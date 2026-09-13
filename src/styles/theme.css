@@ -1,0 +1,81 @@
+/* flutterCon / next.app brand, lifted from nextappcon.com/fluttercon.
+   Pink #ff55e7 + blue #008bff on near-black #171717. Headlines are Wix Madefor
+   Display at regular weight with tight tracking; eyebrows are Familjen Grotesk
+   bold caps. Content slides stay dark so the room can read them for 25 minutes;
+   the full-bleed pink→blue gradient is saved for title/section beats. */
+
+@font-face {
+  font-family: 'Wix Madefor Display';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/wix-madefor-display.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Familjen Grotesk';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/familjen-grotesk.woff2') format('woff2');
+}
+
+:root {
+  --pink: #ff55e7;
+  --pink-2: #ff8aef;
+  --pink-3: #ffc4f6;
+  --blue: #008bff;
+  --blue-2: #5fb3ff;
+  --blue-3: #b3d9ff;
+  --ink: #171717;
+  --ink-2: #1f1f1f;
+  --ink-3: #2a2a2a;
+  --paper: #ffffff;
+  --text: #f7f7f7;
+  --muted: rgba(247, 247, 247, 0.62);
+  --line: rgba(247, 247, 247, 0.14);
+  --warn: #ffb020;
+
+  /* Hero gradient exactly as on the site: pink holds until past the middle,
+     then falls into blue in the bottom-right corner. */
+  --gradient-brand: linear-gradient(125deg, var(--pink) 46%, var(--blue) 100%);
+  --gradient-brand-rev: linear-gradient(225deg, var(--blue) 44%, var(--pink) 100%);
+  --gradient-deep: linear-gradient(160deg, #171717 0%, #1b1b1b 60%, #1f1720 100%);
+
+  --font-display: 'Wix Madefor Display', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-eyebrow: 'Familjen Grotesk', var(--font-display);
+  --font-sans: var(--font-display);
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* The canvas is a fixed 1280x720; every size below is in those px. */
+  --slide-w: 1280px;
+  --slide-h: 720px;
+  --pad: 72px;
+  --bar-h: 84px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #0d0d0d;
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+html[data-view='print'] body,
+html[data-view='presenter'] body {
+  overflow: auto;
+}

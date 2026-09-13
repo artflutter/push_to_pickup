@@ -1,0 +1,17 @@
+---
+title: A feature vs. a call.
+notes: |
+  Design H — comparison table. Left column is what you're used to, right is what you get.
+---
+
+<div className="compare">
+
+|             | A regular feature     | An incoming call                                        |
+| ----------- | --------------------- | ------------------------------------------------------- |
+| Trigger     | The user taps         | Nobody taps. The app is dead, the screen is off.        |
+| Platform    | One Flutter codebase  | PushKit + CallKit on iOS, FCM + ConnectionService on Android |
+| Done when   | It ships              | Time‑to‑ring and answer rate say so                     |
+| Layers      | Dart → widget         | Backend → push → OS → native → Dart → widget            |
+| Dev vs prod | Same thing            | Doze, OEMs, killed processes — drift in both directions |
+
+</div>

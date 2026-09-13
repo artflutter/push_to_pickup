@@ -1,0 +1,13 @@
+---
+title: Five reasons this is hard.
+notes: |
+  Design B — editorial index. Same five points, one row each.
+---
+
+<List>
+  <F><Item n="01" title="Not a regular task">Nobody tapped anything. The app is dead, the screen is off — and it still has to ring, on time.</Item></F>
+  <F><Item n="02" title="Platform specific">iOS: PushKit + CallKit, one mandatory path. Android: FCM + ConnectionService, and every OEM bends the rules.</Item></F>
+  <F><Item n="03" title="Metric heavy">Time‑to‑ring, answer rate, missed calls. Every hop has a millisecond budget.</Item></F>
+  <F><Item n="04" title="Inside out">Backend → APNs / FCM → OS → native → Dart → widget. Flutter is the last 10% of the pipe.</Item></F>
+  <F><Item n="05" title="Build ≠ ship">Debug cable: 300 ms. Real phones: Doze, battery savers, killed processes. Drift goes both ways.</Item></F>
+</List>

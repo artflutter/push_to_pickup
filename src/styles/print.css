@@ -1,0 +1,47 @@
+/* `?print` renders every slide stacked, fully revealed, one per page.
+   Save as PDF from the browser (landscape, no margins, background graphics on)
+   or run `npm run pdf`. */
+.print {
+  background: #06060a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+}
+
+.print__page {
+  width: var(--slide-w);
+  height: var(--slide-h);
+  flex: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@page {
+  size: 1280px 720px;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+  .print {
+    gap: 0;
+    padding: 0;
+  }
+  .print__page {
+    break-after: page;
+    page-break-after: always;
+    box-shadow: none;
+  }
+  .print__page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  .deck__chrome,
+  .overview {
+    display: none !important;
+  }
+}

@@ -1,0 +1,20 @@
+---
+notes: |
+  Design E — the site's photo + dark card pair. Left is the hook, right is the list.
+---
+
+<Split ratio="0.78fr 1fr">
+  <Panel tone="brand" eyebrow="The setup">
+    <h2 className="panel__headline">Why a call is not a feature.</h2>
+    <F><Pill tone="ink">Five reasons</Pill></F>
+  </Panel>
+  <Panel tone="ink">
+    <List>
+      <F><Item n="01" title="Not a regular task">Rings while the app is dead and the screen is off.</Item></F>
+      <F><Item n="02" title="Platform specific">PushKit + CallKit on iOS, FCM + ConnectionService on Android.</Item></F>
+      <F><Item n="03" title="Metric heavy">Time‑to‑ring, answer rate, missed calls. All in ms.</Item></F>
+      <F><Item n="04" title="Inside out">Backend → push → OS → native → Dart → widget.</Item></F>
+      <F><Item n="05" title="Build ≠ ship">Cable: 300 ms. Real phones: Doze, OEMs, killed apps.</Item></F>
+    </List>
+  </Panel>
+</Split>

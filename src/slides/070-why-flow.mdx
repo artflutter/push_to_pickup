@@ -1,0 +1,15 @@
+---
+title: Five hurdles between push and pickup.
+notes: |
+  Design F — the pipeline. Each hurdle is a hop; the punchline lands last.
+---
+
+<Flow>
+  <Step tone="ink">Not a regular task<small>Nobody taps. The app is dead. It still rings.</small></Step>
+  <Step tone="blue">Platform specific<small>PushKit + CallKit vs FCM + ConnectionService.</small></Step>
+  <Step tone="pink">Metric heavy<small>Time‑to‑ring, answer rate, missed calls.</small></Step>
+  <Step tone="blue">Inside out<small>Backend → push → OS → native → Dart → widget.</small></Step>
+  <Step tone="warn">Build ≠ ship<small>Cable: 300 ms. Wild: Doze, OEMs, killed apps.</small></Step>
+</Flow>
+
+<F className="grow"><div className="center"><Big>Every hop is a place to <Hl tone="pink">lose the call.</Hl></Big></div></F>

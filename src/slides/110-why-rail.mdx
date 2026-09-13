@@ -1,0 +1,13 @@
+---
+title: Where a call gets interesting.
+notes: |
+  Design J — vertical rail. Walk down the line.
+---
+
+<Rail>
+  <F><Milestone n="01" title="Not a regular task">Nobody tapped anything. The app is dead, the screen is off — and it still has to ring, on time.</Milestone></F>
+  <F><Milestone n="02" title="Platform specific">PushKit + CallKit on iOS, one mandatory path. FCM + ConnectionService on Android, and every OEM bends it.</Milestone></F>
+  <F><Milestone n="03" title="Metric heavy">Time‑to‑ring, answer rate, missed calls. Every hop has a millisecond budget.</Milestone></F>
+  <F><Milestone n="04" title="Inside out">Backend → APNs / FCM → OS → native → Dart → widget. Flutter is the last 10%.</Milestone></F>
+  <F><Milestone n="05" title="Build ≠ ship">Cable: 300 ms. Wild: Doze, battery savers, killed processes. Drift goes both ways.</Milestone></F>
+</Rail>

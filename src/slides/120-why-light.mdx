@@ -1,0 +1,19 @@
+---
+theme: light
+title: Five things that make a call hard.
+subtitle: Why an incoming call earns 25 minutes of your afternoon
+notes: |
+  Design K — the site's white section. Five ruled columns.
+---
+
+<div className="center">
+<Cols n={5} gap={24}>
+  <F><Note head="Not a regular task">Nobody taps. The app is dead, the screen is off — it still rings.</Note></F>
+  <F><Note head="Platform specific">PushKit + CallKit on iOS. FCM + ConnectionService on Android.</Note></F>
+  <F><Note head="Metric heavy">Time‑to‑ring, answer rate, missed calls. Budgets in ms.</Note></F>
+  <F><Note head="Inside out">Backend → push → OS → native → Dart → widget.</Note></F>
+  <F><Note head="Build ≠ ship">Cable: 300 ms. Wild: Doze, OEMs, killed apps.</Note></F>
+</Cols>
+</div>
+
+<F><Speaker name="So, hop by hop" role="Backend · push · OS · native · Dart · widget" /></F>
