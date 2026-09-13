@@ -1,0 +1,15 @@
+---
+title: Between the push and the UI.
+notes: |
+  The two anchors never change; the three steps in the middle light up one
+  by one. Point two is the iOS trap: you must show the call before you can
+  ask the vendor whether it is still there.
+---
+
+<Tiles cols="0.55fr 1.6fr 0.55fr" rows="1fr 1fr 1fr">
+  <Tile area="1 / 1 / 4 / 2"><Card size="lg" tone="blue" n="From" title="Push" /></Tile>
+  <Tile area="1 / 2 / 2 / 3"><Card at={1} n="01" title="Obtain the vendor token" brick="round 1x1">Without it the app cannot talk to the vendor at all.</Card></Tile>
+  <Tile area="2 / 2 / 3 / 3"><Card at={2} n="02" title="Connect to the vendor" brick="technic 1x2">iOS will not wait for the call status — the UI has to show first.</Card></Tile>
+  <Tile area="3 / 2 / 4 / 3"><Card at={3} n="03" title="Token in the push, or headless Flutter" brick="hinge 1x2">A one‑time token rides in the payload — or a headless isolate fetches one.</Card></Tile>
+  <Tile area="1 / 3 / 4 / 4"><Card size="lg" tone="pink" n="To" title="UI" /></Tile>
+</Tiles>

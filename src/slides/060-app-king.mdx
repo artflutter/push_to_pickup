@@ -1,0 +1,11 @@
+---
+notes: |
+  Spotlight, box on the right this time. The app starts everything: without
+  its tokens nobody can reach the device. Three bars, one click each.
+---
+
+<Spotlight box="right" title="The app is the king.">
+  <Card at={1} brick="round 2x2" n="01" title="Emits a push token" detail="The OS hands the app a push token — FCM on Android, APNs on iOS. Nobody else can get one for this device." />
+  <Card at={2} brick="cone 2x2" n="02" title="Obtains a vendor token" detail="The app signs in with the vendor and gets an access token for this user on this device." />
+  <Card at={3} brick="arch 1x4" n="03" title="Pushes the token to the vendor" detail="It registers the push token with the vendor. From now on the vendor can wake this phone." />
+</Spotlight>

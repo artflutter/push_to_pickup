@@ -1,0 +1,11 @@
+---
+title: The active call.
+notes: |
+  Same user, two phones. Both ring. Then one of them hangs up — and the
+  other one has to know.
+---
+
+<Cards rows={[2]}>
+  <Card at={1} size="lg" n="01" title="Two phones, one user" art={<Phones state="both" />}>Both are registered. Both get the push. Both ring.</Card>
+  <Card at={2} size="lg" n="02" title="One hangs up — the other still rings" art={<Phones state="split" />}>A decision on one device has to reach the other.</Card>
+</Cards>

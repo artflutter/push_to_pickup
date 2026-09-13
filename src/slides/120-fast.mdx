@@ -1,0 +1,14 @@
+---
+title: All of this has to happen fast.
+notes: |
+  Three laps on the clock, one click each; the bar fills as you go. The last
+  click hits the end: 30 seconds, and the call goes to voicemail.
+---
+
+<Cards rows={[3]} height={250}>
+  <Card at={1} n="01" title="Server processing" brick="grille 1x2">Webhook, lookup, token, push request.</Card>
+  <Card at={2} n="02" title="Push delivery" brick="wedge 2x3">APNs or FCM, over whatever network the phone has.</Card>
+  <Card at={3} n="03" title="On‑device call processing" brick="cheese 1x1">Wake up, get the token, connect, show the UI.</Card>
+</Cards>
+
+<Deadline laps={3} value="30 s" label="then voicemail" />

@@ -30,12 +30,14 @@ notes: |
 Everything in [src/deck/mdxComponents.tsx](src/deck/mdxComponents.tsx) is
 available in MDX without an import: `F`, `Cols`, `Box`, `Big`, `Stat`, `Tag`,
 `Flow`, `Step`, `Code`, `CodeMorph`, plus the site-style layouts `Cards`/`Card`,
-`Bento`, `List`/`Item`, `Split`/`Panel`, `Rail`/`Milestone`, `Note`, `Hl`,
-`Pill`, `Speaker`, `ConfBar`, `Logo`, `HeroArt`, `Brick`, `BrickGallery`, and the
-speaker-card pieces `Brand`, `Avatar`, `Byline`, `ConfStrip`, `Gate`.
+`Bento`, `Tiles`/`Tile`, `Hops`, `List`/`Item`, `Split`/`Panel`, `Rail`/`Milestone`,
+`Checklist`/`Check`, `Deadline`, `Phones`, `Note`, `Hl`, `Pill`, `Speaker`,
+`ConfBar`, `Logo`, `HeroArt`, `Brick`, `BrickGallery`, and the speaker-card
+pieces `Brand`, `Avatar`, `Byline`, `ConfStrip`, `Gate`.
 
-Slides 040–130 are ten other designs of the "why this is interesting"
-content, kept after the blank slide for reference.
+The talk runs 010–130. After it: 700 is a blank, 710–712 the brick pick list,
+and 800–890 ten other designs of the "why this is interesting" content, kept
+for reference.
 
 ### Fragments
 
@@ -71,7 +73,16 @@ the brand gradient, cards behind it are plain.
   `minifig head` … 90 in all) or plain `WxL` / `WxLp`. Slides 031–033 are a
   numbered pick list (`<BrickGallery from to />`); drop them once chosen.
 - In a `<Cards>` grid nothing moves; a single gradient slab springs from card
-  to card and the lit card pops a little.
+  to card and the lit card pops a little. `height={250}` stops the grid from
+  taking the whole slide when the cards are short. `<Card art={<Phones />}>`
+  puts an illustration between the title and the body.
+- `<Tiles cols="1fr 1fr" rows="1fr 1fr">` is the same slab on a free-form
+  grid: wrap each card in `<Tile area="1 / 2 / 3 / 3">` (grid-area) — the UI
+  slide's tall iOS card next to two Android ones, or the push → steps → UI
+  layout. `<Hops>` is a row of cards with a chevron between each pair.
+- `<Checklist>` / `<Check>`: big lines whose box ticks with the gradient on
+  its click. `<Deadline laps={3} value="30 s" label="then voicemail" />`: a
+  track that fills one lap per click and lights the figure on its own click.
 
 ### Code
 

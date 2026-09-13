@@ -146,14 +146,28 @@ function useSpotLayer() {
  * filling the full width. Wrap cards in <F> to reveal them one click at a
  * time, or give each <Card at={n}> to step the gradient spot across them.
  */
-export function Cards({ children, rows = [3, 2], gap = 16 }: { children: ReactNode; rows?: number[]; gap?: number }) {
+export function Cards({
+  children,
+  rows = [3, 2],
+  gap = 16,
+  height,
+}: {
+  children: ReactNode
+  rows?: number[]
+  gap?: number
+  /** Fixed height in px; by default the grid takes all the height the slide has left. */
+  height?: number
+}) {
   const cols = rows.reduce((acc, n) => lcm(acc, n), 1)
   const spans = rows.flatMap((n) => Array<number>(n).fill(cols / n))
   const items = Children.toArray(children).filter((c) => !(typeof c === 'string' && c.trim() === ''))
   const { setActive, spot } = useSpotLayer()
   return (
     <SpotContext.Provider value={setActive}>
-      <div className="cards has-spot" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap }}>
+      <div
+        className="cards has-spot"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap, height, flex: height != null ? 'none' : undefined }}
+      >
         {items.map((child, i) => (
           <div key={i} className="cards__cell" style={{ gridColumn: `span ${spans[i] ?? 1}` }}>
             {child}
@@ -179,6 +193,8 @@ interface BentoLayout {
   heroAt: number | null
   /** false when the grid shows details elsewhere (Spotlight box), so cards stay title-only */
   detailInCards?: boolean
+  /** every card is a horizontal bar (number + title, centred), whatever its height */
+  bar?: boolean
 }
 const BentoContext = createContext<BentoLayout | null>(null)
 
@@ -457,7 +473,7 @@ export function Spotlight({
         </div>
       )}
 
-      <BentoContext.Provider value={{ rects, heroAt: null, detailInCards: false }}>{children}</BentoContext.Provider>
+      <BentoContext.Provider value={{ rects, heroAt: null, detailInCards: false, bar: true }}>{children}</BentoContext.Provider>
     </div>
   )
 }
@@ -471,6 +487,7 @@ export function Card({
   size = 'md',
   at,
   brick,
+  art,
 }: {
   /** Small index label, e.g. "01". */
   n?: ReactNode
@@ -489,6 +506,8 @@ export function Card({
   at?: number
   /** Isometric LEGO brick outline at the right end of the card, e.g. `2x4` — see <Brick kind />. */
   brick?: string
+  /** Illustration between the title and the body; takes the spare height. */
+  art?: ReactNode
 }) {
   const slide = useSlide()
   const setActive = useContext(SpotContext)
@@ -546,7 +565,7 @@ export function Card({
       ref={ref}
       className={`card card--${tone} card--${isHero ? 'lg' : 'md'} card--${state}${rect ? ' card--placed' : ''}${
         rect && rect.width < 200 ? ' card--narrow' : ''
-      }${rect && rect.height < 140 ? ' card--bar' : ''}${brick ? ' card--has-end' : ''}`}
+      }${rect && (rect.height < 140 || bento?.bar) ? ' card--bar' : ''}${brick ? ' card--has-end' : ''}`}
       style={{ '--pop': pop } as React.CSSProperties}
       initial={false}
       animate={rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : undefined}
@@ -556,6 +575,7 @@ export function Card({
       <div className="card__inner">
         {n != null && <div className="card__n">{n}</div>}
         {title && <div className="card__title">{title}</div>}
+        {art && <div className="card__art">{art}</div>}
         {body && <div className="card__body">{body}</div>}
         {showDetail && <div className={`card__body card__detail${settled ? ' is-in' : ''}`}>{detail}</div>}
       </div>
@@ -565,6 +585,167 @@ export function Card({
         </div>
       )}
     </motion.div>
+  )
+}
+
+/* ----------------------------------------------------------------- tiles --- */
+const nonBlank = (c: ReactNode) => !(typeof c === 'string' && c.trim() === '')
+
+/**
+ * Free-form card mosaic: a CSS grid you shape with `cols` / `rows`, each
+ * <Tile area="row / col / row / col"> placing one card. Cards with `at` share
+ * one travelling gradient spot, like <Cards>.
+ */
+export function Tiles({
+  children,
+  cols = '1fr 1fr',
+  rows = '1fr',
+  gap = 16,
+}: {
+  children: ReactNode
+  cols?: string
+  rows?: string
+  gap?: number
+}) {
+  const { setActive, spot } = useSpotLayer()
+  return (
+    <SpotContext.Provider value={setActive}>
+      <div className="tiles has-spot" style={{ gridTemplateColumns: cols, gridTemplateRows: rows, gap }}>
+        {Children.toArray(children).filter(nonBlank)}
+        {spot}
+      </div>
+    </SpotContext.Provider>
+  )
+}
+
+export function Tile({ children, area }: { children: ReactNode; area?: string }) {
+  return (
+    <div className="tiles__cell" style={{ gridArea: area }}>
+      {children}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ hops --- */
+/** Cards in a row with a chevron between each pair — a pipeline of big steps. */
+export function Hops({ children, gap = 14 }: { children: ReactNode; gap?: number }) {
+  const items = Children.toArray(children).filter(nonBlank)
+  const { setActive, spot } = useSpotLayer()
+  const cells: ReactNode[] = []
+  items.forEach((child, i) => {
+    if (i > 0)
+      cells.push(
+        <div key={`a${i}`} className="hops__arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        </div>,
+      )
+    cells.push(
+      <div key={i} className="hops__cell">
+        {child}
+      </div>,
+    )
+  })
+  return (
+    <SpotContext.Provider value={setActive}>
+      <div className="hops has-spot" style={{ gridTemplateColumns: items.map(() => 'minmax(0, 1fr)').join(' auto '), gap }}>
+        {cells}
+        {spot}
+      </div>
+    </SpotContext.Provider>
+  )
+}
+
+/* ------------------------------------------------------------- checklist --- */
+/** Big lines with a box in front; each box ticks on its own click. */
+export function Checklist({ children }: { children: ReactNode }) {
+  return <div className="checklist">{children}</div>
+}
+
+export function Check({ children, at }: { children: ReactNode; at?: number }) {
+  const slide = useSlide()
+  const [ordinal] = useState(() => slide.register(at))
+  const done = slide.static || slide.step >= ordinal
+  return (
+    <div className={`check${done ? ' is-done' : ''}`}>
+      <span className="check__box" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12.5l4.5 4.5L19 7.5" />
+        </svg>
+      </span>
+      <span className="check__text">{children}</span>
+    </div>
+  )
+}
+
+/* ---------------------------------------------------------------- phones --- */
+/**
+ * Two phone outlines. `both`: both ring. `split`: the first has hung up
+ * (crossed screen), the second still rings.
+ */
+export function Phones({ state = 'both' }: { state?: 'both' | 'split' }) {
+  const phone = (x: number, ringing: boolean, hung: boolean) => (
+    <g transform={`translate(${x} 0)`}>
+      <rect x="1" y="1" width="84" height="164" rx="16" />
+      <rect x="29" y="12" width="28" height="5" rx="2.5" fill="currentColor" stroke="none" opacity="0.6" />
+      {ringing && (
+        <g className="phones__ring">
+          <path d="M100 58a28 28 0 0 1 0 50" />
+          <path d="M116 42a50 50 0 0 1 0 82" />
+        </g>
+      )}
+      {hung && <path className="phones__hung" d="M28 66l30 30M58 66l-30 30" />}
+    </g>
+  )
+  return (
+    <svg
+      className="phones"
+      viewBox="0 0 346 166"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {phone(0, state === 'both', state === 'split')}
+      {phone(176, true, false)}
+    </svg>
+  )
+}
+
+/* -------------------------------------------------------------- deadline --- */
+/**
+ * A time track that fills one lap per click (`laps` = the steps before it)
+ * and, on its own click `at`, hits the end: the marker and the figure light up.
+ */
+export function Deadline({
+  laps,
+  at,
+  value,
+  label,
+}: {
+  laps: number
+  at?: number
+  value: ReactNode
+  label?: ReactNode
+}) {
+  const slide = useSlide()
+  const [ordinal] = useState(() => slide.register(at))
+  const hit = slide.static || slide.step >= ordinal
+  const frac = hit ? 1 : Math.min(Math.max(slide.step, 0), laps) / laps
+  return (
+    <div className={`deadline${hit ? ' is-hit' : ''}`}>
+      <div className="deadline__track">
+        <div className="deadline__fill" style={{ width: `${frac * 100}%` }} />
+        <div className="deadline__mark" />
+      </div>
+      <div className="deadline__stat">
+        <span className="deadline__value">{value}</span>
+        {label && <span className="deadline__label">{label}</span>}
+      </div>
+    </div>
   )
 }
 
@@ -634,10 +815,11 @@ export function Hl({ children, tone = 'ink' }: { children: ReactNode; tone?: 'in
   return <span className={`hl hl--${tone}`}>{children}</span>
 }
 
-/** Column note for light slides: hairline on top, short head, one-liner. */
-export function Note({ head, children }: { head: ReactNode; children?: ReactNode }) {
+/** Column note for light slides: hairline on top, short head, one-liner. `lg` is the bigger cut with an index. */
+export function Note({ head, children, n, size = 'md' }: { head: ReactNode; children?: ReactNode; n?: ReactNode; size?: 'md' | 'lg' }) {
   return (
-    <div className="note">
+    <div className={`note note--${size}`}>
+      {n != null && <div className="note__n">{n}</div>}
       <div className="note__head">{head}</div>
       <div className="note__body">{children}</div>
     </div>
@@ -796,6 +978,13 @@ export const mdxComponents = {
   BrickGallery,
   Bento,
   Spotlight,
+  Tiles,
+  Tile,
+  Hops,
+  Checklist,
+  Check,
+  Phones,
+  Deadline,
   List,
   Item,
   Split,
