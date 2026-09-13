@@ -33,8 +33,8 @@ available in MDX without an import: `F`, `Cols`, `Box`, `Big`, `Stat`, `Tag`,
 `Bento`, `List`/`Item`, `Split`/`Panel`, `Rail`/`Milestone`, `Note`, `Hl`,
 `Pill`, `Speaker`, `ConfBar`, `Logo`, `HeroArt`.
 
-Slides 030–120 are ten designs of the same "why this is interesting" content —
-keep one, delete the rest (or mark them `draft: true`).
+Slides 040–130 are ten other designs of the "why this is interesting"
+content, kept after the blank slide for reference.
 
 ### Fragments
 
