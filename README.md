@@ -52,10 +52,15 @@ Cards can step without `<F>`: give each `<Card at={n}>`. Everything stays on
 screen — cards ahead of the current step are dimmed, the current one carries
 the brand gradient, cards behind it are plain.
 
-- In a `<Bento rows={[3, 2]}>` the current card also *grows in place* into a
-  square spanning the block's full height (at the left edge, right edge or
-  centre, matching its place in the row); the other cards re-pack, in order,
-  into an even grid beside it. Nothing changes order. Small cards show only number +
+- `<Spotlight title="…" eyebrow="…" box="left|right">` (no frontmatter
+  `title`): a fixed gradient box on one side, the cards as fixed bars on the
+  other. The box
+  opens with the slide title; the first step hands the title to the top of
+  the slide, lights bar 01 and shows its `detail` in the box; each step walks
+  the highlight down. Nothing moves.
+- `<Bento>` variants for the same cards: `stack="right"` (square left, bars
+  right, two cards swap per step), one row (default, an accordion) or
+  `rows={[3, 2]}` (the lit card grows out of its own spot). Small cards show only number +
   title; give a card `detail="…"` for the copy that fades in once it has
   finished growing.
 - In a `<Cards>` grid nothing moves; a single gradient slab springs from card

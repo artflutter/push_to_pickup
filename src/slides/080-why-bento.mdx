@@ -1,16 +1,15 @@
 ---
-title: Not just another feature.
 notes: |
-  Bento accordion. All five on screen from the start, in a fixed 3 + 2 grid.
-  Each click the current reason grows into a full-height square and lights up,
-  its detail fades in once it has settled; the others flow around it. 05 is
-  the thesis — hold there.
+  Spotlight. Five bars on the right never move. The slide title opens inside
+  the gradient box on the left; first click sends it to the top and lights
+  01, the box shows its detail. Each click walks the highlight down. 05 is the
+  thesis — hold there.
 ---
 
-<Bento rows={[3, 2]}>
+<Spotlight box="left" title="Why this is interesting?">
   <Card at={1} n="01" title="Not a regular task" detail="Nobody tapped anything. The app is dead, the screen is off — and it still has to ring, on time." />
   <Card at={2} n="02" title="Platform specific" detail="iOS: PushKit + CallKit, one mandatory path. Android: FCM + ConnectionService, and every OEM bends the rules." />
   <Card at={3} n="03" title="Metric heavy" detail="Time‑to‑ring, answer rate, missed calls. Every hop has a millisecond budget, and someone is measuring it." />
   <Card at={4} n="04" title="Inside out" detail="Backend → APNs / FCM → OS → native → Dart → widget. Flutter is the last 10% of the pipe, and the only part you can see." />
   <Card at={5} n="05" title="What you build is not what ships." detail="Debug cable: 300 ms. In the wild: Doze, battery savers, killed processes, locked screens. The drift goes both ways." />
-</Bento>
+</Spotlight>

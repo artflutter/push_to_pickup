@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { useSlide } from './slideContext'
@@ -164,29 +164,39 @@ export function Cards({ children, rows = [3, 2], gap = 16 }: { children: ReactNo
   )
 }
 
-/* Bento accordion: cards sit in fixed rows (3 + 2 by default) and never change
-   order. The card on the current step grows in place into a square that spans
-   the full height of the block — at the left edge, the right edge or the
-   centre, depending on where it sits in its row — and the other cards keep
-   their rows, flowing into whatever is left beside the square. Cards are
+/* Bento accordion: cards never change order. With a single row (rows={[5]})
+   the lit card is a full-height square and the rest are narrow columns, so a
+   step only touches two neighbours. With several rows the lit card grows out
+   of its own spot into a full-height square and the other rows compress on
+   their side of it. With `stack` the square has a fixed side and the rest are
+   horizontal bars on the other; a step swaps two cards. Cards are
    absolutely positioned and spring between rects, so the resize is the
    animation. Before step 1 the rows share the height equally; static previews
    show the last card grown and lit. */
 interface BentoLayout {
   rects: Map<number, Rect>
   heroAt: number | null
+  /** false when the grid shows details elsewhere (Spotlight box), so cards stay title-only */
+  detailInCards?: boolean
 }
 const BentoContext = createContext<BentoLayout | null>(null)
 
 export function Bento({
   children,
-  rows = [3, 2],
+  rows = [5],
   gap = 16,
+  stack,
 }: {
   children: ReactNode
-  /** Cards per row, in `at` order. */
+  /** Cards per row, in `at` order. Ignored when `stack` is set. */
   rows?: number[]
   gap?: number
+  /**
+   * Fixed layout: the lit card is a full-height square on one side and the
+   * others stack as horizontal bars on the `stack` side, in order. A step
+   * swaps the card entering the square with the one leaving it.
+   */
+  stack?: 'left' | 'right'
 }) {
   const slide = useSlide()
   const ref = useRef<HTMLDivElement>(null)
@@ -217,7 +227,19 @@ export function Bento({
           : ([...ats].reverse().find((a) => a < step) ?? null)
 
   const rects = new Map<number, Rect>()
-  if (size) {
+  if (size && stack) {
+    const { w: W, h: H } = size
+    /* before the first step the first card holds the square, dimmed */
+    const hero = heroAt ?? ats[0]
+    const side = Math.min(H, W)
+    const squareX = stack === 'right' ? 0 : W - side
+    const barX = stack === 'right' ? side + gap : 0
+    const barW = W - side - gap
+    const others = ats.filter((a) => a !== hero)
+    const barH = others.length > 0 ? (H - gap * (others.length - 1)) / others.length : H
+    if (hero != null) rects.set(hero, { x: squareX, y: 0, width: side, height: side })
+    others.forEach((a, i) => rects.set(a, { x: barX, y: i * (barH + gap), width: barW, height: barH }))
+  } else if (size) {
     const { w: W, h: H } = size
     let taken = 0
     const rowCards = rows.map((n) => ats.slice(taken, (taken += n))).filter((r) => r.length > 0)
@@ -233,51 +255,209 @@ export function Bento({
     const heroRow = heroAt == null ? -1 : rowCards.findIndex((r) => r.includes(heroAt))
     if (heroAt == null || heroRow < 0) {
       rest.forEach((r, a) => rects.set(a, r))
+    } else if (rowCards.length === 1) {
+      /* Single row = accordion. The lit card is a full-height square, every
+         other card is one fixed narrow column, all in order. A step only ever
+         changes the two adjacent cards; nothing else moves at all. */
+      const cards = rowCards[0]
+      const side = Math.min(H, W)
+      const narrow = (W - side - gap * (cards.length - 1)) / (cards.length - 1)
+      let x = 0
+      cards.forEach((a) => {
+        const w = a === heroAt ? side : narrow
+        rects.set(a, { x, y: 0, width: w, height: H })
+        x += w + gap
+      })
     } else {
       const side = Math.min(H, W)
-      const row = rowCards[heroRow]
-      const ci = row.indexOf(heroAt)
-      const slot = row.length === 1 || (ci > 0 && ci < row.length - 1) ? 'center' : ci === 0 ? 'left' : 'right'
-      const sx = slot === 'left' ? 0 : slot === 'right' ? W - side : (W - side) / 2
+      /* The square grows out of the lit card's own resting spot: anchored to
+         the left edge, the right edge, or centred on it. */
+      const heroRest = rest.get(heroAt)!
+      const atLeft = heroRest.x <= 0.5
+      const atRight = heroRest.x + heroRest.width >= W - 0.5
+      const slot = atLeft && !atRight ? 'left' : atRight && !atLeft ? 'right' : 'center'
+      const sx =
+        slot === 'left'
+          ? 0
+          : slot === 'right'
+            ? W - side
+            : Math.max(0, Math.min(W - side, heroRest.x + heroRest.width / 2 - side / 2))
       rects.set(heroAt, { x: sx, y: 0, width: side, height: side })
 
-      /* The other cards, in order, fill the region(s) beside the square as an
-         even grid — e.g. four cards become 2 x 2 — rather than keeping their
-         resting rows, so an edge square never leaves a row of slivers. */
-      const pack = (list: number[], x0: number, x1: number) => {
+      /* Everyone else keeps its row and order and simply compresses into the
+         space left on its own side of the square — a push, never a reshuffle. */
+      const place = (list: number[], ri: number, x0: number, x1: number) => {
         if (list.length === 0) return
-        const nRows = Math.min(rowCards.length, list.length)
-        const rh = (H - gap * (nRows - 1)) / nRows
-        let i = 0
-        for (let r = 0; r < nRows; r++) {
-          const count = Math.ceil((list.length - i) / (nRows - r))
-          const w = (x1 - x0 - gap * (count - 1)) / count
-          list.slice(i, i + count).forEach((a, k) => rects.set(a, { x: x0 + k * (w + gap), y: r * (rh + gap), width: w, height: rh }))
-          i += count
-        }
+        const w = (x1 - x0 - gap * (list.length - 1)) / list.length
+        list.forEach((a, i) => rects.set(a, { x: x0 + i * (w + gap), y: ri * (rowH + gap), width: w, height: rowH }))
       }
-      const others = ats.filter((a) => a !== heroAt)
-      const left =
-        slot === 'right'
-          ? others
-          : slot === 'left'
-            ? []
-            : others.filter((a) => {
-                const r = rest.get(a)!
-                return r.x + r.width / 2 < W / 2
-              })
-      const right = others.filter((a) => !left.includes(a))
-      pack(left, 0, sx - gap)
-      pack(right, sx + side + gap, W)
+      const squareMid = sx + side / 2
+      rowCards.forEach((cards, ri) => {
+        const others = cards.filter((a) => a !== heroAt)
+        const left =
+          slot === 'right'
+            ? others
+            : slot === 'left'
+              ? []
+              : others.filter((a) => {
+                  const r = rest.get(a)!
+                  return r.x + r.width / 2 < squareMid
+                })
+        const right = others.filter((a) => !left.includes(a))
+        place(left, ri, 0, sx - gap)
+        place(right, ri, sx + side + gap, W)
+      })
     }
   }
 
   return (
-    <BentoContext.Provider value={{ rects, heroAt }}>
+    <BentoContext.Provider value={{ rects, heroAt: stack ? (heroAt ?? ats[0] ?? null) : heroAt }}>
       <div ref={ref} className="bento">
         {children}
       </div>
     </BentoContext.Provider>
+  )
+}
+
+/* Spotlight: a fixed gradient box on the left and the cards as fixed bars on
+   the right. Nothing ever moves. Before the first step the box carries the
+   slide title; on step 1 the title hands off to the top of the slide and the
+   box starts showing the lit card's number, title and detail, crossfading as
+   the highlight walks down the bars. */
+export function Spotlight({
+  title,
+  eyebrow,
+  children,
+  gap = 16,
+  titleRow = 82,
+  box = 'left',
+  split = 0.5,
+}: {
+  title: ReactNode
+  eyebrow?: ReactNode
+  children: ReactNode
+  gap?: number
+  /** Height reserved for the slide title above the block (title line + gap). */
+  titleRow?: number
+  /** Which side the gradient box sits on; the bars take the other. */
+  box?: 'left' | 'right'
+  /** Share of the width the box takes (0.5 = an even split). */
+  split?: number
+}) {
+  const slide = useSlide()
+  const ref = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setSize({ w: el.offsetWidth, h: el.offsetHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  type Item = { at: number; n?: ReactNode; title?: ReactNode; detail?: ReactNode }
+  const items: Item[] = Children.toArray(children)
+    .flatMap((c) => (isValidElement(c) && typeof (c.props as { at?: unknown }).at === 'number' ? [c.props as Item] : []))
+    .sort((a, b) => a.at - b.at)
+  const ats = items.map((i) => i.at)
+
+  const step = slide.step
+  const activeAt =
+    ats.length === 0
+      ? null
+      : slide.static
+        ? ats[ats.length - 1]
+        : ats.includes(step)
+          ? step
+          : ([...ats].reverse().find((a) => a < step) ?? null)
+  const active = items.find((i) => i.at === activeAt)
+
+  const rects = new Map<number, Rect>()
+  let boxW = 0
+  let boxH = 0
+  let boxX = 0
+  if (size) {
+    const { w: W, h: H } = size
+    boxW = W * split - gap / 2
+    boxH = H - titleRow
+    boxX = box === 'right' ? W - boxW : 0
+    const barX = box === 'right' ? 0 : boxW + gap
+    const barW = W - boxW - gap
+    const barH = ats.length > 0 ? (boxH - gap * (ats.length - 1)) / ats.length : boxH
+    ats.forEach((a, i) => rects.set(a, { x: barX, y: titleRow + i * (barH + gap), width: barW, height: barH }))
+  }
+
+  /* Tail on the box edge, pointing at the lit bar. Its colour is sampled from
+     the box gradient (225deg, blue to 44% then pink) at that height, so it
+     reads as part of the box rather than a stuck-on triangle. */
+  const activeIndex = activeAt == null ? -1 : ats.indexOf(activeAt)
+  const barPitch = ats.length > 0 ? (boxH - gap * (ats.length - 1)) / ats.length + gap : 0
+  const tailY = activeIndex < 0 ? boxH / 2 : activeIndex * barPitch + (barPitch - gap) / 2
+  const tailColor = (() => {
+    const edgeX = box === 'right' ? 0 : boxW
+    const len = (boxW + boxH) * Math.SQRT1_2
+    const t = len > 0 ? ((edgeX - boxW / 2) * -Math.SQRT1_2 + (tailY - boxH / 2) * Math.SQRT1_2) / len + 0.5 : 0
+    const m = Math.max(0, Math.min(1, (t - 0.44) / 0.56))
+    const c = (a: number, b: number) => Math.round(a + (b - a) * m)
+    return `rgb(${c(0, 255)}, ${c(139, 85)}, ${c(255, 231)})`
+  })()
+
+  const lit = activeAt != null
+  return (
+    <div ref={ref} className="spotlight">
+      <motion.h1
+        className="slide__title spotlight__title"
+        initial={false}
+        animate={{ opacity: lit ? 1 : 0, y: lit ? 0 : 28 }}
+        transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1], delay: lit && !slide.static ? 0.12 : 0 }}
+      >
+        {title}
+      </motion.h1>
+
+      {size && (
+        <div className="spotlight__box" style={{ top: titleRow, left: boxX, width: boxW, height: boxH }}>
+          <motion.div
+            className="spotlight__tail"
+            style={box === 'right' ? { left: -11 } : { right: -11 }}
+            initial={false}
+            animate={{ y: tailY, rotate: 45, opacity: lit ? 1 : 0, backgroundColor: tailColor }}
+            transition={{ type: 'spring', stiffness: 260, damping: 28, opacity: { duration: 0.3 }, backgroundColor: { duration: 0.3 } }}
+          />
+          <AnimatePresence mode="wait" initial={false}>
+            {active == null ? (
+              <motion.div
+                key="cover"
+                className="spotlight__cover"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -48 }}
+                transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
+              >
+                {eyebrow && <div className="spotlight__eyebrow">{eyebrow}</div>}
+                <div className="spotlight__cover-title">{title}</div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={active.at}
+                className="spotlight__detail"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.32, ease: 'easeOut' }}
+              >
+                {/* number and title already sit on the highlighted bar; the box carries the detail only */}
+                {active.detail ?? active.title}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      <BentoContext.Provider value={{ rects, heroAt: null, detailInCards: false }}>{children}</BentoContext.Provider>
+    </div>
   )
 }
 
@@ -337,7 +517,7 @@ export function Card({
     return () => setActive(null)
   }, [bento, state, setActive, pop])
 
-  const showDetail = detail != null && (bento ? state === 'active' : isHero)
+  const showDetail = detail != null && (bento ? bento.detailInCards !== false && state === 'active' : isHero)
   const body = bento ? null : isHero && detail ? detail : children
 
   /* The detail waits for the size spring to settle before fading in, so the
@@ -360,7 +540,9 @@ export function Card({
     <motion.div
       key={rect ? 'placed' : 'unplaced'}
       ref={ref}
-      className={`card card--${tone} card--${isHero ? 'lg' : 'md'} card--${state}${rect ? ' card--placed' : ''}`}
+      className={`card card--${tone} card--${isHero ? 'lg' : 'md'} card--${state}${rect ? ' card--placed' : ''}${
+        rect && rect.width < 200 ? ' card--narrow' : ''
+      }${rect && rect.height < 140 ? ' card--bar' : ''}`}
       style={{ '--pop': pop } as React.CSSProperties}
       initial={false}
       animate={rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : undefined}
@@ -543,6 +725,7 @@ export const mdxComponents = {
   Cards,
   Card,
   Bento,
+  Spotlight,
   List,
   Item,
   Split,
