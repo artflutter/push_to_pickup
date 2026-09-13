@@ -833,6 +833,29 @@
   border-color: rgba(255, 255, 255, 0.28);
 }
 
+/* contour at the right end of a card: an outlined brick, one shape per item */
+.card__end {
+  position: absolute;
+  z-index: 1;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  color: var(--blue-2);
+  opacity: 0.7;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.card--active .card__end {
+  opacity: 1;
+}
+.card--has-end .card__inner {
+  padding-right: 110px;
+}
+.brick {
+  display: block;
+}
+
 /* stacked bars: number + title, vertically centred */
 .card--bar {
   padding: 14px 26px;
@@ -1357,4 +1380,181 @@
   place-items: center;
   height: 100%;
   color: var(--muted);
+}
+
+/* ---------------------------------------------------------- card (title) --- */
+/* The official speaker card, reproduced 1:1. Measured on the 1200x628 PNG:
+   sizes and x positions scale by 1280/1200, y positions by 720/628 so the
+   composition keeps its proportions on the wider stage. Type is Inter, the
+   card's face; positions below are the ink boxes converted to CSS boxes with
+   Inter's metrics (ascent 0.97em, descent 0.24em). */
+.slide--card {
+  padding: 0;
+  gap: 0;
+  color: #fff;
+  background: linear-gradient(
+    180deg,
+    #ff59e9 0%,
+    #ff5be9 8%,
+    #fe5ee9 15.9%,
+    #fe61ea 23.9%,
+    #fe66ea 31.8%,
+    #fd6deb 39.8%,
+    #fd75eb 47.8%,
+    #fc7fec 55.7%,
+    #fb8bed 63.7%,
+    #fa98ee 71.7%,
+    #f8a9ef 79.6%,
+    #f7bcf0 87.6%,
+    #f5d2f2 95.5%,
+    #f4def3 100%
+  );
+}
+.slide--card::after {
+  display: none;
+}
+.slide--card .slide__title {
+  position: absolute;
+  z-index: 1;
+  left: 96.3px;
+  top: 171.4px;
+  width: 1060px;
+  margin: 0;
+  font: 700 44.8px/55.5px var(--font-card);
+  letter-spacing: 0;
+  color: #fff;
+  text-wrap: wrap;
+}
+/* body stays static so the pieces anchor to the slide */
+.slide--card .slide__body {
+  position: static;
+  flex: none;
+}
+
+.brand {
+  position: absolute;
+  z-index: 1;
+  left: 34.1px;
+  top: 31px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10.2px;
+}
+.brand__nextapp {
+  width: 88.5px;
+  height: auto;
+  display: block;
+  filter: brightness(0);
+}
+.brand__fluttercon {
+  width: 301.9px;
+  height: auto;
+  display: block;
+}
+
+.avatar {
+  position: absolute;
+  z-index: 1;
+  left: 67.2px;
+  top: 310.7px;
+  width: 246.4px;
+  height: 246.4px;
+  border-radius: 50%;
+  display: block;
+}
+
+.byline {
+  position: absolute;
+  z-index: 1;
+  left: 364.5px;
+  top: 327.7px;
+  font-family: var(--font-card);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.byline__name {
+  font-size: 40.7px;
+  line-height: 55px;
+  color: #fff;
+}
+.byline__role {
+  margin-top: 18.3px;
+  font-size: 38.4px;
+  line-height: 1;
+  color: #000;
+}
+.byline__company {
+  margin-top: 18.9px;
+  font-size: 38.4px;
+  line-height: 1;
+  color: var(--blue);
+}
+
+.confstrip {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  bottom: 0;
+  width: 666.7px;
+  height: 94.9px;
+  background: var(--blue);
+  border-top-right-radius: 29px;
+}
+.confstrip span {
+  position: absolute;
+  left: 30.6px;
+  top: 40.3px;
+  font: 500 31.3px/1 var(--font-card);
+  letter-spacing: 0;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.gate {
+  position: absolute;
+  z-index: 0;
+  right: 0;
+  bottom: 0;
+  width: 405.3px;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ---------------------------------------------------------------- bricks --- */
+/* pick list of brick outlines: one cell per catalogue shape, name underneath */
+.bricks {
+  display: grid;
+  gap: 8px 12px;
+  align-content: start;
+  color: var(--blue-2);
+}
+.bricks__cell {
+  height: var(--cell, 88px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.bricks__cell svg {
+  flex: none;
+}
+.bricks__label {
+  font-family: var(--font-eyebrow);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bricks__n {
+  color: var(--blue-2);
+  margin-right: 2px;
 }

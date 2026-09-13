@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { useSlide } from './slideContext'
+import { Brick, BrickGallery } from './Brick'
 
 export function Cols({ children, n = 2, gap = 40 }: { children: ReactNode; n?: number; gap?: number }) {
   return (
@@ -469,6 +470,7 @@ export function Card({
   tone = 'ink',
   size = 'md',
   at,
+  brick,
 }: {
   /** Small index label, e.g. "01". */
   n?: ReactNode
@@ -485,6 +487,8 @@ export function Card({
    * (and, in a Bento, it grows in place). After it: plain. Cards without `at` are static.
    */
   at?: number
+  /** Isometric LEGO brick outline at the right end of the card, e.g. `2x4` — see <Brick kind />. */
+  brick?: string
 }) {
   const slide = useSlide()
   const setActive = useContext(SpotContext)
@@ -542,7 +546,7 @@ export function Card({
       ref={ref}
       className={`card card--${tone} card--${isHero ? 'lg' : 'md'} card--${state}${rect ? ' card--placed' : ''}${
         rect && rect.width < 200 ? ' card--narrow' : ''
-      }${rect && rect.height < 140 ? ' card--bar' : ''}`}
+      }${rect && rect.height < 140 ? ' card--bar' : ''}${brick ? ' card--has-end' : ''}`}
       style={{ '--pop': pop } as React.CSSProperties}
       initial={false}
       animate={rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : undefined}
@@ -555,6 +559,11 @@ export function Card({
         {body && <div className="card__body">{body}</div>}
         {showDetail && <div className={`card__body card__detail${settled ? ' is-in' : ''}`}>{detail}</div>}
       </div>
+      {brick && (
+        <div className="card__end">
+          <Brick kind={brick} fit={56} />
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -697,6 +706,65 @@ export function Speaker({ name, role, tone = 'blue' }: { name: string; role?: st
   )
 }
 
+/* ---------------------------------------------------------- speaker card --- */
+/* The `card` layout is the official flutterCon speaker card (1200x628),
+   measured and scaled onto the 1280x720 stage. Every piece is absolutely
+   positioned by deck.css; the title comes from frontmatter. */
+
+/** next.app wordmark over the flutterCon wordmark, top-left. */
+export function Brand() {
+  return (
+    <div className="brand">
+      <img className="brand__nextapp" src="/brand/nextapp-wordmark.png" alt="next.app" />
+      <img className="brand__fluttercon" src="/brand/fluttercon-logo.png" alt="flutterCon" />
+    </div>
+  )
+}
+
+/** Round halftone portrait with the blue ring. The PNG is already masked round. */
+export function Avatar({ src, alt = '' }: { src: string; alt?: string }) {
+  return <img className="avatar" src={src} alt={alt} />
+}
+
+/** First and last name on two lines, role in ink, optional company in blue. */
+export function Byline({
+  first,
+  last,
+  role,
+  company,
+}: {
+  first: string
+  last: string
+  role?: string
+  company?: string
+}) {
+  return (
+    <div className="byline">
+      <div className="byline__name">
+        {first}
+        <br />
+        {last}
+      </div>
+      {role && <div className="byline__role">{role}</div>}
+      {company && <div className="byline__company">{company}</div>}
+    </div>
+  )
+}
+
+/** Blue strip bleeding off the bottom-left: hashtag | dates | city. */
+export function ConfStrip({ children = '#nextapp26 | OCT 7-9, 2026 | BERLIN' }: { children?: ReactNode }) {
+  return (
+    <div className="confstrip no-nav">
+      <span>{children}</span>
+    </div>
+  )
+}
+
+/** Halftone Brandenburg Gate bleeding off the bottom-right. */
+export function Gate() {
+  return <img className="gate" src="/brand/brandenburg-gate.png" alt="" aria-hidden="true" />
+}
+
 export const mdxComponents = {
   // markdown element overrides
   pre: Pre,
@@ -724,6 +792,8 @@ export const mdxComponents = {
   Step,
   Cards,
   Card,
+  Brick,
+  BrickGallery,
   Bento,
   Spotlight,
   List,
@@ -739,4 +809,9 @@ export const mdxComponents = {
   HeroArt,
   Pill,
   Speaker,
+  Brand,
+  Avatar,
+  Byline,
+  ConfStrip,
+  Gate,
 }

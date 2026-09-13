@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react'
 
-export type Layout = 'title' | 'section' | 'default' | 'full' | 'quote' | 'end'
+export type Layout = 'title' | 'card' | 'section' | 'default' | 'full' | 'quote' | 'end'
 
 export interface SlideMeta {
-  /** Big text for `title` / `section` / `end` layouts. */
+  /** Big text for `title` / `card` / `section` / `end` layouts. */
   title?: string
   subtitle?: string
   layout?: Layout

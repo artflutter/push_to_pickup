@@ -18,6 +18,15 @@
   font-display: swap;
   src: url('/fonts/familjen-grotesk.woff2') format('woff2');
 }
+/* The official speaker card is set in Inter, not the site fonts; the `card`
+   layout uses it so the title slide matches the card 1:1. Latin subset. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/inter.woff2') format('woff2');
+}
 
 :root {
   --pink: #ff55e7;
@@ -44,6 +53,7 @@
   --font-display: 'Wix Madefor Display', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
   --font-eyebrow: 'Familjen Grotesk', var(--font-display);
+  --font-card: 'Inter', var(--font-display);
   --font-sans: var(--font-display);
   --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
 
