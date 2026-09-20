@@ -2022,20 +2022,70 @@
   height: 1050px;
   margin: -525px 0 0 -525px;
 }
-/* fog of war over the route; the title and everything explored sit above it */
+/* fog of war over the route: static mask, hole radii are registered custom
+   properties so opening a hole is a transition, not a per-frame mask rebuild */
+@property --fog-h0 {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fog-h1 {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fog-h2 {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fog-h3 {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fog-h4 {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fog-h5 {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fog-h6 {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fog-h7 {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
 .fog {
   position: absolute;
   inset: 0;
   z-index: 2;
   background: rgba(9, 9, 12, 0.88);
   pointer-events: none;
+  transition: --fog-h0 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), --fog-h1 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), --fog-h2 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), --fog-h3 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), --fog-h4 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), --fog-h5 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), --fog-h6 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), --fog-h7 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+/* the blob rides above the fog as the light; transform-only, so it stays cheap */
+.lamp {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
 }
 .route__cover {
-  z-index: 4;
+  z-index: 5;
 }
 .route__title {
   position: absolute;
-  z-index: 4;
+  z-index: 5;
   top: 72px;
   left: 72px;
   margin: 0;
@@ -2054,7 +2104,7 @@
 }
 .stop {
   position: absolute;
-  z-index: 1;
+  z-index: 4;
   width: 360px;
   margin: -100px 0 0 -180px;
   display: flex;

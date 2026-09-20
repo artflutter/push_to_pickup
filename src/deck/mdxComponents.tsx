@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'motion/react'
+import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useMotionValueEvent, useSpring, useTransform } from 'motion/react'
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { useSlide } from './slideContext'
@@ -460,11 +460,14 @@ const slideOf = (el: HTMLElement) => el.closest<HTMLElement>('.slide')
 export function Orb({
   listen = 'slide',
   target,
+  glow = true,
   children,
 }: {
   listen?: 'slide' | 'self'
   target?: { x: number; y: number } | null
-  /** rendered after the layer with the orb's motion values — for things that follow the blob, like <Fog> */
+  /** false: the base only — render the blob yourself with <Lamp>, e.g. above a fog */
+  glow?: boolean
+  /** rendered after the layer with the orb's motion values — for things that follow the blob */
   children?: (orb: OrbValues) => ReactNode
 }) {
   const slide = useSlide()
@@ -483,38 +486,52 @@ export function Orb({
   return (
     <>
       <motion.div ref={ref} className="orb" style={{ background: orb.skin }} aria-hidden="true">
-        <OrbLayers orb={orb} />
+        {glow && <OrbLayers orb={orb} />}
       </motion.div>
       {children?.(orb)}
     </>
   )
 }
 
+/** The blob and its sheen on their own layer — a transform-only mover, cheap to stack above a fog. */
+export function Lamp({ orb }: { orb: OrbValues }) {
+  return (
+    <div className="lamp" aria-hidden="true">
+      <OrbLayers orb={orb} />
+    </div>
+  )
+}
+
 /**
- * Fog of war: a dark layer with a soft hole that rides on the orb, so only
- * what the blob is over can be seen. Stack explored things above it.
+ * Fog of war: a dark layer with soft holes. The mask is static — each hole's
+ * radius is a registered custom property (`--fog-hN`, see deck.css), so
+ * opening one is a CSS transition, not a per-frame mask rebuild. Up to 8.
  */
 export function Fog({
-  orb,
   on = true,
-  clear = 240,
-  edge = 470,
-  holes = [],
+  holes,
+  open,
+  clear = 210,
 }: {
-  orb: OrbValues
   on?: boolean
+  /** every place that can be revealed */
+  holes: { x: number; y: number }[]
+  /** which of them are open right now */
+  open: boolean[]
   clear?: number
-  edge?: number
-  /** places that stay clear for good — explored ground */
-  holes?: { x: number; y: number }[]
 }) {
-  const fixed = holes.map((h) => `, radial-gradient(circle at ${h.x}px ${h.y}px, transparent ${clear}px, #000 ${edge}px)`).join('')
-  const mask = useMotionTemplate`radial-gradient(circle at ${orb.glowX}px ${orb.glowY}px, transparent ${clear}px, #000 ${edge}px)${fixed}`
+  const layers = holes
+    .map((h, k) => `radial-gradient(circle at ${h.x}px ${h.y}px, transparent var(--fog-h${k}), #000 calc(var(--fog-h${k}) * 1.9))`)
+    .join(', ')
+  const vars: Record<string, string> = {}
+  holes.forEach((_, k) => {
+    vars[`--fog-h${k}`] = open[k] ? `${clear}px` : '0px'
+  })
   return (
     <motion.div
       className="fog"
       aria-hidden="true"
-      style={{ WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' }}
+      style={{ WebkitMaskImage: layers, maskImage: layers, WebkitMaskComposite: 'source-in', maskComposite: 'intersect', ...vars }}
       initial={false}
       animate={{ opacity: on ? 1 : 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -527,9 +544,9 @@ export function Fog({
  * Poster opening, then the orb flies from stop to stop, one per click. Each
  * <Stop title> is a ring on a line. Rings light by how close the orb is and
  * stay lit once it has passed; the line draws in under the orb as it
- * travels. The poster opening has no fog; on the first click the fog snaps
- * in (0.3 s) while the orb departs, and it keeps a hole wherever the orb
- * has rested.
+ * travels. The poster has no fog; from the first click a fog covers the
+ * route, the blob rides above it as the light, and a hole opens in the fog
+ * under every stop the orb reaches (and the corner it started from).
  */
 export function Route({ title, children }: { title: ReactNode; children: ReactNode }) {
   const slide = useSlide()
@@ -547,37 +564,8 @@ export function Route({ title, children }: { title: ReactNode; children: ReactNo
   const target = active === 0 ? null : { x: xs[active - 1], y }
   return (
     <div className="route">
-      <Orb target={target}>
-        {(orb) => (
-          <>
-            <Fog
-              orb={orb}
-              on={active > 0}
-              clear={210}
-              edge={400}
-              holes={[{ x: 0, y: 720 }, ...xs.slice(0, Math.max(0, active - 1)).map((x) => ({ x, y }))]}
-            />
-            <svg className="route__path" viewBox="0 0 1280 720" aria-hidden="true">
-              {xs.slice(1).map((x, i) => (
-                <Segment key={i} orb={orb} a={xs[i]} b={x} y={y} inset={114} />
-              ))}
-            </svg>
-            {stops.map((s, i) => (
-              <StopView
-                key={i}
-                orb={orb}
-                x={xs[i]}
-                y={y}
-                n={s.n ?? String(i + 1).padStart(2, '0')}
-                title={s.title}
-                body={s.children}
-                shown={active > 0}
-                passed={i < active - 1}
-                delay={0.08 * i}
-              />
-            ))}
-          </>
-        )}
+      <Orb target={target} glow={false}>
+        {(orb) => <RouteScene orb={orb} stops={stops} xs={xs} y={y} active={active} isStatic={slide.static} />}
       </Orb>
       <AnimatePresence initial={false}>
         {active === 0 ? (
@@ -605,6 +593,65 @@ export function Route({ title, children }: { title: ReactNode; children: ReactNo
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+function RouteScene({
+  orb,
+  stops,
+  xs,
+  y,
+  active,
+  isStatic,
+}: {
+  orb: OrbValues
+  stops: { n?: ReactNode; title: ReactNode; children?: ReactNode }[]
+  xs: number[]
+  y: number
+  active: number
+  isStatic: boolean
+}) {
+  /* a stop's hole opens the moment the orb is on it (under the opaque centre
+     of the blob, so the switch is invisible); stepping back closes it again */
+  const [arrived, setArrived] = useState<boolean[]>(() => xs.map((_, i) => isStatic && i < active))
+  const arrivedRef = useRef(arrived)
+  arrivedRef.current = arrived
+  useMotionValueEvent(orb.glowX, 'change', (gx) => {
+    const gy = orb.glowY.get()
+    xs.forEach((x, i) => {
+      if (!arrivedRef.current[i] && i < active && Math.hypot(gx - x, gy - y) < 40) {
+        setArrived((a) => a.map((v, k) => (k === i ? true : v)))
+      }
+    })
+  })
+  useEffect(() => {
+    setArrived((a) => (a.some((v, i) => v && i >= active) ? a.map((v, i) => v && i < active) : a))
+  }, [active])
+
+  return (
+    <>
+      <Fog on={active > 0} holes={[{ x: 0, y: 720 }, ...xs.map((x) => ({ x, y }))]} open={[true, ...arrived]} />
+      <Lamp orb={orb} />
+      <svg className="route__path" viewBox="0 0 1280 720" aria-hidden="true">
+        {xs.slice(1).map((x, i) => (
+          <Segment key={i} orb={orb} a={xs[i]} b={x} y={y} inset={114} />
+        ))}
+      </svg>
+      {stops.map((s, i) => (
+        <StopView
+          key={i}
+          orb={orb}
+          x={xs[i]}
+          y={y}
+          n={s.n ?? String(i + 1).padStart(2, '0')}
+          title={s.title}
+          body={s.children}
+          shown={active > 0}
+          passed={i < active - 1}
+          delay={0.08 * i}
+        />
+      ))}
+    </>
   )
 }
 
@@ -642,10 +689,10 @@ function StopView({
     const d = Math.hypot(gx - x, gy - y)
     return Math.max(0, Math.min(1, 1 - (d - 60) / 260))
   })
-  const border = useTransform(lit, (v) => `rgba(255, 255, 255, ${0.4 + 0.6 * v})`)
+  const border = useTransform(lit, (v) => `rgba(255, 255, 255, ${v})`)
   const halo = useTransform(lit, (v) => `0 0 0 12px rgba(255, 255, 255, ${0.14 * v})`)
   const scale = useTransform(lit, (v) => 1 + 0.06 * v)
-  const text = useTransform(lit, (v) => 0.45 + 0.55 * v)
+  const text = useTransform(lit, (v) => v)
   return (
     <motion.div
       className="stop"
@@ -1436,6 +1483,7 @@ export const mdxComponents = {
   Bento,
   Spotlight,
   Orb,
+  Lamp,
   Fog,
   Route,
   Stop,

@@ -57,13 +57,16 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   arrives and stays lit once the orb has passed it; nothing snaps.
   Orb on this slide is 30% smaller than the poster's, stops have no body
   lines. The poster opening is bright, no fog. On the first click a fog of
-  war (`<Fog>`, dark layer with a soft hole riding on the orb, hole sized to
-  the orb) snaps in (0.3 s) in parallel with the orb departing — one motion,
-  not two steps.
-  The lit stop is seen through the hole; the corner and every visited stop
-  keep a permanent hole so explored ground stays clear; unvisited stops stay
-  dark. The fog fade must be quick; a slow fade behind a moving orb reads as
-  the hole arriving late.
+  war (`<Fog>`) snaps in (0.3 s) in parallel with the orb departing — one
+  motion, not two steps. The blob rides *above* the fog as the light
+  (`<Lamp>`, `Orb glow={false}`), a transform-only layer. The fog mask is
+  static: one soft hole per place (corner + every stop) whose radius is a
+  registered custom property (`--fog-hN`); a hole opens as a CSS transition
+  the moment the orb arrives on its stop (under the opaque blob centre, so
+  the switch is invisible) and closes when stepping back. Explored ground
+  stays clear; unvisited stops are dark and only light up as the orb nears.
+  Performance rule: never rebuild a multi-layer mask string per frame — that
+  was the cause of the "steppy" transitions.
 
 ## Slide numbering
 
