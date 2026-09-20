@@ -2084,6 +2084,11 @@
 .route__cover {
   z-index: 5;
 }
+/* the poster title swaps word by word: each word is its own motion span */
+.route__word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
 .route__title {
   position: absolute;
   z-index: 5;

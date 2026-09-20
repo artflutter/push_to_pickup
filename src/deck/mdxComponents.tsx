@@ -548,17 +548,63 @@ export function Fog({
  * stay lit once it has passed; the line draws in under the orb as it
  * travels. No fog: the base stays bright throughout; the blob rides on its
  * own layer (<Lamp>) above the line and below the rings.
+ *
+ * `poster` is an opening title shown before `title` on the same poster, one
+ * extra click: the words of one swap for the words of the other in place —
+ * old words lift out, new words rise in, staggered. Stepping back runs the
+ * swap downward. The same word motion carries the title off when the first
+ * stop lights and brings it back when the deck steps back onto the poster.
  */
-export function Route({ title, children }: { title: ReactNode; children: ReactNode }) {
+const ROUTE_EASE = [0.22, 0.61, 0.36, 1] as const
+const coverMotion = {
+  in: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+  out: { transition: { staggerChildren: 0.045 } },
+}
+const wordMotion = {
+  in: (dir: number) => ({ opacity: 0, y: 56 * dir }),
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: ROUTE_EASE } },
+  out: (dir: number) => ({ opacity: 0, y: -56 * dir, transition: { duration: 0.38, ease: ROUTE_EASE } }),
+}
+
+/* each word on its own motion span, so a title can swap word by word.
+   `custom` is set on every span: the mount-time `in` variant is resolved from
+   the span's own props (the presence custom only reaches exit), so without it
+   the words would fade in without rising. */
+function Words({ text, dir }: { text: ReactNode; dir: number }) {
+  const parts = typeof text === 'string' ? text.split(' ') : [text]
+  return (
+    <>
+      {parts.flatMap((w, i) => [
+        i > 0 ? ' ' : null,
+        <motion.span key={i} className="route__word" variants={wordMotion} custom={dir}>
+          {w}
+        </motion.span>,
+      ])}
+    </>
+  )
+}
+
+export function Route({ poster, title, children }: { poster?: ReactNode; title: ReactNode; children: ReactNode }) {
   const slide = useSlide()
   type StopProps = { n?: ReactNode; title: ReactNode; children?: ReactNode }
   const stops = Children.toArray(children).flatMap((c) => (isValidElement(c) ? [c.props as StopProps] : []))
+  const covers = poster != null ? [poster, title] : [title]
+  /* clicks spent on the poster before the first stop */
+  const lead = covers.length - 1
   useState(() => {
-    for (let i = 1; i <= stops.length; i++) slide.register(i)
+    for (let i = 1; i <= lead + stops.length; i++) slide.register(i)
     return null
   })
   const n = stops.length
-  const active = slide.static ? n : Math.min(n, Math.max(0, slide.step))
+  const step = slide.static ? lead + n : Math.min(lead + n, Math.max(0, slide.step))
+  const active = Math.max(0, step - lead)
+  /* which way the last click went — the title swap runs with it */
+  const prevStep = useRef(step)
+  const dir = step >= prevStep.current ? 1 : -1
+  useEffect(() => {
+    prevStep.current = step
+  }, [step])
   const W = 1280
   const y = 400
   const xs = stops.map((_, i) => (n === 1 ? W / 2 : 240 + (i * (W - 480)) / (n - 1)))
@@ -568,17 +614,10 @@ export function Route({ title, children }: { title: ReactNode; children: ReactNo
       <Orb target={target} glow={false}>
         {(orb) => <RouteScene orb={orb} stops={stops} xs={xs} y={y} active={active} isStatic={slide.static} />}
       </Orb>
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} custom={dir}>
         {active === 0 ? (
-          <motion.div
-            key="cover"
-            className="route__cover"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
-          >
-            {title}
+          <motion.div key={`cover-${step}`} className="route__cover" variants={coverMotion} custom={dir} initial="in" animate="show" exit="out">
+            <Words text={covers[step]} dir={dir} />
           </motion.div>
         ) : (
           <motion.h1
@@ -587,7 +626,7 @@ export function Route({ title, children }: { title: ReactNode; children: ReactNo
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1], delay: 0.1 }}
+            transition={{ duration: 0.4, ease: ROUTE_EASE, delay: 0.1 }}
           >
             {title}
           </motion.h1>

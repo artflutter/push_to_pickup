@@ -42,16 +42,25 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   sends the blob home.
 - The tail is a notch in the box skin's clip-path (not a separate element), so
   gradient and glow run into it.
-- Slide 030 (`Let's dive deep.`) is the poster look: `layout: full`, `<Orb />`
-  as the whole background (blob and sheen scaled up, `.orb .orb__glow`), the
-  title alone at 150 px bottom-left. No eyebrow. Four other looks (centred +
-  pill, split, orb box, chapter number) were shown and rejected.
+- The poster look (approved on the old slide 030, `Let's dive deep.`):
+  `layout: full`, the orb as the whole background (blob and sheen scaled up,
+  `.orb .orb__glow`), the title alone at 150 px bottom-left. No eyebrow.
+  Four other looks (centred + pill, split, orb box, chapter number) were
+  shown and rejected. `<div className="sec sec--poster"><Orb /><div
+  className="sec__title">…</div></div>` still renders it on its own; slide
+  030 itself was merged into 040.
 - To offer design options, wrap them in `<Pick>` inside the slide: one child
   per click. Never add variant slides.
-- Slide 040 (`The naive flow.`) is a `<Route>`: opens as the same poster as
-  030, then each click the orb flies to the next `<Stop>` (rings on a line,
-  the lit ring is behind the orb, the line draws in behind it). The orb
-  takes a `target` for this; the pointer only drifts it a little there.
+- Slide 040 is a `<Route poster="Let's dive deep." title="The naive flow.">`
+  (the former 030 and 040 merged, so there is no 030): opens as the poster
+  with `Let's dive deep.`; the first click swaps the poster title to
+  `The naive flow.` word by word (old words lift out, new words rise in,
+  staggered, `.route__word`; stepping back runs the swap downward); then
+  each click the orb flies to the next `<Stop>` (rings on a line, the lit
+  ring is behind the orb, the line draws in behind it). Four clicks. The
+  same word motion carries the title off the poster when the first stop
+  lights. The orb takes a `target` for the stops; the pointer only drifts
+  it a little there.
   On the poster (step 0) the path layer is hidden — the orb roams with the
   pointer there and must not paint the connecting lines.
   Ring highlight, text opacity and the line are driven by the orb's real
@@ -118,5 +127,6 @@ renders the orb itself.
 
 ## Slide numbering
 
-010 title · 020 why · 030–130 the talk outline · 700 blank · 710–712 brick
-pick list · 800–890 unused "why" layouts kept for reference.
+010 title · 020 why · 040–130 the talk outline (030 was merged into 040, the
+number is free) · 700 blank · 710–712 brick pick list · 800–890 unused "why"
+layouts kept for reference.

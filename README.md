@@ -67,8 +67,9 @@ the brand gradient, cards behind it are plain.
   own `bulletStyle="…"` overrides the Spotlight's. The box background is a
   pointer-chasing pink blob on a blue base; `<Orb />` puts the same thing
   behind a whole section slide, and `<Route title>` with `<Stop title>` children
-  makes the orb fly from ring to ring, one click each, after a poster opening,
-  under a fog of war (`Fog`) with the blob riding above it (`Lamp`).
+  makes the orb fly from ring to ring, one click each, after a poster opening
+  (`poster="…"` adds an opening title that swaps to `title` word by word on
+  the first click); the blob rides on its own layer (`Lamp`).
   `<Pick>` shows one child per click, for choosing between designs in place.
 - `<Bento>` variants for the same cards: `stack="right"` (square left, bars
   right, two cards swap per step), one row (default, an accordion) or
