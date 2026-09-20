@@ -42,9 +42,12 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   sends the blob home.
 - The tail is a notch in the box skin's clip-path (not a separate element), so
   gradient and glow run into it.
-- Slide 030 (`Let's dive deep.`) has the same orb as its whole background:
-  `<Orb />` as the first thing in the slide body. Blob and sheen are scaled up
-  for the full slide (`.orb .orb__glow`).
+- Slide 030 (`Let's dive deep.`) is the poster look: `layout: full`, `<Orb />`
+  as the whole background (blob and sheen scaled up, `.orb .orb__glow`), the
+  title alone at 150 px bottom-left. No eyebrow. Four other looks (centred +
+  pill, split, orb box, chapter number) were shown and rejected.
+- To offer design options, wrap them in `<Pick>` inside the slide: one child
+  per click. Never add variant slides.
 
 ## Slide numbering
 

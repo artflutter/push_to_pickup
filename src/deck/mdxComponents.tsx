@@ -428,8 +428,13 @@ function OrbLayers({ orb, left = 0 }: { orb: OrbValues; left?: number }) {
 
 const slideOf = (el: HTMLElement) => el.closest<HTMLElement>('.slide')
 
-/** Full-slide background with the pointer-chasing blob. Put it first in a section slide. */
-export function Orb() {
+/**
+ * Full-bleed background with the pointer-chasing blob: fills the nearest
+ * positioned ancestor. `listen="slide"` (default) reads the pointer over the
+ * whole slide, so content stacked on top doesn't block it; `self` only
+ * inside the layer's own box.
+ */
+export function Orb({ listen = 'slide' }: { listen?: 'slide' | 'self' }) {
   const slide = useSlide()
   const ref = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
@@ -442,12 +447,24 @@ export function Orb() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-  const orb = useOrb(ref, size?.w ?? 0, size?.h ?? 0, !slide.static, slideOf)
+  const orb = useOrb(ref, size?.w ?? 0, size?.h ?? 0, !slide.static, listen === 'slide' ? slideOf : undefined)
   return (
     <motion.div ref={ref} className="orb" style={{ background: orb.skin }} aria-hidden="true">
       <OrbLayers orb={orb} />
     </motion.div>
   )
+}
+
+/** Design picker: shows child N on step N (clicks walk through the options). Static views show the first. */
+export function Pick({ children }: { children: ReactNode }) {
+  const slide = useSlide()
+  const items = Children.toArray(children).filter(nonBlank)
+  useState(() => {
+    for (let i = 1; i < items.length; i++) slide.register(i)
+    return null
+  })
+  const idx = slide.static ? 0 : Math.min(items.length - 1, Math.max(0, slide.step))
+  return <>{items[idx]}</>
 }
 
 export type BulletStyle = 'list' | 'numbered' | 'ticks' | 'chips' | 'steps' | 'rail' | 'big' | 'hero'
@@ -1198,6 +1215,7 @@ export const mdxComponents = {
   Bento,
   Spotlight,
   Orb,
+  Pick,
   Tiles,
   Tile,
   Hops,

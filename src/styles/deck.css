@@ -1973,3 +1973,25 @@
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
+
+/* --------------------------------------------------------- section slide --- */
+/* Poster look: full-bleed orb, giant title bottom-left. */
+.sec {
+  position: absolute;
+  inset: 0;
+  color: var(--paper);
+}
+.sec__title {
+  position: absolute;
+  z-index: 1;
+  left: 64px;
+  bottom: 70px;
+  max-width: 900px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 150px;
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
