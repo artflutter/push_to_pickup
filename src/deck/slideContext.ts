@@ -7,6 +7,10 @@ export interface SlideRuntime {
   register: (at?: number) => number
   /** True in the presenter preview / overview — fragments render fully revealed. */
   static: boolean
+  /** Move the deck on (next step or next slide) — for choreographies that end by themselves. Absent in static views. */
+  advance?: () => void
+  /** Position of this slide in the deck (0-based). Absent in static views. */
+  index?: number
 }
 
 export const SlideContext = createContext<SlideRuntime>({

@@ -70,6 +70,52 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   the rings. Performance rule: never rebuild a multi-layer mask string per
   frame — that was the cause of the "steppy" transitions.
 
+## The travelling orb (Traveller.tsx)
+
+The orb is the key piece of the deck and travels between slides. **The orb
+is the pink glow and nothing else** — the same `radial-gradient` as
+`.orb__glow`. Never give it a skin, a ring or any blue; drawing it as a
+blue ball with a pink spot got "the orb has no blue accents".
+
+There is one orb for the whole deck: `<Traveller>` in Deck.tsx draws it
+above the slide layer (`.ball-layer`, z-index 10 inside the stage) and its
+position, squash and opacity are module-level motion values in stage px, so
+a slide change never resets it. Slides only cue it; nothing inside a slide
+renders the orb itself.
+
+- Slide 010 has **no orb**: the whole `<OrbLaunch />` choreography below was
+  built, shown and removed at the owner's request ("remove the orb from the
+  first slide"). The component still exists in Traveller.tsx, unused. Do
+  not put it back unless asked. What it did, for reference: two steps that
+  chained on one click.
+  Step 1: lights out — a `.lights` layer dims the card to ink while the
+  pink condenses (wide faint haze → bright orb) over the avatar; the orb
+  takes a breath up, falls under gravity to the floor, splashes flat,
+  springs back, one soft hop, settles; then it advances by itself
+  (`slide.advance`, wired from `deck.next`). Step 2: it hops into the
+  bottom-left corner of the 020 gradient box (72, 648), where that box's own
+  blob rests, and its light spreads: 020 is revealed through an iris
+  (a `clip-path: circle()` on the incoming `.deck__slide`, a pink
+  `.iris-ring` leading it) while the orb fades into the box blob.
+  Re-entering 010 at a step shows that step's rest state (lights down, orb
+  on the floor / in the corner), no replay, no auto-advance; step 0 turns
+  the lights back on.
+- The iris is deck-level: `useReveal()` / `useIrisClip()` from
+  Traveller.tsx. `AnimatePresence` runs in `sync` mode (crossfade with a
+  small lift by default); while a reveal targets the incoming slide it is
+  clipped and stacked on top, and the outgoing slide holds until covered.
+- Hand-off between slides goes through `hooks.onLeaveForward/onLeaveBack`
+  in Traveller.tsx: the slide that owns the orb sets them while mounted,
+  `<Traveller>` calls the right one when the slide index changes, and with
+  no hook the orb fades out (so an overview jump never strands it). A
+  reveal moves the deck itself and sets `hooks.skipNext` so the hooks stay
+  out of that change.
+- Choreographies take a ticket (`take()` / `live(t)`); a newer cue (a click
+  mid-drop) makes the older continuation stop after its current await.
+- Slides 020+ have not been converted yet: they still render their own orb
+  (Spotlight box blob, `<Orb />`, `<Route>`). Convert one slide at a time,
+  as the owner directs.
+
 ## Slide numbering
 
 010 title · 020 why · 030–130 the talk outline · 700 blank · 710–712 brick

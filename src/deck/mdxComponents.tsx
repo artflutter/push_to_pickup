@@ -15,6 +15,7 @@ import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { useSlide } from './slideContext'
 import { Brick, BrickGallery } from './Brick'
+import { OrbLaunch } from './Traveller'
 
 export function Cols({ children, n = 2, gap = 40 }: { children: ReactNode; n?: number; gap?: number }) {
   return (
@@ -1495,6 +1496,7 @@ export const mdxComponents = {
   Orb,
   Lamp,
   Fog,
+  OrbLaunch,
   Route,
   Stop,
   Pick,

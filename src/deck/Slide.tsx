@@ -12,15 +12,21 @@ interface SlideViewProps {
   onSteps?: (count: number) => void
   /** Render every fragment revealed and skip step tracking (overview, print, previews). */
   frozen?: boolean
+  /** Lets a slide move the deck on by itself once a choreography has finished. */
+  onAdvance?: () => void
+  /** Position of this slide in the deck, for cues that address the next slide. */
+  index?: number
 }
 
-export function SlideView({ slide, step, onSteps, frozen = false }: SlideViewProps) {
+export function SlideView({ slide, step, onSteps, frozen = false, onAdvance, index }: SlideViewProps) {
   const counter = useRef(0)
 
   const runtime = useMemo<SlideRuntime>(
     () => ({
       step,
       static: frozen,
+      advance: frozen ? undefined : onAdvance,
+      index: frozen ? undefined : index,
       register: (at?: number) => {
         if (at != null) {
           counter.current = Math.max(counter.current, at)
@@ -30,7 +36,7 @@ export function SlideView({ slide, step, onSteps, frozen = false }: SlideViewPro
         return counter.current
       },
     }),
-    [step, frozen],
+    [step, frozen, onAdvance, index],
   )
 
   // Fragments register during the first render pass, so the count is final by
