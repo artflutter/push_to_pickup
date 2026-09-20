@@ -900,15 +900,21 @@ export function Spotlight({
   })
 
   const lit = activeAt != null
+  /* The tail travels only while it is out, from bar to bar. While hidden —
+     before the box is measured, on step 0, or arriving on a later step from
+     the next slide — it is put straight where it will show, so growing out
+     never comes with a vertical slide; retracting leaves it where it is. */
+  const shown = useRef(false)
   useEffect(() => {
-    if (slide.static) {
+    if (!size) return
+    if (slide.static || (lit && !shown.current)) {
+      tailYMv.jump(tailY)
       tailYS.jump(tailY)
-      tailOnS.jump(lit ? 1 : 0)
-      return
-    }
-    tailYMv.set(tailY)
-    tailOnMv.set(lit ? 1 : 0)
-  }, [tailY, lit, slide.static, tailYMv, tailOnMv, tailYS, tailOnS])
+    } else if (lit) tailYMv.set(tailY)
+    if (slide.static) tailOnS.jump(lit ? 1 : 0)
+    else tailOnMv.set(lit ? 1 : 0)
+    shown.current = lit
+  }, [size, tailY, lit, slide.static, tailYMv, tailOnMv, tailYS, tailOnS])
 
   return (
     <div ref={ref} className="spotlight">

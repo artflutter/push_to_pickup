@@ -41,7 +41,11 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   is away the corner is blue — nothing else may sit there. Leaving the box
   sends the blob home.
 - The tail is a notch in the box skin's clip-path (not a separate element), so
-  gradient and glow run into it.
+  gradient and glow run into it. It travels only while it is out, bar to
+  bar. When it appears it grows out in place — at bar 01 on the first click,
+  at the last bar when the deck steps back into the slide — never sliding
+  there from the middle ("it animates its position vertically when it
+  initially appears" was the complaint). Retracting leaves it where it is.
 - The poster look (approved on the old slide 030, `Let's dive deep.`):
   `layout: full`, the orb as the whole background (blob and sheen scaled up,
   `.orb .orb__glow`), the title alone at 150 px bottom-left. No eyebrow.
