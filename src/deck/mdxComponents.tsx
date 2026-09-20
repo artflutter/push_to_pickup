@@ -504,8 +504,9 @@ export function Lamp({ orb }: { orb: OrbValues }) {
 
 /**
  * Fog of war: a dark layer with soft holes. The mask is static — each hole's
- * radius is a registered custom property (`--fog-hN`, see deck.css), so
- * opening one is a CSS transition, not a per-frame mask rebuild. Up to 8.
+ * colour is a registered custom property (`--fog-hN`, see deck.css) that goes
+ * from black (fog) to transparent (clear), so opening one is a CSS fade in
+ * place, not a growing disc and not a per-frame mask rebuild. Up to 8.
  */
 export function Fog({
   on = true,
@@ -521,11 +522,11 @@ export function Fog({
   clear?: number
 }) {
   const layers = holes
-    .map((h, k) => `radial-gradient(circle at ${h.x}px ${h.y}px, transparent var(--fog-h${k}), #000 calc(var(--fog-h${k}) * 1.9))`)
+    .map((h, k) => `radial-gradient(circle at ${h.x}px ${h.y}px, var(--fog-h${k}) ${clear}px, #000 ${Math.round(clear * 1.9)}px)`)
     .join(', ')
   const vars: Record<string, string> = {}
   holes.forEach((_, k) => {
-    vars[`--fog-h${k}`] = open[k] ? `${clear}px` : '0px'
+    vars[`--fog-h${k}`] = open[k] ? 'transparent' : '#000'
   })
   return (
     <motion.div
@@ -544,9 +545,8 @@ export function Fog({
  * Poster opening, then the orb flies from stop to stop, one per click. Each
  * <Stop title> is a ring on a line. Rings light by how close the orb is and
  * stay lit once it has passed; the line draws in under the orb as it
- * travels. The poster has no fog; from the first click a fog covers the
- * route, the blob rides above it as the light, and a hole opens in the fog
- * under every stop the orb reaches (and the corner it started from).
+ * travels. No fog: the base stays bright throughout; the blob rides on its
+ * own layer (<Lamp>) above the line and below the rings.
  */
 export function Route({ title, children }: { title: ReactNode; children: ReactNode }) {
   const slide = useSlide()
@@ -611,32 +611,42 @@ function RouteScene({
   active: number
   isStatic: boolean
 }) {
-  /* a stop's hole opens the moment the orb is on it (under the opaque centre
-     of the blob, so the switch is invisible); stepping back closes it again */
-  const [arrived, setArrived] = useState<boolean[]>(() => xs.map((_, i) => isStatic && i < active))
-  const arrivedRef = useRef(arrived)
-  arrivedRef.current = arrived
+  /* a ring is held fully lit once the orb has reached it, for as long as it
+     is at or before the current stop. Without this a step back would flip
+     the ring the orb returns to from "passed" to distance-lit while the orb
+     is still far away — a blink. Rings beyond the current stop go back to
+     distance lighting, which fades as the orb leaves them. */
+  const [reached, setReached] = useState<boolean[]>(() => xs.map((_, i) => i < active - 1 || (isStatic && i < active)))
+  const reachedRef = useRef(reached)
+  reachedRef.current = reached
   useMotionValueEvent(orb.glowX, 'change', (gx) => {
-    const gy = orb.glowY.get()
-    xs.forEach((x, i) => {
-      if (!arrivedRef.current[i] && i < active && Math.hypot(gx - x, gy - y) < 40) {
-        setArrived((a) => a.map((v, k) => (k === i ? true : v)))
-      }
-    })
+    const i = active - 1
+    if (i < 0 || reachedRef.current[i]) return
+    if (Math.hypot(gx - xs[i], orb.glowY.get() - y) < 60) setReached((a) => a.map((v, k) => (k === i ? true : v)))
   })
   useEffect(() => {
-    setArrived((a) => (a.some((v, i) => v && i >= active) ? a.map((v, i) => v && i < active) : a))
+    setReached((a) => {
+      const next = a.map((v, i) => i < active - 1 || (i < active && v))
+      return next.some((v, i) => v !== a[i]) ? next : a
+    })
   }, [active])
 
   return (
     <>
-      <Fog on={active > 0} holes={[{ x: 0, y: 720 }, ...xs.map((x) => ({ x, y }))]} open={[true, ...arrived]} />
       <Lamp orb={orb} />
-      <svg className="route__path" viewBox="0 0 1280 720" aria-hidden="true">
+      {/* hidden on the poster: there the orb roams with the pointer and would paint the lines */}
+      <motion.svg
+        className="route__path"
+        viewBox="0 0 1280 720"
+        aria-hidden="true"
+        initial={false}
+        animate={{ opacity: active > 0 ? 1 : 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      >
         {xs.slice(1).map((x, i) => (
           <Segment key={i} orb={orb} a={xs[i]} b={x} y={y} inset={114} />
         ))}
-      </svg>
+      </motion.svg>
       {stops.map((s, i) => (
         <StopView
           key={i}
@@ -647,7 +657,7 @@ function RouteScene({
           title={s.title}
           body={s.children}
           shown={active > 0}
-          passed={i < active - 1}
+          held={i < active - 1 || (i === active - 1 && reached[i])}
           delay={0.08 * i}
         />
       ))}
@@ -662,7 +672,7 @@ function Segment({ orb, a, b, y, inset }: { orb: OrbValues; a: number; b: number
   return <motion.line x1={a + inset} y1={y} x2={b - inset} y2={y} style={{ pathLength: progress, opacity }} />
 }
 
-/* a ring lit by the orb's distance; once the orb has passed it, it stays lit */
+/* a ring lit by the orb's distance; `held` pins it fully lit (reached, and at or before the current stop) */
 function StopView({
   orb,
   x,
@@ -671,7 +681,7 @@ function StopView({
   title,
   body,
   shown,
-  passed,
+  held,
   delay,
 }: {
   orb: OrbValues
@@ -681,11 +691,11 @@ function StopView({
   title: ReactNode
   body?: ReactNode
   shown: boolean
-  passed: boolean
+  held: boolean
   delay: number
 }) {
   const lit = useTransform([orb.glowX, orb.glowY], ([gx, gy]: number[]) => {
-    if (passed) return 1
+    if (held) return 1
     const d = Math.hypot(gx - x, gy - y)
     return Math.max(0, Math.min(1, 1 - (d - 60) / 260))
   })

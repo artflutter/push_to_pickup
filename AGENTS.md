@@ -52,21 +52,23 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   030, then each click the orb flies to the next `<Stop>` (rings on a line,
   the lit ring is behind the orb, the line draws in behind it). The orb
   takes a `target` for this; the pointer only drifts it a little there.
+  On the poster (step 0) the path layer is hidden — the orb roams with the
+  pointer there and must not paint the connecting lines.
   Ring highlight, text opacity and the line are driven by the orb's real
   position (motion values), not by the click: a ring brightens as the orb
-  arrives and stays lit once the orb has passed it; nothing snaps.
+  arrives and is then held lit for as long as it is at or before the
+  current stop; nothing snaps. Stepping back must not blink: the ring the
+  orb returns to stays held (it was reached), the ring it leaves goes back
+  to distance lighting and fades as the orb moves off.
   Orb on this slide is 30% smaller than the poster's, stops have no body
-  lines. The poster opening is bright, no fog. On the first click a fog of
-  war (`<Fog>`) snaps in (0.3 s) in parallel with the orb departing — one
-  motion, not two steps. The blob rides *above* the fog as the light
-  (`<Lamp>`, `Orb glow={false}`), a transform-only layer. The fog mask is
-  static: one soft hole per place (corner + every stop) whose radius is a
-  registered custom property (`--fog-hN`); a hole opens as a CSS transition
-  the moment the orb arrives on its stop (under the opaque blob centre, so
-  the switch is invisible) and closes when stepping back. Explored ground
-  stays clear; unvisited stops are dark and only light up as the orb nears.
-  Performance rule: never rebuild a multi-layer mask string per frame — that
-  was the cause of the "steppy" transitions.
+  lines. No fog of war: the base stays bright the whole time. A fog layer
+  with holes under visited stops (`<Fog>`, `--fog-hN`) was tried and
+  removed — any clearing under or behind the blob read as a second orb or
+  as a highlight popping in. `<Fog>` / `<Lamp>` and the `.fog` CSS remain
+  available but unused on this slide; the blob still rides on `<Lamp>`
+  (`Orb glow={false}`), a transform-only layer above the line and below
+  the rings. Performance rule: never rebuild a multi-layer mask string per
+  frame — that was the cause of the "steppy" transitions.
 
 ## Slide numbering
 

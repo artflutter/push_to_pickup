@@ -2022,47 +2022,48 @@
   height: 1050px;
   margin: -525px 0 0 -525px;
 }
-/* fog of war over the route: static mask, hole radii are registered custom
-   properties so opening a hole is a transition, not a per-frame mask rebuild */
+/* fog of war over the route: static mask; each hole's colour is a registered
+   custom property (black = fog, transparent = clear), so opening a hole is a
+   fade in place, not a growing disc and not a per-frame mask rebuild */
 @property --fog-h0 {
-  syntax: '<length>';
+  syntax: '<color>';
   inherits: false;
-  initial-value: 0px;
+  initial-value: #000;
 }
 @property --fog-h1 {
-  syntax: '<length>';
+  syntax: '<color>';
   inherits: false;
-  initial-value: 0px;
+  initial-value: #000;
 }
 @property --fog-h2 {
-  syntax: '<length>';
+  syntax: '<color>';
   inherits: false;
-  initial-value: 0px;
+  initial-value: #000;
 }
 @property --fog-h3 {
-  syntax: '<length>';
+  syntax: '<color>';
   inherits: false;
-  initial-value: 0px;
+  initial-value: #000;
 }
 @property --fog-h4 {
-  syntax: '<length>';
+  syntax: '<color>';
   inherits: false;
-  initial-value: 0px;
+  initial-value: #000;
 }
 @property --fog-h5 {
-  syntax: '<length>';
+  syntax: '<color>';
   inherits: false;
-  initial-value: 0px;
+  initial-value: #000;
 }
 @property --fog-h6 {
-  syntax: '<length>';
+  syntax: '<color>';
   inherits: false;
-  initial-value: 0px;
+  initial-value: #000;
 }
 @property --fog-h7 {
-  syntax: '<length>';
+  syntax: '<color>';
   inherits: false;
-  initial-value: 0px;
+  initial-value: #000;
 }
 .fog {
   position: absolute;
