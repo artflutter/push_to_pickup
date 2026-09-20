@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'motion/react'
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { useSlide } from './slideContext'
@@ -195,6 +195,8 @@ interface BentoLayout {
   detailInCards?: boolean
   /** every card is a horizontal bar (number + title, centred), whatever its height */
   bar?: boolean
+  /** the lit card, when the grid decides it (Spotlight); undefined = lit on its own step */
+  activeAt?: number | null
 }
 const BentoContext = createContext<BentoLayout | null>(null)
 
@@ -341,6 +343,8 @@ export function Bento({
    slide title; on step 1 the title hands off to the top of the slide and the
    box starts showing the lit card's number, title and detail, crossfading as
    the highlight walks down the bars. */
+export type BulletStyle = 'list' | 'numbered' | 'ticks' | 'chips' | 'steps' | 'rail' | 'big' | 'hero'
+
 export function Spotlight({
   title,
   eyebrow,
@@ -349,6 +353,7 @@ export function Spotlight({
   titleRow = 82,
   box = 'left',
   split = 0.5,
+  bullets,
 }: {
   title: ReactNode
   eyebrow?: ReactNode
@@ -360,6 +365,12 @@ export function Spotlight({
   box?: 'left' | 'right'
   /** Share of the width the box takes (0.5 = an even split). */
   split?: number
+  /**
+   * How a card's `bullets` show in the box under (or instead of) its detail.
+   * `steps` reveals them one click at a time: give the cards `at` values with
+   * room for them (at={1}, at={5} … for three bullets each).
+   */
+  bullets?: BulletStyle
 }) {
   const slide = useSlide()
   const ref = useRef<HTMLDivElement>(null)
@@ -375,11 +386,34 @@ export function Spotlight({
     return () => ro.disconnect()
   }, [])
 
-  type Item = { at: number; n?: ReactNode; title?: ReactNode; detail?: ReactNode }
+  type Item = { at: number; n?: ReactNode; title?: ReactNode; detail?: ReactNode; bullets?: ReactNode[]; bulletStyle?: BulletStyle }
   const items: Item[] = Children.toArray(children)
     .flatMap((c) => (isValidElement(c) && typeof (c.props as { at?: unknown }).at === 'number' ? [c.props as Item] : []))
     .sort((a, b) => a.at - b.at)
   const ats = items.map((i) => i.at)
+
+  /* All the pink is one blob: it rests in the bottom-left corner (where the
+     brand gradient has its pink) and chases the pointer on a lazy spring
+     while it is inside the box; a small white sheen follows faster, like a
+     reflection, and the blue base leans a few degrees toward the pointer.
+     Pointer out: everything drifts home and the corner is pink again. */
+  const boxRef = useRef<HTMLDivElement>(null)
+  const px = useMotionValue(0)
+  const py = useMotionValue(0)
+  const ax = useMotionValue(225)
+  const glowX = useSpring(px, { stiffness: 46, damping: 15, mass: 1.3 })
+  const glowY = useSpring(py, { stiffness: 46, damping: 15, mass: 1.3 })
+  const sheenX = useSpring(px, { stiffness: 150, damping: 22 })
+  const sheenY = useSpring(py, { stiffness: 150, damping: 22 })
+  const angle = useSpring(ax, { stiffness: 60, damping: 18 })
+  /* the base is blue only — every bit of pink comes from the blob */
+  const skin = useMotionTemplate`linear-gradient(${angle}deg, var(--blue) 40%, #4a5cff 100%)`
+
+  /* stepped bullets take the clicks after their card's own */
+  useState(() => {
+    items.forEach((i) => (i.bulletStyle ?? bullets) === 'steps' && i.bullets?.forEach((_, k) => slide.register(i.at + k + 1)))
+    return null
+  })
 
   const step = slide.step
   const activeAt =
@@ -391,6 +425,7 @@ export function Spotlight({
           ? step
           : ([...ats].reverse().find((a) => a < step) ?? null)
   const active = items.find((i) => i.at === activeAt)
+  const bulletStyle = active ? (active.bulletStyle ?? bullets) : undefined
 
   const rects = new Map<number, Rect>()
   let boxW = 0
@@ -407,22 +442,77 @@ export function Spotlight({
     ats.forEach((a, i) => rects.set(a, { x: barX, y: titleRow + i * (barH + gap), width: barW, height: barH }))
   }
 
-  /* Tail on the box edge, pointing at the lit bar. Its colour is sampled from
-     the box gradient (225deg, blue to 44% then pink) at that height, so it
-     reads as part of the box rather than a stuck-on triangle. */
+  /* where the tail points: the middle of the lit bar */
   const activeIndex = activeAt == null ? -1 : ats.indexOf(activeAt)
   const barPitch = ats.length > 0 ? (boxH - gap * (ats.length - 1)) / ats.length + gap : 0
   const tailY = activeIndex < 0 ? boxH / 2 : activeIndex * barPitch + (barPitch - gap) / 2
-  const tailColor = (() => {
-    const edgeX = box === 'right' ? 0 : boxW
-    const len = (boxW + boxH) * Math.SQRT1_2
-    const t = len > 0 ? ((edgeX - boxW / 2) * -Math.SQRT1_2 + (tailY - boxH / 2) * Math.SQRT1_2) / len + 0.5 : 0
-    const m = Math.max(0, Math.min(1, (t - 0.44) / 0.56))
-    const c = (a: number, b: number) => Math.round(a + (b - a) * m)
-    return `rgb(${c(0, 255)}, ${c(139, 85)}, ${c(255, 231)})`
-  })()
+
+  useEffect(() => {
+    const el = boxRef.current
+    if (!size || !el) return
+    const home = () => {
+      px.set(0)
+      py.set(boxH)
+      ax.set(225)
+    }
+    /* first placement is instant — no sliding in from the top-left corner */
+    home()
+    for (const v of [glowX, sheenX]) v.jump(0)
+    for (const v of [glowY, sheenY]) v.jump(boxH)
+    angle.jump(225)
+    if (slide.static) return
+    const move = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect()
+      if (r.width === 0) return
+      const k = boxW / r.width
+      const x = (e.clientX - r.left) * k
+      const y = (e.clientY - r.top) * k
+      px.set(x)
+      py.set(y)
+      ax.set(225 - (x / boxW - 0.5) * 34)
+    }
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerleave', home)
+    return () => {
+      el.removeEventListener('pointermove', move)
+      el.removeEventListener('pointerleave', home)
+    }
+  }, [size, boxW, boxH, slide.static, px, py, ax, glowX, glowY, sheenX, sheenY, angle])
+
+  /* The tail is a notch in the skin's clip-path, so gradient and glow run
+     straight into it. It springs between bars and grows out when lit. */
+  const TAIL = 16
+  const RAD = 28
+  const tailYMv = useMotionValue(0)
+  const tailOnMv = useMotionValue(0)
+  const tailYS = useSpring(tailYMv, { stiffness: 260, damping: 28 })
+  const tailOnS = useSpring(tailOnMv, { stiffness: 200, damping: 26 })
+  const clip = useTransform([tailYS, tailOnS], ([yRaw, on]: number[]) => {
+    const W = boxW
+    const H = boxH
+    const t = TAIL * on
+    const y = Math.max(RAD + TAIL, Math.min(H - RAD - TAIL, yRaw))
+    const n = (v: number) => v.toFixed(2)
+    const arc = `A${RAD},${RAD} 0 0 1`
+    if (box === 'right') {
+      const x0 = TAIL
+      const x1 = TAIL + W
+      return `path("M${n(x0 + RAD)},0 H${n(x1 - RAD)} ${arc} ${n(x1)},${RAD} V${n(H - RAD)} ${arc} ${n(x1 - RAD)},${n(H)} H${n(x0 + RAD)} ${arc} ${n(x0)},${n(H - RAD)} V${n(y + t)} L${n(x0 - t)},${n(y)} L${n(x0)},${n(y - t)} V${RAD} ${arc} ${n(x0 + RAD)},0 Z")`
+    }
+    return `path("M${RAD},0 H${n(W - RAD)} ${arc} ${n(W)},${RAD} V${n(y - t)} L${n(W + t)},${n(y)} L${n(W)},${n(y + t)} V${n(H - RAD)} ${arc} ${n(W - RAD)},${n(H)} H${RAD} ${arc} 0,${n(H - RAD)} V${RAD} ${arc} ${RAD},0 Z")`
+  })
 
   const lit = activeAt != null
+  useEffect(() => {
+    if (slide.static) {
+      tailYS.jump(tailY)
+      tailOnS.jump(lit ? 1 : 0)
+      return
+    }
+    tailYMv.set(tailY)
+    tailOnMv.set(lit ? 1 : 0)
+  }, [tailY, lit, slide.static, tailYMv, tailOnMv, tailYS, tailOnS])
+
   return (
     <div ref={ref} className="spotlight">
       <motion.h1
@@ -435,14 +525,14 @@ export function Spotlight({
       </motion.h1>
 
       {size && (
-        <div className="spotlight__box" style={{ top: titleRow, left: boxX, width: boxW, height: boxH }}>
+        <div ref={boxRef} className="spotlight__box" style={{ top: titleRow, left: boxX, width: boxW, height: boxH }}>
           <motion.div
-            className="spotlight__tail"
-            style={box === 'right' ? { left: -11 } : { right: -11 }}
-            initial={false}
-            animate={{ y: tailY, rotate: 45, opacity: lit ? 1 : 0, backgroundColor: tailColor }}
-            transition={{ type: 'spring', stiffness: 260, damping: 28, opacity: { duration: 0.3 }, backgroundColor: { duration: 0.3 } }}
-          />
+            className="spotlight__skin"
+            style={{ background: skin, clipPath: clip, left: box === 'right' ? -TAIL : 0, right: box === 'right' ? 0 : -TAIL }}
+          >
+            <motion.div className="spotlight__glow" style={{ x: glowX, y: glowY, left: box === 'right' ? TAIL : 0 }} />
+            <motion.div className="spotlight__sheen" style={{ x: sheenX, y: sheenY, left: box === 'right' ? TAIL : 0 }} />
+          </motion.div>
           <AnimatePresence mode="wait" initial={false}>
             {active == null ? (
               <motion.div
@@ -459,22 +549,80 @@ export function Spotlight({
             ) : (
               <motion.div
                 key={active.at}
-                className="spotlight__detail"
+                className={`spotlight__detail${bulletStyle && active.bullets ? ` spotlight__detail--${bulletStyle}` : ''}`}
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.32, ease: 'easeOut' }}
               >
                 {/* number and title already sit on the highlighted bar; the box carries the detail only */}
-                {active.detail ?? active.title}
+                {bulletStyle && active.bullets ? (
+                  <BoxBullets
+                    style={bulletStyle}
+                    items={active.bullets}
+                    lead={active.detail}
+                    heading={active.title}
+                    shown={slide.static || bulletStyle !== 'steps' ? active.bullets.length : Math.max(0, step - active.at)}
+                  />
+                ) : (
+                  (active.detail ?? active.title)
+                )}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       )}
 
-      <BentoContext.Provider value={{ rects, heroAt: null, detailInCards: false, bar: true }}>{children}</BentoContext.Provider>
+      <BentoContext.Provider value={{ rects, heroAt: null, detailInCards: false, bar: true, activeAt }}>{children}</BentoContext.Provider>
     </div>
+  )
+}
+
+/* Bullets inside the Spotlight box, one markup, eight looks (deck.css .sb--*). */
+function BoxBullets({
+  style,
+  items,
+  lead,
+  heading,
+  shown,
+}: {
+  style: BulletStyle
+  items: ReactNode[]
+  lead?: ReactNode
+  heading?: ReactNode
+  shown: number
+}) {
+  const withLead = style === 'list' || style === 'ticks' || style === 'chips' || style === 'steps' || style === 'rail'
+  return (
+    <>
+      {style === 'big' && heading && <div className="spotlight__eyebrow">{heading}</div>}
+      {withLead && lead && <div className="spotlight__lead">{lead}</div>}
+      <div className={`sb sb--${style}`}>
+        {items.map((item, k) => {
+          const on = k < shown
+          return (
+            <motion.div
+              key={k}
+              className={`sb__item${k === 0 ? ' sb__item--first' : ''}`}
+              initial={false}
+              animate={{ opacity: on ? 1 : 0, y: on ? 0 : 10 }}
+              transition={{ duration: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
+            >
+              {style === 'numbered' && <span className="sb__n">{(k + 1).toString(2).padStart(2, '0')}</span>}
+              {(style === 'list' || style === 'steps' || style === 'rail') && <span className="sb__dot" aria-hidden="true" />}
+              {style === 'ticks' && (
+                <span className="sb__tick" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                  </svg>
+                </span>
+              )}
+              <span className="sb__text">{item}</span>
+            </motion.div>
+          )
+        })}
+      </div>
+    </>
   )
 }
 
@@ -508,6 +656,10 @@ export function Card({
   brick?: string
   /** Illustration between the title and the body; takes the spare height. */
   art?: ReactNode
+  /** Short lines shown in the Spotlight box under the detail — see <Spotlight bullets />. */
+  bullets?: ReactNode[]
+  /** Per-card override of the Spotlight's bullet style. */
+  bulletStyle?: BulletStyle
 }) {
   const slide = useSlide()
   const setActive = useContext(SpotContext)
@@ -528,11 +680,17 @@ export function Card({
             ? 'active'
             : 'revealed'
           : 'plain'
-        : slide.step < ordinal
-        ? 'frosted'
-        : slide.step === ordinal
-          ? 'active'
-          : 'revealed'
+        : bento && bento.activeAt !== undefined
+          ? bento.activeAt === at
+            ? 'active'
+            : slide.step < ordinal
+              ? 'frosted'
+              : 'revealed'
+          : slide.step < ordinal
+            ? 'frosted'
+            : slide.step === ordinal
+              ? 'active'
+              : 'revealed'
 
   useLayoutEffect(() => {
     if (bento || state !== 'active' || !setActive) return

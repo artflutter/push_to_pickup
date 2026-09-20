@@ -60,7 +60,11 @@ the brand gradient, cards behind it are plain.
   other. The box
   opens with the slide title; the first step hands the title to the top of
   the slide, lights bar 01 and shows its `detail` in the box; each step walks
-  the highlight down. Nothing moves.
+  the highlight down. Nothing moves. Give the cards `bullets={[…]}` and the
+  Spotlight `bullets="list|numbered|ticks|chips|steps|rail|big|hero"` to show
+  them in the box under the detail (`big` and `hero` replace it; `steps`
+  reveals one per click, so space the cards' `at` values: 1, 5, 9 …). A card's
+  own `bulletStyle="…"` overrides the Spotlight's.
 - `<Bento>` variants for the same cards: `stack="right"` (square left, bars
   right, two cards swap per step), one row (default, an accordion) or
   `rows={[3, 2]}` (the lit card grows out of its own spot). Small cards show only number +

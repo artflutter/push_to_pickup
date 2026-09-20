@@ -779,20 +779,43 @@
   position: absolute;
   left: 0;
   border-radius: 28px;
-  background: var(--gradient-brand-rev);
   color: var(--paper);
 }
-.spotlight__tail {
+/* the box is painted by the skin: it reaches 16px past the bar side and a
+   clip-path cuts the rounded box plus the tail notch out of it */
+.spotlight__skin {
   position: absolute;
-  top: -11px;
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  background: linear-gradient(225deg, var(--blue) 40%, #4a5cff 100%);
+}
+.spotlight__glow,
+.spotlight__sheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
   pointer-events: none;
+  will-change: transform;
+}
+.spotlight__glow {
+  width: 820px;
+  height: 820px;
+  margin: -410px 0 0 -410px;
+  background: radial-gradient(circle, rgba(255, 85, 231, 1) 0%, rgba(255, 85, 231, 0.8) 22%, rgba(255, 85, 231, 0) 64%);
+}
+.spotlight__sheen {
+  width: 360px;
+  height: 360px;
+  margin: -180px 0 0 -180px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 64%);
+  mix-blend-mode: screen;
 }
 .spotlight__cover,
 .spotlight__detail {
   position: absolute;
+  z-index: 1;
   inset: 32px 36px;
   display: flex;
   flex-direction: column;
@@ -824,6 +847,145 @@
   letter-spacing: -0.02em;
   text-wrap: pretty;
 }
+/* bullets in the box: lead sentence on top, then the list in one of eight cuts */
+.spotlight__detail[class*='spotlight__detail--'] {
+  justify-content: center;
+  gap: 22px;
+  font-size: 22px;
+  line-height: 1.3;
+}
+.spotlight__lead {
+  font-size: 26px;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
+  text-wrap: pretty;
+}
+.sb {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sb__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  letter-spacing: -0.015em;
+}
+.sb__text {
+  min-width: 0;
+}
+/* list / steps / rail: a white dot */
+.sb__dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--paper);
+  margin-top: 0.5em;
+}
+/* numbered: eyebrow index, hairline between rows */
+.sb--numbered {
+  gap: 0;
+}
+.sb--numbered .sb__item {
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  align-items: center;
+}
+.sb--numbered .sb__item:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+}
+.sb__n {
+  flex: none;
+  width: 50px;
+  font-family: var(--font-eyebrow);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.85);
+}
+/* ticks: small ink boxes with a white check */
+.sb__tick {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--ink);
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+}
+.sb__tick svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* chips: paper pills */
+.sb--chips {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.sb--chips .sb__item {
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+/* rail: a thin vertical line the dots sit on */
+.sb--rail {
+  position: relative;
+  padding-left: 4px;
+  gap: 16px;
+}
+.sb--rail::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 12px;
+  bottom: 12px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.45);
+}
+.sb--rail .sb__dot {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18);
+  position: relative;
+}
+/* big: no lead, the bullets are the copy */
+.sb--big {
+  gap: 0;
+}
+.sb--big .sb__item {
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+/* hero: the first line is the headline, the rest follow smaller */
+.sb--hero {
+  gap: 10px;
+}
+.sb--hero .sb__item--first {
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  margin-bottom: 8px;
+}
+.sb--hero .sb__item:not(.sb__item--first) {
+  opacity: 0.82;
+}
+
 /* bars: the lit one is highlighted, not gradient — the box is the gradient */
 .spotlight .card__bg {
   display: none;
