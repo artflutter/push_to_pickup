@@ -790,8 +790,20 @@
   z-index: 0;
   background: linear-gradient(225deg, var(--blue) 40%, #4a5cff 100%);
 }
-.spotlight__glow,
-.spotlight__sheen {
+/* full-slide version: sits under the section title */
+.orb {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.slide--section .slide__title,
+.slide--section .slide__subtitle {
+  position: relative;
+  z-index: 1;
+}
+.orb__glow,
+.orb__sheen {
   position: absolute;
   top: 0;
   left: 0;
@@ -799,13 +811,24 @@
   pointer-events: none;
   will-change: transform;
 }
-.spotlight__glow {
+.orb__glow {
   width: 820px;
   height: 820px;
   margin: -410px 0 0 -410px;
   background: radial-gradient(circle, rgba(255, 85, 231, 1) 0%, rgba(255, 85, 231, 0.8) 22%, rgba(255, 85, 231, 0) 64%);
 }
-.spotlight__sheen {
+/* on a whole slide the blob and sheen scale up with it */
+.orb .orb__glow {
+  width: 1500px;
+  height: 1500px;
+  margin: -750px 0 0 -750px;
+}
+.orb .orb__sheen {
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+}
+.orb__sheen {
   width: 360px;
   height: 360px;
   margin: -180px 0 0 -180px;

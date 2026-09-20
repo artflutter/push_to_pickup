@@ -33,7 +33,7 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
 ## Other approved details on slide 020
 
 - Title: `What makes a ring special?` — with the question mark.
-- Bar numbers are hex with the prefix: `0x01` … `0x05`.
+- Bar numbers are hex with the prefix: `0x01` … `0x05`. No brick icons on the bars.
 - The gradient box reacts to the pointer **only while it is inside the box**:
   the base is blue only, all the pink is one blob that rests in the
   bottom-left corner and chases the cursor on a slow spring; a white sheen
@@ -42,6 +42,9 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   sends the blob home.
 - The tail is a notch in the box skin's clip-path (not a separate element), so
   gradient and glow run into it.
+- Slide 030 (`Let's dive deep.`) has the same orb as its whole background:
+  `<Orb />` as the first thing in the slide body. Blob and sheen are scaled up
+  for the full slide (`.orb .orb__glow`).
 
 ## Slide numbering
 

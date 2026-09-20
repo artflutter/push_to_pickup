@@ -343,6 +343,113 @@ export function Bento({
    slide title; on step 1 the title hands off to the top of the slide and the
    box starts showing the lit card's number, title and detail, crossfading as
    the highlight walks down the bars. */
+/* ------------------------------------------------------------------- orb --- */
+/* All the pink is one blob: it rests in the bottom-left corner (where the
+   brand gradient has its pink) and chases the pointer on a lazy spring while
+   the pointer is inside the host; a small white sheen follows faster, like a
+   reflection, and the blue base leans a few degrees toward the pointer.
+   Pointer out: everything drifts home and the corner is pink again. */
+interface OrbValues {
+  skin: ReturnType<typeof useMotionTemplate>
+  glowX: ReturnType<typeof useSpring>
+  glowY: ReturnType<typeof useSpring>
+  sheenX: ReturnType<typeof useSpring>
+  sheenY: ReturnType<typeof useSpring>
+}
+
+/**
+ * `w` × `h` is the host's size in stage px (0 until measured). Pointer
+ * events are read from `listen` (defaults to the host) — pass the slide
+ * when the host is a background layer that content sits on top of.
+ */
+function useOrb(
+  host: React.RefObject<HTMLElement | null>,
+  w: number,
+  h: number,
+  active: boolean,
+  listen?: (el: HTMLElement) => HTMLElement | null,
+): OrbValues {
+  const px = useMotionValue(0)
+  const py = useMotionValue(0)
+  const ax = useMotionValue(225)
+  const glowX = useSpring(px, { stiffness: 46, damping: 15, mass: 1.3 })
+  const glowY = useSpring(py, { stiffness: 46, damping: 15, mass: 1.3 })
+  const sheenX = useSpring(px, { stiffness: 150, damping: 22 })
+  const sheenY = useSpring(py, { stiffness: 150, damping: 22 })
+  const angle = useSpring(ax, { stiffness: 60, damping: 18 })
+  /* the base is blue only — every bit of pink comes from the blob */
+  const skin = useMotionTemplate`linear-gradient(${angle}deg, var(--blue) 40%, #4a5cff 100%)`
+
+  useEffect(() => {
+    const el = host.current
+    if (!w || !h || !el) return
+    const home = () => {
+      px.set(0)
+      py.set(h)
+      ax.set(225)
+    }
+    /* first placement is instant — no sliding in from the top-left corner */
+    home()
+    for (const v of [glowX, sheenX]) v.jump(0)
+    for (const v of [glowY, sheenY]) v.jump(h)
+    angle.jump(225)
+    if (!active) return
+    const target = listen ? listen(el) : el
+    if (!target) return
+    const move = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect()
+      if (r.width === 0) return
+      const k = w / r.width
+      const x = (e.clientX - r.left) * k
+      const y = (e.clientY - r.top) * k
+      px.set(x)
+      py.set(y)
+      ax.set(225 - (x / w - 0.5) * 34)
+    }
+    target.addEventListener('pointermove', move)
+    target.addEventListener('pointerleave', home)
+    return () => {
+      target.removeEventListener('pointermove', move)
+      target.removeEventListener('pointerleave', home)
+    }
+  }, [host, w, h, active, listen, px, py, ax, glowX, glowY, sheenX, sheenY, angle])
+
+  return { skin, glowX, glowY, sheenX, sheenY }
+}
+
+function OrbLayers({ orb, left = 0 }: { orb: OrbValues; left?: number }) {
+  return (
+    <>
+      <motion.div className="orb__glow" style={{ x: orb.glowX, y: orb.glowY, left }} />
+      <motion.div className="orb__sheen" style={{ x: orb.sheenX, y: orb.sheenY, left }} />
+    </>
+  )
+}
+
+const slideOf = (el: HTMLElement) => el.closest<HTMLElement>('.slide')
+
+/** Full-slide background with the pointer-chasing blob. Put it first in a section slide. */
+export function Orb() {
+  const slide = useSlide()
+  const ref = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setSize({ w: el.offsetWidth, h: el.offsetHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const orb = useOrb(ref, size?.w ?? 0, size?.h ?? 0, !slide.static, slideOf)
+  return (
+    <motion.div ref={ref} className="orb" style={{ background: orb.skin }} aria-hidden="true">
+      <OrbLayers orb={orb} />
+    </motion.div>
+  )
+}
+
 export type BulletStyle = 'list' | 'numbered' | 'ticks' | 'chips' | 'steps' | 'rail' | 'big' | 'hero'
 
 export function Spotlight({
@@ -392,22 +499,7 @@ export function Spotlight({
     .sort((a, b) => a.at - b.at)
   const ats = items.map((i) => i.at)
 
-  /* All the pink is one blob: it rests in the bottom-left corner (where the
-     brand gradient has its pink) and chases the pointer on a lazy spring
-     while it is inside the box; a small white sheen follows faster, like a
-     reflection, and the blue base leans a few degrees toward the pointer.
-     Pointer out: everything drifts home and the corner is pink again. */
   const boxRef = useRef<HTMLDivElement>(null)
-  const px = useMotionValue(0)
-  const py = useMotionValue(0)
-  const ax = useMotionValue(225)
-  const glowX = useSpring(px, { stiffness: 46, damping: 15, mass: 1.3 })
-  const glowY = useSpring(py, { stiffness: 46, damping: 15, mass: 1.3 })
-  const sheenX = useSpring(px, { stiffness: 150, damping: 22 })
-  const sheenY = useSpring(py, { stiffness: 150, damping: 22 })
-  const angle = useSpring(ax, { stiffness: 60, damping: 18 })
-  /* the base is blue only — every bit of pink comes from the blob */
-  const skin = useMotionTemplate`linear-gradient(${angle}deg, var(--blue) 40%, #4a5cff 100%)`
 
   /* stepped bullets take the clicks after their card's own */
   useState(() => {
@@ -447,37 +539,7 @@ export function Spotlight({
   const barPitch = ats.length > 0 ? (boxH - gap * (ats.length - 1)) / ats.length + gap : 0
   const tailY = activeIndex < 0 ? boxH / 2 : activeIndex * barPitch + (barPitch - gap) / 2
 
-  useEffect(() => {
-    const el = boxRef.current
-    if (!size || !el) return
-    const home = () => {
-      px.set(0)
-      py.set(boxH)
-      ax.set(225)
-    }
-    /* first placement is instant — no sliding in from the top-left corner */
-    home()
-    for (const v of [glowX, sheenX]) v.jump(0)
-    for (const v of [glowY, sheenY]) v.jump(boxH)
-    angle.jump(225)
-    if (slide.static) return
-    const move = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect()
-      if (r.width === 0) return
-      const k = boxW / r.width
-      const x = (e.clientX - r.left) * k
-      const y = (e.clientY - r.top) * k
-      px.set(x)
-      py.set(y)
-      ax.set(225 - (x / boxW - 0.5) * 34)
-    }
-    el.addEventListener('pointermove', move)
-    el.addEventListener('pointerleave', home)
-    return () => {
-      el.removeEventListener('pointermove', move)
-      el.removeEventListener('pointerleave', home)
-    }
-  }, [size, boxW, boxH, slide.static, px, py, ax, glowX, glowY, sheenX, sheenY, angle])
+  const orb = useOrb(boxRef, size ? boxW : 0, size ? boxH : 0, !slide.static)
 
   /* The tail is a notch in the skin's clip-path, so gradient and glow run
      straight into it. It springs between bars and grows out when lit. */
@@ -528,10 +590,9 @@ export function Spotlight({
         <div ref={boxRef} className="spotlight__box" style={{ top: titleRow, left: boxX, width: boxW, height: boxH }}>
           <motion.div
             className="spotlight__skin"
-            style={{ background: skin, clipPath: clip, left: box === 'right' ? -TAIL : 0, right: box === 'right' ? 0 : -TAIL }}
+            style={{ background: orb.skin, clipPath: clip, left: box === 'right' ? -TAIL : 0, right: box === 'right' ? 0 : -TAIL }}
           >
-            <motion.div className="spotlight__glow" style={{ x: glowX, y: glowY, left: box === 'right' ? TAIL : 0 }} />
-            <motion.div className="spotlight__sheen" style={{ x: sheenX, y: sheenY, left: box === 'right' ? TAIL : 0 }} />
+            <OrbLayers orb={orb} left={box === 'right' ? TAIL : 0} />
           </motion.div>
           <AnimatePresence mode="wait" initial={false}>
             {active == null ? (
@@ -1136,6 +1197,7 @@ export const mdxComponents = {
   BrickGallery,
   Bento,
   Spotlight,
+  Orb,
   Tiles,
   Tile,
   Hops,
