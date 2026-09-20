@@ -1995,3 +1995,98 @@
   letter-spacing: -0.055em;
   text-wrap: balance;
 }
+
+/* ----------------------------------------------------------------- route --- */
+/* Poster opening, then rings on a line that the orb visits one by one. */
+.route {
+  position: absolute;
+  inset: 0;
+  color: var(--paper);
+}
+.route__cover {
+  position: absolute;
+  z-index: 1;
+  left: 64px;
+  bottom: 70px;
+  max-width: 900px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 150px;
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+/* the orb on the route is 30% smaller than the poster's */
+.route .orb__glow {
+  width: 1050px;
+  height: 1050px;
+  margin: -525px 0 0 -525px;
+}
+/* fog of war over the route; the title and everything explored sit above it */
+.fog {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(9, 9, 12, 0.88);
+  pointer-events: none;
+}
+.route__cover {
+  z-index: 4;
+}
+.route__title {
+  position: absolute;
+  z-index: 4;
+  top: 72px;
+  left: 72px;
+  margin: 0;
+}
+.route__path {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.stop {
+  position: absolute;
+  z-index: 1;
+  width: 360px;
+  margin: -100px 0 0 -180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+}
+/* border, halo, scale and text opacity are driven by the orb's distance (motion values) */
+.stop__ring {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  display: grid;
+  place-items: center;
+}
+.stop__n {
+  font-family: var(--font-eyebrow);
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: -0.02em;
+}
+.stop__title {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.stop__body {
+  margin-top: -8px;
+  font-size: 21px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.78);
+}

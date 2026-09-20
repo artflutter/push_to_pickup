@@ -30,7 +30,7 @@ notes: |
 Everything in [src/deck/mdxComponents.tsx](src/deck/mdxComponents.tsx) is
 available in MDX without an import: `F`, `Cols`, `Box`, `Big`, `Stat`, `Tag`,
 `Flow`, `Step`, `Code`, `CodeMorph`, plus the site-style layouts `Cards`/`Card`,
-`Bento`, `Orb`, `Tiles`/`Tile`, `Hops`, `List`/`Item`, `Split`/`Panel`, `Rail`/`Milestone`,
+`Bento`, `Orb`, `Route`/`Stop`, `Pick`, `Tiles`/`Tile`, `Hops`, `List`/`Item`, `Split`/`Panel`, `Rail`/`Milestone`,
 `Checklist`/`Check`, `Deadline`, `Phones`, `Note`, `Hl`, `Pill`, `Speaker`,
 `ConfBar`, `Logo`, `HeroArt`, `Brick`, `BrickGallery`, and the speaker-card
 pieces `Brand`, `Avatar`, `Byline`, `ConfStrip`, `Gate`.
@@ -66,7 +66,9 @@ the brand gradient, cards behind it are plain.
   reveals one per click, so space the cards' `at` values: 1, 5, 9 …). A card's
   own `bulletStyle="…"` overrides the Spotlight's. The box background is a
   pointer-chasing pink blob on a blue base; `<Orb />` puts the same thing
-  behind a whole section slide.
+  behind a whole section slide, and `<Route title>` with `<Stop title>` children
+  makes the orb fly from ring to ring, one click each, after a poster opening.
+  `<Pick>` shows one child per click, for choosing between designs in place.
 - `<Bento>` variants for the same cards: `stack="right"` (square left, bars
   right, two cards swap per step), one row (default, an accordion) or
   `rows={[3, 2]}` (the lit card grows out of its own spot). Small cards show only number +

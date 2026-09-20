@@ -357,18 +357,21 @@ interface OrbValues {
   sheenY: ReturnType<typeof useSpring>
 }
 
+interface OrbOptions {
+  /** false in static views: blob parked, no listeners */
+  active: boolean
+  /** element to read the pointer from; defaults to the host */
+  listen?: (el: HTMLElement) => HTMLElement | null
+  /** where the blob goes instead of the pointer (host px); the pointer only drifts it a little */
+  target?: { x: number; y: number } | null
+}
+
 /**
- * `w` × `h` is the host's size in stage px (0 until measured). Pointer
- * events are read from `listen` (defaults to the host) — pass the slide
- * when the host is a background layer that content sits on top of.
+ * `w` × `h` is the host's size in stage px (0 until measured). Without a
+ * target the blob rests in the bottom-left corner and follows the pointer
+ * while it is over `listen`; with one it flies there on each change.
  */
-function useOrb(
-  host: React.RefObject<HTMLElement | null>,
-  w: number,
-  h: number,
-  active: boolean,
-  listen?: (el: HTMLElement) => HTMLElement | null,
-): OrbValues {
+function useOrb(host: React.RefObject<HTMLElement | null>, w: number, h: number, { active, listen, target }: OrbOptions): OrbValues {
   const px = useMotionValue(0)
   const py = useMotionValue(0)
   const ax = useMotionValue(225)
@@ -380,39 +383,59 @@ function useOrb(
   /* the base is blue only — every bit of pink comes from the blob */
   const skin = useMotionTemplate`linear-gradient(${angle}deg, var(--blue) 40%, #4a5cff 100%)`
 
+  const tx = target?.x
+  const ty = target?.y
+  const goalRef = useRef({ x: 0, y: h })
+  goalRef.current = tx != null && ty != null ? { x: tx, y: ty } : { x: 0, y: h }
+  const aim = useCallback(
+    (x: number, y: number) => {
+      px.set(x)
+      py.set(y)
+      ax.set(225 - (x / Math.max(w, 1) - 0.5) * 34)
+    },
+    [px, py, ax, w],
+  )
+
+  /* first placement is instant — no sliding in from the top-left corner */
+  useEffect(() => {
+    if (!w || !h) return
+    const g = goalRef.current
+    aim(g.x, g.y)
+    for (const v of [glowX, sheenX]) v.jump(g.x)
+    for (const v of [glowY, sheenY]) v.jump(g.y)
+    angle.jump(225 - (g.x / w - 0.5) * 34)
+  }, [w, h, aim, glowX, glowY, sheenX, sheenY, angle])
+
+  /* a new target: fly there */
+  useEffect(() => {
+    if (!w || !h) return
+    const g = goalRef.current
+    aim(g.x, g.y)
+  }, [tx, ty, w, h, aim])
+
   useEffect(() => {
     const el = host.current
-    if (!w || !h || !el) return
-    const home = () => {
-      px.set(0)
-      py.set(h)
-      ax.set(225)
-    }
-    /* first placement is instant — no sliding in from the top-left corner */
-    home()
-    for (const v of [glowX, sheenX]) v.jump(0)
-    for (const v of [glowY, sheenY]) v.jump(h)
-    angle.jump(225)
-    if (!active) return
-    const target = listen ? listen(el) : el
-    if (!target) return
+    if (!w || !h || !el || !active) return
+    const el2 = listen ? listen(el) : el
+    if (!el2) return
     const move = (e: PointerEvent) => {
       const r = el.getBoundingClientRect()
       if (r.width === 0) return
       const k = w / r.width
       const x = (e.clientX - r.left) * k
       const y = (e.clientY - r.top) * k
-      px.set(x)
-      py.set(y)
-      ax.set(225 - (x / w - 0.5) * 34)
+      const g = goalRef.current
+      if (tx != null) aim(g.x + (x - g.x) * 0.1, g.y + (y - g.y) * 0.1)
+      else aim(x, y)
     }
-    target.addEventListener('pointermove', move)
-    target.addEventListener('pointerleave', home)
+    const back = () => aim(goalRef.current.x, goalRef.current.y)
+    el2.addEventListener('pointermove', move)
+    el2.addEventListener('pointerleave', back)
     return () => {
-      target.removeEventListener('pointermove', move)
-      target.removeEventListener('pointerleave', home)
+      el2.removeEventListener('pointermove', move)
+      el2.removeEventListener('pointerleave', back)
     }
-  }, [host, w, h, active, listen, px, py, ax, glowX, glowY, sheenX, sheenY, angle])
+  }, [host, w, h, active, listen, tx, aim])
 
   return { skin, glowX, glowY, sheenX, sheenY }
 }
@@ -434,7 +457,16 @@ const slideOf = (el: HTMLElement) => el.closest<HTMLElement>('.slide')
  * whole slide, so content stacked on top doesn't block it; `self` only
  * inside the layer's own box.
  */
-export function Orb({ listen = 'slide' }: { listen?: 'slide' | 'self' }) {
+export function Orb({
+  listen = 'slide',
+  target,
+  children,
+}: {
+  listen?: 'slide' | 'self'
+  target?: { x: number; y: number } | null
+  /** rendered after the layer with the orb's motion values — for things that follow the blob, like <Fog> */
+  children?: (orb: OrbValues) => ReactNode
+}) {
   const slide = useSlide()
   const ref = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
@@ -447,12 +479,201 @@ export function Orb({ listen = 'slide' }: { listen?: 'slide' | 'self' }) {
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-  const orb = useOrb(ref, size?.w ?? 0, size?.h ?? 0, !slide.static, listen === 'slide' ? slideOf : undefined)
+  const orb = useOrb(ref, size?.w ?? 0, size?.h ?? 0, { active: !slide.static, listen: listen === 'slide' ? slideOf : undefined, target })
   return (
-    <motion.div ref={ref} className="orb" style={{ background: orb.skin }} aria-hidden="true">
-      <OrbLayers orb={orb} />
+    <>
+      <motion.div ref={ref} className="orb" style={{ background: orb.skin }} aria-hidden="true">
+        <OrbLayers orb={orb} />
+      </motion.div>
+      {children?.(orb)}
+    </>
+  )
+}
+
+/**
+ * Fog of war: a dark layer with a soft hole that rides on the orb, so only
+ * what the blob is over can be seen. Stack explored things above it.
+ */
+export function Fog({
+  orb,
+  on = true,
+  clear = 240,
+  edge = 470,
+  holes = [],
+}: {
+  orb: OrbValues
+  on?: boolean
+  clear?: number
+  edge?: number
+  /** places that stay clear for good — explored ground */
+  holes?: { x: number; y: number }[]
+}) {
+  const fixed = holes.map((h) => `, radial-gradient(circle at ${h.x}px ${h.y}px, transparent ${clear}px, #000 ${edge}px)`).join('')
+  const mask = useMotionTemplate`radial-gradient(circle at ${orb.glowX}px ${orb.glowY}px, transparent ${clear}px, #000 ${edge}px)${fixed}`
+  return (
+    <motion.div
+      className="fog"
+      aria-hidden="true"
+      style={{ WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect' }}
+      initial={false}
+      animate={{ opacity: on ? 1 : 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+    />
+  )
+}
+
+/* ----------------------------------------------------------------- route --- */
+/**
+ * Poster opening, then the orb flies from stop to stop, one per click. Each
+ * <Stop title> is a ring on a line. Rings light by how close the orb is and
+ * stay lit once it has passed; the line draws in under the orb as it
+ * travels. The poster opening has no fog; on the first click the fog snaps
+ * in (0.3 s) while the orb departs, and it keeps a hole wherever the orb
+ * has rested.
+ */
+export function Route({ title, children }: { title: ReactNode; children: ReactNode }) {
+  const slide = useSlide()
+  type StopProps = { n?: ReactNode; title: ReactNode; children?: ReactNode }
+  const stops = Children.toArray(children).flatMap((c) => (isValidElement(c) ? [c.props as StopProps] : []))
+  useState(() => {
+    for (let i = 1; i <= stops.length; i++) slide.register(i)
+    return null
+  })
+  const n = stops.length
+  const active = slide.static ? n : Math.min(n, Math.max(0, slide.step))
+  const W = 1280
+  const y = 400
+  const xs = stops.map((_, i) => (n === 1 ? W / 2 : 240 + (i * (W - 480)) / (n - 1)))
+  const target = active === 0 ? null : { x: xs[active - 1], y }
+  return (
+    <div className="route">
+      <Orb target={target}>
+        {(orb) => (
+          <>
+            <Fog
+              orb={orb}
+              on={active > 0}
+              clear={210}
+              edge={400}
+              holes={[{ x: 0, y: 720 }, ...xs.slice(0, Math.max(0, active - 1)).map((x) => ({ x, y }))]}
+            />
+            <svg className="route__path" viewBox="0 0 1280 720" aria-hidden="true">
+              {xs.slice(1).map((x, i) => (
+                <Segment key={i} orb={orb} a={xs[i]} b={x} y={y} inset={114} />
+              ))}
+            </svg>
+            {stops.map((s, i) => (
+              <StopView
+                key={i}
+                orb={orb}
+                x={xs[i]}
+                y={y}
+                n={s.n ?? String(i + 1).padStart(2, '0')}
+                title={s.title}
+                body={s.children}
+                shown={active > 0}
+                passed={i < active - 1}
+                delay={0.08 * i}
+              />
+            ))}
+          </>
+        )}
+      </Orb>
+      <AnimatePresence initial={false}>
+        {active === 0 ? (
+          <motion.div
+            key="cover"
+            className="route__cover"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
+          >
+            {title}
+          </motion.div>
+        ) : (
+          <motion.h1
+            key="title"
+            className="slide__title route__title"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1], delay: 0.1 }}
+          >
+            {title}
+          </motion.h1>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+/* the line between two stops, drawn as far as the orb has travelled between their centres */
+function Segment({ orb, a, b, y, inset }: { orb: OrbValues; a: number; b: number; y: number; inset: number }) {
+  const progress = useTransform(orb.glowX, (gx: number) => Math.max(0, Math.min(1, (gx - a) / (b - a))))
+  const opacity = useTransform(progress, (p) => (p > 0.02 ? 1 : 0))
+  return <motion.line x1={a + inset} y1={y} x2={b - inset} y2={y} style={{ pathLength: progress, opacity }} />
+}
+
+/* a ring lit by the orb's distance; once the orb has passed it, it stays lit */
+function StopView({
+  orb,
+  x,
+  y,
+  n,
+  title,
+  body,
+  shown,
+  passed,
+  delay,
+}: {
+  orb: OrbValues
+  x: number
+  y: number
+  n: ReactNode
+  title: ReactNode
+  body?: ReactNode
+  shown: boolean
+  passed: boolean
+  delay: number
+}) {
+  const lit = useTransform([orb.glowX, orb.glowY], ([gx, gy]: number[]) => {
+    if (passed) return 1
+    const d = Math.hypot(gx - x, gy - y)
+    return Math.max(0, Math.min(1, 1 - (d - 60) / 260))
+  })
+  const border = useTransform(lit, (v) => `rgba(255, 255, 255, ${0.4 + 0.6 * v})`)
+  const halo = useTransform(lit, (v) => `0 0 0 12px rgba(255, 255, 255, ${0.14 * v})`)
+  const scale = useTransform(lit, (v) => 1 + 0.06 * v)
+  const text = useTransform(lit, (v) => 0.45 + 0.55 * v)
+  return (
+    <motion.div
+      className="stop"
+      style={{ left: x, top: y }}
+      initial={false}
+      animate={{ opacity: shown ? 1 : 0, y: shown ? 0 : 24 }}
+      transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1], delay: shown ? delay : 0 }}
+    >
+      <motion.div className="stop__ring" style={{ borderColor: border, boxShadow: halo, scale }}>
+        <motion.span className="stop__n" style={{ opacity: text }}>
+          {n}
+        </motion.span>
+      </motion.div>
+      <motion.div className="stop__title" style={{ opacity: text }}>
+        {title}
+      </motion.div>
+      {body && (
+        <motion.div className="stop__body" style={{ opacity: text }}>
+          {body}
+        </motion.div>
+      )}
     </motion.div>
   )
+}
+
+/** Data only — read by <Route>. */
+export function Stop(_: { n?: ReactNode; title: ReactNode; children?: ReactNode }) {
+  return null
 }
 
 /** Design picker: shows child N on step N (clicks walk through the options). Static views show the first. */
@@ -556,7 +777,7 @@ export function Spotlight({
   const barPitch = ats.length > 0 ? (boxH - gap * (ats.length - 1)) / ats.length + gap : 0
   const tailY = activeIndex < 0 ? boxH / 2 : activeIndex * barPitch + (barPitch - gap) / 2
 
-  const orb = useOrb(boxRef, size ? boxW : 0, size ? boxH : 0, !slide.static)
+  const orb = useOrb(boxRef, size ? boxW : 0, size ? boxH : 0, { active: !slide.static })
 
   /* The tail is a notch in the skin's clip-path, so gradient and glow run
      straight into it. It springs between bars and grows out when lit. */
@@ -1215,6 +1436,9 @@ export const mdxComponents = {
   Bento,
   Spotlight,
   Orb,
+  Fog,
+  Route,
+  Stop,
   Pick,
   Tiles,
   Tile,

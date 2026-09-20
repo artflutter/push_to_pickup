@@ -48,6 +48,22 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   pill, split, orb box, chapter number) were shown and rejected.
 - To offer design options, wrap them in `<Pick>` inside the slide: one child
   per click. Never add variant slides.
+- Slide 040 (`The naive flow.`) is a `<Route>`: opens as the same poster as
+  030, then each click the orb flies to the next `<Stop>` (rings on a line,
+  the lit ring is behind the orb, the line draws in behind it). The orb
+  takes a `target` for this; the pointer only drifts it a little there.
+  Ring highlight, text opacity and the line are driven by the orb's real
+  position (motion values), not by the click: a ring brightens as the orb
+  arrives and stays lit once the orb has passed it; nothing snaps.
+  Orb on this slide is 30% smaller than the poster's, stops have no body
+  lines. The poster opening is bright, no fog. On the first click a fog of
+  war (`<Fog>`, dark layer with a soft hole riding on the orb, hole sized to
+  the orb) snaps in (0.3 s) in parallel with the orb departing — one motion,
+  not two steps.
+  The lit stop is seen through the hole; the corner and every visited stop
+  keep a permanent hole so explored ground stays clear; unvisited stops stay
+  dark. The fog fade must be quick; a slow fade behind a moving orb reads as
+  the hole arriving late.
 
 ## Slide numbering
 
