@@ -55,16 +55,38 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   030 itself was merged into 040.
 - To offer design options, wrap them in `<Pick>` inside the slide: one child
   per click. Never add variant slides.
-- Slide 040 is a `<Route poster="Let's dive deep." title="The naive flow.">`
-  (the former 030 and 040 merged, so there is no 030): opens as the poster
-  with `Let's dive deep.`; the first click swaps the poster title to
-  `The naive flow.` word by word (old words lift out, new words rise in,
-  staggered, `.route__word`; stepping back runs the swap downward); then
-  each click the orb flies to the next `<Stop>` (rings on a line, the lit
-  ring is behind the orb, the line draws in behind it). Four clicks. The
-  same word motion carries the title off the poster when the first stop
-  lights. The orb takes a `target` for the stops; the pointer only drifts
-  it a little there.
+- Slide 040 is a `<Route title="The naive flow.">` in three acts (the former
+  030, 040 and 050 merged, so those numbers are free). An act opens on its
+  own title poster — the 150 px bottom-left look, where the orb roams with
+  the pointer and the path layer is hidden — and the next click carries that
+  title into the corner and brings its rings in; then each click the orb
+  flies to the next `<Stop>` (rings on a line, the lit ring is behind the
+  orb, the line draws in behind it). The orb takes a `target` for the stops;
+  the pointer only drifts it a little there.
+  Act 1 is `The naive flow.` (incoming push → display the UI → accept /
+  decline), act 2 is `<Act title="The naive implementation.">` with the
+  former slide 050's shopping list, act 3 is `<Act title="Let's dive deep." />`
+  — a title poster with no stops, one breath before the next slide. Eight
+  clicks in all.
+  Act 2's last ring is `<Stop n={<Munch>03</Munch>} title="" />`: Clawd, the
+  Claude Code mascot (Iconify `cbi:claude-clawd`, the path in `CLAWD`, drawn
+  in `currentColor` so it takes the ring's white — the orange #d97757 was
+  tried and dropped), waits where the ring's label would be, then climbs into
+  the ring and eats the `03` in five bites, left to right: each bite snaps
+  shut over the next fifth and clips it away (`CHEW`, built once — keyframes
+  and times have to line up). It is cued by the ring's own light through
+  `StopLit`, not by the click, so it starts when the orb really arrives and
+  the number comes back if the deck steps away. Stepping to the next act lifts the whole frame — title, line
+  and rings — out of the top of the slide while the new title rises in its
+  place; stepping back brings the old act down with its rings still lit.
+  Each act is two layers (`.route__act--lines` / `.route__act--stops`, either
+  side of the blob's `.lamp`) so the light keeps running above the line and
+  below the rings while the act moves.
+  `<Route poster="…">` (an opening title that swaps word by word into the
+  route title — old words lift out, new words rise in, staggered,
+  `.route__word`; stepping back runs the swap downward) still works but is
+  not used here any more: `Let's dive deep.` now closes the slide instead of
+  opening it.
   On the poster (step 0) the path layer is hidden — the orb roams with the
   pointer there and must not paint the connecting lines.
   Ring highlight, text opacity and the line are driven by the orb's real
@@ -131,6 +153,6 @@ renders the orb itself.
 
 ## Slide numbering
 
-010 title · 020 why · 040–130 the talk outline (030 was merged into 040, the
-number is free) · 700 blank · 710–712 brick pick list · 800–890 unused "why"
-layouts kept for reference.
+010 title · 020 why · 040–130 the talk outline (030 and 050 were merged into
+040, both numbers are free) · 700 blank · 710–712 brick pick list · 800–890
+unused "why" layouts kept for reference.

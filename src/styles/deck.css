@@ -2084,6 +2084,20 @@
 .route__cover {
   z-index: 5;
 }
+/* an act is a whole frame of the route — title, line and rings. The deck
+   steps past one by lifting it out; the next waits below. Two layers so the
+   blob (.lamp, z 3) keeps running above the line and below the rings. */
+.route__act {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
+}
+.route__act--lines {
+  z-index: 2;
+}
+.route__act--stops {
+  z-index: 4;
+}
 /* the poster title swaps word by word: each word is its own motion span */
 .route__word {
   display: inline-block;
@@ -2139,6 +2153,25 @@
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.03em;
+}
+/* the Claude mark and the number it eats share one cell in the ring */
+.munch {
+  display: grid;
+  place-items: center;
+}
+.munch__n,
+.munch__icon {
+  grid-area: 1 / 1;
+}
+.munch__icon {
+  width: 78px;
+  height: 78px;
+  will-change: transform;
+}
+.munch__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .stop__body {
   margin-top: -8px;

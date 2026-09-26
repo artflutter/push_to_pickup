@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useMotionValueEvent, useSpring, useTransform } from 'motion/react'
+import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useMotionValueEvent, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { useSlide } from './slideContext'
@@ -554,6 +554,13 @@ export function Fog({
  * old words lift out, new words rise in, staggered. Stepping back runs the
  * swap downward. The same word motion carries the title off when the first
  * stop lights and brings it back when the deck steps back onto the poster.
+ *
+ * An <Act title> after the stops is a further act on the same route. On the
+ * click after the last stop the whole frame — title, line and rings — lifts
+ * out and the act's own title rises in its place as a poster, the same look
+ * the route opened with; the next click carries that title into the corner
+ * and the same rings come back empty for the orb to visit again. Stepping
+ * back brings the old act down with its rings still lit.
  */
 const ROUTE_EASE = [0.22, 0.61, 0.36, 1] as const
 const coverMotion = {
@@ -585,71 +592,119 @@ function Words({ text, dir }: { text: ReactNode; dir: number }) {
   )
 }
 
+type StopProps = { n?: ReactNode; title: ReactNode; children?: ReactNode }
+/** one act of the route: the titles it opens with, then its rings */
+type ActData = { covers: ReactNode[]; title: ReactNode; stops: StopProps[]; xs: number[] }
+
+const ROUTE_W = 1280
+const ROUTE_Y = 400
+/* how far an act travels when the deck steps past it */
+const ACT_LIFT = 180
+
+const spread = (n: number) => Array.from({ length: n }, (_, i) => (n === 1 ? ROUTE_W / 2 : 240 + (i * (ROUTE_W - 480)) / (n - 1)))
+
+/* the stops written straight into <Route> are the first act; every <Act> adds
+   another, and each act opens on its own title poster */
+function readActs(title: ReactNode, poster: ReactNode, children: ReactNode): ActData[] {
+  const kids = Children.toArray(children).filter(isValidElement)
+  const stopsOf = (nodes: ReactNode) =>
+    Children.toArray(nodes)
+      .filter(isValidElement)
+      .map((c) => c.props as StopProps)
+  const acts: Omit<ActData, 'xs'>[] = [
+    { covers: poster != null ? [poster, title] : [title], title, stops: kids.filter((k) => k.type !== Act).map((k) => k.props as StopProps) },
+  ]
+  for (const k of kids) {
+    if (k.type !== Act) continue
+    const a = k.props as { title: ReactNode; children?: ReactNode }
+    acts.push({ covers: [a.title], title: a.title, stops: stopsOf(a.children) })
+  }
+  return acts.map((a) => ({ ...a, xs: spread(a.stops.length) }))
+}
+
 export function Route({ poster, title, children }: { poster?: ReactNode; title: ReactNode; children: ReactNode }) {
   const slide = useSlide()
-  type StopProps = { n?: ReactNode; title: ReactNode; children?: ReactNode }
-  const stops = Children.toArray(children).flatMap((c) => (isValidElement(c) ? [c.props as StopProps] : []))
-  const covers = poster != null ? [poster, title] : [title]
-  /* clicks spent on the poster before the first stop */
-  const lead = covers.length - 1
+  const acts = readActs(title, poster, children)
+  /* every beat of the route: each opening title is one, each stop is one. The
+     deck sits on the first beat at step 0, so there is one click fewer. */
+  const beats = acts.flatMap((a, i) => [
+    ...a.covers.map((_, j) => ({ act: i, cover: j, active: 0 })),
+    ...a.stops.map((_, m) => ({ act: i, cover: -1, active: m + 1 })),
+  ])
   useState(() => {
-    for (let i = 1; i <= lead + stops.length; i++) slide.register(i)
+    for (let i = 1; i < beats.length; i++) slide.register(i)
     return null
   })
-  const n = stops.length
-  const step = slide.static ? lead + n : Math.min(lead + n, Math.max(0, slide.step))
-  const active = Math.max(0, step - lead)
+  const step = slide.static ? beats.length - 1 : Math.min(beats.length - 1, Math.max(0, slide.step))
+  const beat = beats[step]
   /* which way the last click went — the title swap runs with it */
   const prevStep = useRef(step)
   const dir = step >= prevStep.current ? 1 : -1
   useEffect(() => {
     prevStep.current = step
   }, [step])
-  const W = 1280
-  const y = 400
-  const xs = stops.map((_, i) => (n === 1 ? W / 2 : 240 + (i * (W - 480)) / (n - 1)))
-  const target = active === 0 ? null : { x: xs[active - 1], y }
+  const target = beat.active === 0 ? null : { x: acts[beat.act].xs[beat.active - 1], y: ROUTE_Y }
   return (
     <div className="route">
       <Orb target={target} glow={false}>
-        {(orb) => <RouteScene orb={orb} stops={stops} xs={xs} y={y} active={active} isStatic={slide.static} />}
+        {(orb) => (
+          <>
+            {acts.map((a, i) => {
+              const at = i === beat.act ? beat.active : i < beat.act ? a.stops.length : 0
+              return (
+                <ActLayer
+                  key={i}
+                  orb={orb}
+                  title={a.title}
+                  stops={a.stops}
+                  xs={a.xs}
+                  active={at}
+                  /* the corner title only exists once the act's own poster is gone */
+                  titleShown={i < beat.act || at > 0}
+                  state={i === beat.act ? 0 : i < beat.act ? -1 : 1}
+                  isStatic={slide.static}
+                />
+              )
+            })}
+            <Lamp orb={orb} />
+          </>
+        )}
       </Orb>
       <AnimatePresence initial={false} custom={dir}>
-        {active === 0 ? (
+        {beat.cover >= 0 && (
           <motion.div key={`cover-${step}`} className="route__cover" variants={coverMotion} custom={dir} initial="in" animate="show" exit="out">
-            <Words text={covers[step]} dir={dir} />
+            <Words text={acts[beat.act].covers[beat.cover]} dir={dir} />
           </motion.div>
-        ) : (
-          <motion.h1
-            key="title"
-            className="slide__title route__title"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: ROUTE_EASE, delay: 0.1 }}
-          >
-            {title}
-          </motion.h1>
         )}
       </AnimatePresence>
     </div>
   )
 }
 
-function RouteScene({
+/**
+ * One act: its title, the line and the rings. Two layers with the blob's own
+ * layer between them, so the light keeps running above the line and below the
+ * rings. `state` is -1 for an act the deck has stepped past (it lifts out of
+ * frame), 0 for the one on screen, 1 for one still waiting below it.
+ */
+function ActLayer({
   orb,
+  title,
   stops,
   xs,
-  y,
   active,
   isStatic,
+  state,
+  titleShown,
 }: {
   orb: OrbValues
-  stops: { n?: ReactNode; title: ReactNode; children?: ReactNode }[]
+  title: ReactNode
+  stops: StopProps[]
   xs: number[]
-  y: number
   active: number
   isStatic: boolean
+  state: -1 | 0 | 1
+  titleShown: boolean
 }) {
   /* a ring is held fully lit once the orb has reached it, for as long as it
      is at or before the current stop. Without this a step back would flip
@@ -660,9 +715,10 @@ function RouteScene({
   const reachedRef = useRef(reached)
   reachedRef.current = reached
   useMotionValueEvent(orb.glowX, 'change', (gx) => {
+    if (state !== 0) return
     const i = active - 1
     if (i < 0 || reachedRef.current[i]) return
-    if (Math.hypot(gx - xs[i], orb.glowY.get() - y) < 60) setReached((a) => a.map((v, k) => (k === i ? true : v)))
+    if (Math.hypot(gx - xs[i], orb.glowY.get() - ROUTE_Y) < 60) setReached((a) => a.map((v, k) => (k === i ? true : v)))
   })
   useEffect(() => {
     setReached((a) => {
@@ -671,36 +727,60 @@ function RouteScene({
     })
   }, [active])
 
+  const move = {
+    initial: false as const,
+    animate: { y: state === 0 ? 0 : state < 0 ? -ACT_LIFT : ACT_LIFT, opacity: state === 0 ? 1 : 0 },
+    transition: { duration: 0.6, ease: ROUTE_EASE },
+  }
   return (
     <>
-      <Lamp orb={orb} />
-      {/* hidden on the poster: there the orb roams with the pointer and would paint the lines */}
-      <motion.svg
-        className="route__path"
-        viewBox="0 0 1280 720"
-        aria-hidden="true"
-        initial={false}
-        animate={{ opacity: active > 0 ? 1 : 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-      >
-        {xs.slice(1).map((x, i) => (
-          <Segment key={i} orb={orb} a={xs[i]} b={x} y={y} inset={114} />
+      <motion.div className="route__act route__act--lines" {...move}>
+        {/* held back until the orb is at the first ring: on the poster it roams with
+            the pointer, and an act that opens from the right would otherwise show
+            its lines already drawn while the orb flies back to the start */}
+        <motion.svg
+          className="route__path"
+          viewBox="0 0 1280 720"
+          aria-hidden="true"
+          initial={false}
+          animate={{ opacity: active > 0 && reached[0] ? 1 : 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        >
+          {xs.slice(1).map((x, i) => (
+            <Segment key={i} orb={orb} a={xs[i]} b={x} y={ROUTE_Y} inset={114} />
+          ))}
+        </motion.svg>
+      </motion.div>
+      <motion.div className="route__act route__act--stops" {...move}>
+        <AnimatePresence initial={false}>
+          {titleShown && (
+            <motion.h1
+              key="title"
+              className="slide__title route__title"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: ROUTE_EASE, delay: 0.1 }}
+            >
+              {title}
+            </motion.h1>
+          )}
+        </AnimatePresence>
+        {stops.map((s, i) => (
+          <StopView
+            key={i}
+            orb={orb}
+            x={xs[i]}
+            y={ROUTE_Y}
+            n={s.n ?? String(i + 1).padStart(2, '0')}
+            title={s.title}
+            body={s.children}
+            shown={active > 0}
+            held={i < active - 1 || (i === active - 1 && reached[i])}
+            delay={0.08 * i}
+          />
         ))}
-      </motion.svg>
-      {stops.map((s, i) => (
-        <StopView
-          key={i}
-          orb={orb}
-          x={xs[i]}
-          y={y}
-          n={s.n ?? String(i + 1).padStart(2, '0')}
-          title={s.title}
-          body={s.children}
-          shown={active > 0}
-          held={i < active - 1 || (i === active - 1 && reached[i])}
-          delay={0.08 * i}
-        />
-      ))}
+      </motion.div>
     </>
   )
 }
@@ -711,6 +791,9 @@ function Segment({ orb, a, b, y, inset }: { orb: OrbValues; a: number; b: number
   const opacity = useTransform(progress, (p) => (p > 0.02 ? 1 : 0))
   return <motion.line x1={a + inset} y1={y} x2={b - inset} y2={y} style={{ pathLength: progress, opacity }} />
 }
+
+/* how lit the ring a component sits in is — <Munch> waits for it to arrive */
+const StopLit = createContext<MotionValue<number> | null>(null)
 
 /* a ring lit by the orb's distance; `held` pins it fully lit (reached, and at or before the current stop) */
 function StopView({
@@ -751,14 +834,16 @@ function StopView({
       animate={{ opacity: shown ? 1 : 0, y: shown ? 0 : 24 }}
       transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1], delay: shown ? delay : 0 }}
     >
-      <motion.div className="stop__ring" style={{ borderColor: border, boxShadow: halo, scale }}>
-        <motion.span className="stop__n" style={{ opacity: text }}>
-          {n}
-        </motion.span>
-      </motion.div>
-      <motion.div className="stop__title" style={{ opacity: text }}>
-        {title}
-      </motion.div>
+      <StopLit.Provider value={lit}>
+        <motion.div className="stop__ring" style={{ borderColor: border, boxShadow: halo, scale }}>
+          <motion.span className="stop__n" style={{ opacity: text }}>
+            {n}
+          </motion.span>
+        </motion.div>
+        <motion.div className="stop__title" style={{ opacity: text }}>
+          {title}
+        </motion.div>
+      </StopLit.Provider>
       {body && (
         <motion.div className="stop__body" style={{ opacity: text }}>
           {body}
@@ -773,15 +858,105 @@ export function Stop(_: { n?: ReactNode; title: ReactNode; children?: ReactNode 
   return null
 }
 
-/** Design picker: shows child N on step N (clicks walk through the options). Static views show the first. */
-export function Pick({ children }: { children: ReactNode }) {
+/** Data only — a further act of a <Route>: its own title and its own stops. */
+export function Act(_: { title: ReactNode; children?: ReactNode }) {
+  return null
+}
+
+/* Clawd, the Claude Code mascot (Iconify `cbi:claude-clawd`), in the current colour */
+const CLAWD = 'M4.5 6h15v5H22v2h-2.5v3h-1v2H17v-2h-1v2h-1.5v-2h-5v2H8v-2H7v2H5.5v-2h-1v-3H2v-2h2.5ZM7 8v3h1V8Zm9 0v3h1V8Z'
+
+function ClaudeMark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d={CLAWD} />
+    </svg>
+  )
+}
+
+/* Five bites, left to right across the number: at every bite the mark snaps
+   shut over the next fifth and that fifth is clipped away for good. Built
+   once — keyframes and their times have to line up exactly. */
+const BITES = 5
+const CHEW = (() => {
+  const span = BITES + 0.5 /* a tail, so the mark can settle after the last bite */
+  const times = [0]
+  /* it waits centred under the ring and only steps aside for the first bite */
+  const x = [0]
+  const scaleX = [1]
+  const scaleY = [1]
+  const clip = ['inset(0px 0px 0px 0%)']
+  for (let i = 0; i < BITES; i++) {
+    const at = -32 + (64 * (i + 0.5)) / BITES
+    times.push((i + 0.55) / span, (i + 1) / span)
+    x.push(at, at)
+    scaleX.push(1.22, 0.96)
+    scaleY.push(0.7, 1.06)
+    const eaten = (100 * (i + 1)) / BITES
+    clip.push(`inset(0px 0px 0px ${eaten}%)`, `inset(0px 0px 0px ${eaten}%)`)
+  }
+  times.push(1)
+  x.push(0)
+  scaleX.push(1)
+  scaleY.push(1)
+  clip.push('inset(0px 0px 0px 100%)')
+  return { times, x, scaleX, scaleY, clip, duration: 1.6 }
+})()
+
+/**
+ * The Claude mark eating a stop's number: it waits below the ring, rises into
+ * it after `delay` and chews the number away in five bites, then settles in
+ * its place. Cued by the ring's own light, so it starts when the orb really
+ * arrives; stepping back to an earlier stop puts the number back.
+ */
+export function Munch({ children, delay = 0.8 }: { children: ReactNode; delay?: number }) {
+  const slide = useSlide()
+  const lit = useStopLitValue()
+  const [on, setOn] = useState(slide.static)
+  useMotionValueEvent(lit, 'change', (v) => setOn(v > 0.98))
+  const chew = { delay: delay + 0.5, duration: CHEW.duration, times: CHEW.times, ease: 'easeInOut' as const }
+  return (
+    <span className="munch">
+      <motion.span
+        className="munch__n"
+        initial={false}
+        animate={on ? { clipPath: CHEW.clip } : { clipPath: 'inset(0px 0px 0px 0%)' }}
+        transition={on ? { ...chew, ease: 'linear' as const } : { duration: 0.3 }}
+      >
+        {children}
+      </motion.span>
+      <motion.span
+        className="munch__icon"
+        initial={false}
+        animate={on ? { y: [140, -8, 0], x: CHEW.x, scaleX: CHEW.scaleX, scaleY: CHEW.scaleY } : { y: 140, x: 0, scaleX: 1, scaleY: 1 }}
+        transition={on ? { y: { delay, duration: 0.5, ease: ROUTE_EASE }, x: chew, scaleX: chew, scaleY: chew } : { duration: 0.35, ease: 'easeOut' }}
+      >
+        <ClaudeMark />
+      </motion.span>
+    </span>
+  )
+}
+
+/* the light of the ring this sits in; a still 0 when used outside a stop */
+function useStopLitValue() {
+  const idle = useMotionValue(0)
+  return useContext(StopLit) ?? idle
+}
+
+/**
+ * Design picker: shows child N on step N (clicks walk through the options).
+ * Static views show the first. `after` holds the first option until that step,
+ * so options can be walked after a choreography that owns the earlier steps
+ * has finished.
+ */
+export function Pick({ children, after = 0 }: { children: ReactNode; after?: number }) {
   const slide = useSlide()
   const items = Children.toArray(children).filter(nonBlank)
   useState(() => {
-    for (let i = 1; i < items.length; i++) slide.register(i)
+    for (let i = 1; i < items.length; i++) slide.register(after + i)
     return null
   })
-  const idx = slide.static ? 0 : Math.min(items.length - 1, Math.max(0, slide.step))
+  const idx = slide.static ? 0 : Math.min(items.length - 1, Math.max(0, slide.step - after))
   return <>{items[idx]}</>
 }
 
@@ -1544,6 +1719,8 @@ export const mdxComponents = {
   OrbLaunch,
   Route,
   Stop,
+  Act,
+  Munch,
   Pick,
   Tiles,
   Tile,

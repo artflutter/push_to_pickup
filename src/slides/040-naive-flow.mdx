@@ -1,13 +1,22 @@
 ---
 layout: full
 notes: |
-  Section break: "Let's dive deep." — one breath. Click: the words swap to
-  "The naive flow." Then each click the orb flies to the next stop:
-  a push arrives → the UI shows → the user decides. Four clicks in all.
+  Opens on "The naive flow." Then each click the orb flies to the next stop: a
+  push arrives → the UI shows → the user decides. After accept / decline the
+  whole route lifts away and "The naive implementation." rises in its place —
+  the same three rings: Twilio, the twilio_* package, and then Claude, which
+  climbs into the third ring and eats the 03. Then it all lifts away again for
+  "Let's dive deep." — one breath before the next slide. Eight clicks in all.
 ---
 
-<Route poster="Let's dive deep." title="The naive flow.">
-  <Stop title="Incoming push" />
+<Route title="The naive flow.">
+  <Stop title="Setup push" />
   <Stop title="Display the UI" />
   <Stop title="Accept / decline" />
+  <Act title="The naive implementation.">
+    <Stop title="Use Twilio" />
+    <Stop title="twilio_* package" />
+    <Stop n={<Munch>03</Munch>} title="" />
+  </Act>
+  <Act title="Let's dive deep." />
 </Route>
