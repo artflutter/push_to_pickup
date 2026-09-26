@@ -33,7 +33,7 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
 ## Other approved details on slide 020
 
 - Title: `What makes a ring special?` — with the question mark.
-- Bar numbers are hex with the prefix: `0x01` … `0x05`. No brick icons on the bars.
+- Bar numbers are hex with the prefix: `0x01` … `0x05`. No icons on the bars.
 - The gradient box reacts to the pointer **only while it is inside the box**:
   the base is blue only, all the pink is one blob that rests in the
   bottom-left corner and chases the cursor on a slow spring; a white sheen
@@ -154,5 +154,5 @@ renders the orb itself.
 ## Slide numbering
 
 010 title · 020 why · 040–130 the talk outline (030 and 050 were merged into
-040, both numbers are free) · 700 blank · 710–712 brick pick list · 800–890
-unused "why" layouts kept for reference.
+040, both numbers are free) · 700 blank · 800–890 unused "why" layouts kept
+for reference.

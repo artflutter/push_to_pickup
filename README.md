@@ -32,12 +32,11 @@ available in MDX without an import: `F`, `Cols`, `Box`, `Big`, `Stat`, `Tag`,
 `Flow`, `Step`, `Code`, `CodeMorph`, plus the site-style layouts `Cards`/`Card`,
 `Bento`, `Orb`, `Route`/`Stop`, `Pick`, `Tiles`/`Tile`, `Hops`, `List`/`Item`, `Split`/`Panel`, `Rail`/`Milestone`,
 `Checklist`/`Check`, `Deadline`, `Phones`, `Note`, `Hl`, `Pill`, `Speaker`,
-`ConfBar`, `Logo`, `HeroArt`, `Brick`, `BrickGallery`, and the speaker-card
+`ConfBar`, `Logo`, `HeroArt`, and the speaker-card
 pieces `Brand`, `Avatar`, `Byline`, `ConfStrip`, `Gate`.
 
-The talk runs 010–130. After it: 700 is a blank, 710–712 the brick pick list,
-and 800–890 ten other designs of the "why this is interesting" content, kept
-for reference.
+The talk runs 010–130. After it: 700 is a blank, and 800–890 ten other designs
+of the "why this is interesting" content, kept for reference.
 
 ### Fragments
 
@@ -76,12 +75,6 @@ the brand gradient, cards behind it are plain.
   `rows={[3, 2]}` (the lit card grows out of its own spot). Small cards show only number +
   title; give a card `detail="…"` for the copy that fades in once it has
   finished growing.
-- Any `<Card brick="slope 2x2" />` gets an isometric LEGO-brick outline at its
-  right end, every shape scaled to the same square. Names are the catalogue in
-  [src/deck/Brick.tsx](src/deck/Brick.tsx) (`brick 2x4`, `plate 4x4`, `round 2x2`,
-  `cone 1x1`, `dome 2x2`, `slope 1x3`, `corner 2x2`, `arch 1x4`, `wheel`,
-  `minifig head` … 90 in all) or plain `WxL` / `WxLp`. Slides 031–033 are a
-  numbered pick list (`<BrickGallery from to />`); drop them once chosen.
 - In a `<Cards>` grid nothing moves; a single gradient slab springs from card
   to card and the lit card pops a little. `height={250}` stops the grid from
   taking the whole slide when the cards are short. `<Card art={<Phones />}>`

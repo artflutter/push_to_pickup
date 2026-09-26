@@ -14,7 +14,6 @@ import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useMotionVa
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { useSlide } from './slideContext'
-import { Brick, BrickGallery } from './Brick'
 import { OrbLaunch } from './Traveller'
 
 export function Cols({ children, n = 2, gap = 40 }: { children: ReactNode; n?: number; gap?: number }) {
@@ -1211,7 +1210,6 @@ export function Card({
   tone = 'ink',
   size = 'md',
   at,
-  brick,
   art,
 }: {
   /** Small index label, e.g. "01". */
@@ -1229,8 +1227,6 @@ export function Card({
    * (and, in a Bento, it grows in place). After it: plain. Cards without `at` are static.
    */
   at?: number
-  /** Isometric LEGO brick outline at the right end of the card, e.g. `2x4` — see <Brick kind />. */
-  brick?: string
   /** Illustration between the title and the body; takes the spare height. */
   art?: ReactNode
   /** Short lines shown in the Spotlight box under the detail — see <Spotlight bullets />. */
@@ -1300,7 +1296,7 @@ export function Card({
       ref={ref}
       className={`card card--${tone} card--${isHero ? 'lg' : 'md'} card--${state}${rect ? ' card--placed' : ''}${
         rect && rect.width < 200 ? ' card--narrow' : ''
-      }${rect && (rect.height < 140 || bento?.bar) ? ' card--bar' : ''}${brick ? ' card--has-end' : ''}`}
+      }${rect && (rect.height < 140 || bento?.bar) ? ' card--bar' : ''}`}
       style={{ '--pop': pop } as React.CSSProperties}
       initial={false}
       animate={rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : undefined}
@@ -1314,11 +1310,6 @@ export function Card({
         {body && <div className="card__body">{body}</div>}
         {showDetail && <div className={`card__body card__detail${settled ? ' is-in' : ''}`}>{detail}</div>}
       </div>
-      {brick && (
-        <div className="card__end">
-          <Brick kind={brick} fit={56} />
-        </div>
-      )}
     </motion.div>
   )
 }
@@ -1709,8 +1700,6 @@ export const mdxComponents = {
   Step,
   Cards,
   Card,
-  Brick,
-  BrickGallery,
   Bento,
   Spotlight,
   Orb,
