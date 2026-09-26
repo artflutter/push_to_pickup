@@ -35,8 +35,7 @@ available in MDX without an import: `F`, `Cols`, `Box`, `Big`, `Stat`, `Tag`,
 `ConfBar`, `Logo`, `HeroArt`, and the speaker-card
 pieces `Brand`, `Avatar`, `Byline`, `ConfStrip`, `Gate`.
 
-The talk runs 010–130. After it: 700 is a blank, and 800–890 ten other designs
-of the "why this is interesting" content, kept for reference.
+The talk runs 010–130.
 
 ### Fragments
 

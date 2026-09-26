@@ -61,18 +61,18 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   the pointer and the path layer is hidden — and the next click carries that
   title into the corner and brings its rings in; then each click the orb
   flies to the next `<Stop>` (rings on a line, the lit ring is behind the
-  orb, the line draws in behind it). The orb takes a `target` for the stops;
+  orb, the line draws in behind it). Ring numbers are binary like the 020 bullets — `01` · `10` · `11` — everywhere except the 020 bars, which keep their hex (`0x01` …; "do not touch hex"). The orb takes a `target` for the stops;
   the pointer only drifts it a little there.
   Act 1 is `The naive flow.` (incoming push → display the UI → accept /
   decline), act 2 is `<Act title="The naive implementation.">` with the
   former slide 050's shopping list, act 3 is `<Act title="Let's dive deep." />`
   — a title poster with no stops, one breath before the next slide. Eight
   clicks in all.
-  Act 2's last ring is `<Stop n={<Munch>03</Munch>} title="" />`: Clawd, the
+  Act 2's last ring is `<Stop n={<Munch>11</Munch>} title="" />`: Clawd, the
   Claude Code mascot (Iconify `cbi:claude-clawd`, the path in `CLAWD`, drawn
   in `currentColor` so it takes the ring's white — the orange #d97757 was
   tried and dropped), waits where the ring's label would be, then climbs into
-  the ring and eats the `03` in five bites, left to right: each bite snaps
+  the ring and eats the `11` in five bites, left to right: each bite snaps
   shut over the next fifth and clips it away (`CHEW`, built once — keyframes
   and times have to line up). It is cued by the ring's own light through
   `StopLit`, not by the click, so it starts when the orb really arrives and
@@ -104,6 +104,52 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   (`Orb glow={false}`), a transform-only layer above the line and below
   the rings. Performance rule: never rebuild a multi-layer mask string per
   frame — that was the cause of the "steppy" transitions.
+
+## Slide 060: the app is the king
+
+`layout: full`, one page throughout — no title, no Spotlight box, no bars.
+`<Unfold hero={<AppWire />} seeds={APP_WIRE.circles} orbAt={APP_WIRE.top}>`
+with three `<Stop title>body</Stop>` (the slide imports `APP_WIRE` from
+mdxComponents — plain MDX ESM).
+Step 0: the whole slide is the gradient, the app's ringing screen as a
+wireframe in the middle (phone outline with notch and home bar, the
+caller's two lines), and the blob — small, 340 px (`.unfold .orb__glow`;
+820 → 260 → 340 were tried) — resting on the top edge of the phone. The
+wireframe's three circles (avatar, then the two call buttons) are not in
+the SVG: they are the three rings in their folded state, drawn as the same
+2.5 px outline with nothing inside.
+First click: the phone shrinks to half around its centre and moves up to
+(640, 200), and the circles spring down into a row of rings (120 px, on
+the 240 / 640 / 1040 line of slide 040, y 470), all on one spring — empty
+rings: the number inside (binary, `01` · `10` · `11`, like the 020
+bullets) and the title under come with the light, so a
+ring shows nothing until the orb reaches it ("the number and subtitle
+should appear only after orb highlight the item"). No body ("there should
+be no subtitles"; `<Stop>` still takes one). The caller's two lines in the
+phone fade
+out as the circles leave (`.appwire__caller`, `.unfold--open`) and come
+back when it folds. The blob *stays on top of the phone*,
+riding its shrink to the same spot on the smaller frame (`orbAt` mapped
+through the shrink); "the orb should stay on top, only next tap moves it".
+The sheen rides the glow's own spring here (`<Lamp together />`): with the
+glow this small the sheen's faster spring read as a second orb running
+ahead of the first.
+Second click: the blob leaves the phone and flies to ring 01; from there
+it is the route rule: a ring brightens as the orb arrives and is held once
+reached, the line draws in behind the orb and is held back until the orb
+is at the first ring (it arrives from above, off-line). One difference
+from the route: only the ring the orb is *heading for* lights by distance
+(`aim`) — coming down from the phone it passes within ~280 px of ring 02,
+which flickered to 14 % on the way ("why 02 blinks"). Four clicks. Stepping back folds it all up again; nothing
+blinks.
+The rings read `Emits push token` · `Obtains vendor token` · `Send push to
+vendor` (the owner's words). Rejected on the way here: the box shrinking
+into the Spotlight layout with bars on the left ("everything should be on
+the same page"); a phone drawn without its frame; a content block inside
+the phone; the blob centred on the phone instead of on top of it.
+`<Spotlight>` still has the `hero` / `heroOrb` / `heroSeeds` opening view
+and cards still take a `seed` rect from the Bento context — built for this
+slide, now unused anywhere.
 
 ## The travelling orb (Traveller.tsx)
 
@@ -154,5 +200,6 @@ renders the orb itself.
 ## Slide numbering
 
 010 title · 020 why · 040–130 the talk outline (030 and 050 were merged into
-040, both numbers are free) · 700 blank · 800–890 unused "why" layouts kept
-for reference.
+040, both numbers are free). Nothing after 130: the blank 700 and the ten
+"why" layouts that followed it (800–890, leftovers of the 020 design round)
+have all been deleted.

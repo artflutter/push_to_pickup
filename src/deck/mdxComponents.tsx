@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -197,6 +198,14 @@ interface BentoLayout {
   bar?: boolean
   /** the lit card, when the grid decides it (Spotlight); undefined = lit on its own step */
   activeAt?: number | null
+  /**
+   * Where a card starts from before it takes its slot: a circle it springs
+   * out of (Spotlight's opening view). While set, the card is drawn as that
+   * circle — outline only, no content.
+   */
+  seed?: Map<number, Rect & { radius: number }>
+  /** the grid can seed cards, so their corner radius is animated too */
+  seedable?: boolean
 }
 const BentoContext = createContext<BentoLayout | null>(null)
 
@@ -440,11 +449,13 @@ function useOrb(host: React.RefObject<HTMLElement | null>, w: number, h: number,
   return { skin, glowX, glowY, sheenX, sheenY }
 }
 
-function OrbLayers({ orb, left = 0 }: { orb: OrbValues; left?: number }) {
+/* `together`: the sheen rides the glow's own spring instead of its faster one —
+   on a small glow the two springs read as two orbs */
+function OrbLayers({ orb, left = 0, together = false }: { orb: OrbValues; left?: number; together?: boolean }) {
   return (
     <>
       <motion.div className="orb__glow" style={{ x: orb.glowX, y: orb.glowY, left }} />
-      <motion.div className="orb__sheen" style={{ x: orb.sheenX, y: orb.sheenY, left }} />
+      <motion.div className="orb__sheen" style={{ x: together ? orb.glowX : orb.sheenX, y: together ? orb.glowY : orb.sheenY, left }} />
     </>
   )
 }
@@ -494,10 +505,10 @@ export function Orb({
 }
 
 /** The blob and its sheen on their own layer — a transform-only mover, cheap to stack above a fog. */
-export function Lamp({ orb }: { orb: OrbValues }) {
+export function Lamp({ orb, together = false }: { orb: OrbValues; together?: boolean }) {
   return (
     <div className="lamp" aria-hidden="true">
-      <OrbLayers orb={orb} />
+      <OrbLayers orb={orb} together={together} />
     </div>
   )
 }
@@ -771,7 +782,7 @@ function ActLayer({
             orb={orb}
             x={xs[i]}
             y={ROUTE_Y}
-            n={s.n ?? String(i + 1).padStart(2, '0')}
+            n={s.n ?? (i + 1).toString(2).padStart(2, '0')}
             title={s.title}
             body={s.children}
             shown={active > 0}
@@ -848,6 +859,203 @@ function StopView({
           {body}
         </motion.div>
       )}
+    </motion.div>
+  )
+}
+
+/* ---------------------------------------------------------------- unfold --- */
+/**
+ * One page, no layout change: a full-slide gradient with a hero drawing on
+ * it and the blob resting on the hero. On the first click the hero shrinks
+ * up out of the way and its circles (`seeds`, in slide px, one per <Stop>)
+ * spring down into a row of rings, number inside, title and body under —
+ * the blob stays on the hero, riding its shrink. Only the next click moves
+ * it: it lights the rings one per click, the line drawing in behind it,
+ * exactly like <Route>. Stepping back folds it up again.
+ */
+const UNFOLD_SPRING = { type: 'spring' as const, stiffness: 150, damping: 24, mass: 0.9 }
+
+export function Unfold({
+  hero,
+  seeds,
+  orbAt,
+  heroAt = { x: 640, y: 360 },
+  heroTo = { x: 640, y: 200 },
+  shrink = 0.5,
+  y = 470,
+  ring = 120,
+  children,
+}: {
+  hero: ReactNode
+  /** the hero's circles the stops start out as, in slide px, in stop order */
+  seeds: { x: number; y: number; r: number }[]
+  /** where the blob rests on the hero */
+  orbAt: { x: number; y: number }
+  /** the hero's centre — what it shrinks around */
+  heroAt?: { x: number; y: number }
+  /** where that centre goes once it has shrunk */
+  heroTo?: { x: number; y: number }
+  shrink?: number
+  /** the rings' centre line */
+  y?: number
+  /** ring diameter */
+  ring?: number
+  children: ReactNode
+}) {
+  const slide = useSlide()
+  const stops = Children.toArray(children)
+    .filter(isValidElement)
+    .map((c) => c.props as StopProps)
+  const n = stops.length
+  /* one click to unfold, then one per ring */
+  useState(() => {
+    for (let i = 1; i <= n + 1; i++) slide.register(i)
+    return null
+  })
+  const step = slide.static ? n + 1 : Math.min(n + 1, Math.max(0, slide.step))
+  const open = step > 0
+  /* how many rings the orb has been sent to */
+  const active = Math.max(0, step - 1)
+  const xs = spread(n)
+  /* where the blob's resting spot on the hero ends up once the hero has shrunk */
+  const orbAtShrunk = { x: heroTo.x + (orbAt.x - heroAt.x) * shrink, y: heroTo.y + (orbAt.y - heroAt.y) * shrink }
+  const target = !open ? orbAt : active === 0 ? orbAtShrunk : { x: xs[active - 1], y }
+
+  /* same rule as the route: a ring is held lit once the orb has reached it,
+     for as long as it is at or before the current stop — no blink on the
+     way back */
+  const [reached, setReached] = useState<boolean[]>(() => xs.map((_, i) => i < active - 1 || (slide.static && i < active)))
+  const reachedRef = useRef(reached)
+  reachedRef.current = reached
+  useEffect(() => {
+    setReached((a) => {
+      const next = a.map((v, i) => i < active - 1 || (i < active && v))
+      return next.some((v, i) => v !== a[i]) ? next : a
+    })
+  }, [active])
+
+  return (
+    <div className={`unfold${open ? ' unfold--open' : ''}`}>
+      <Orb target={target} glow={false}>
+        {(orb) => (
+          <>
+            <Reach orb={orb} x={active > 0 ? xs[active - 1] : null} y={y} onReach={() => setReached((a) => a.map((v, k) => (k === active - 1 ? true : v)))} skip={!!reachedRef.current[active - 1]} />
+            <motion.div
+              className="unfold__hero"
+              style={{ transformOrigin: `${heroAt.x}px ${heroAt.y}px` }}
+              initial={false}
+              animate={open ? { scale: shrink, x: heroTo.x - heroAt.x, y: heroTo.y - heroAt.y } : { scale: 1, x: 0, y: 0 }}
+              transition={UNFOLD_SPRING}
+            >
+              {hero}
+            </motion.div>
+            {/* held back until the orb is at the first ring: it arrives from the hero, from above and off-line */}
+            <motion.svg
+              className="unfold__path"
+              viewBox="0 0 1280 720"
+              aria-hidden="true"
+              initial={false}
+              animate={{ opacity: open && reached[0] ? 1 : 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              {xs.slice(1).map((x, i) => (
+                <Segment key={i} orb={orb} a={xs[i]} b={x} y={y} inset={ring / 2 + 14} />
+              ))}
+            </motion.svg>
+            {/* one orb: the sheen moves with the glow here, not ahead of it */}
+            <Lamp orb={orb} together />
+            {stops.map((s, i) => (
+              <UnfoldStop
+                key={i}
+                orb={orb}
+                seed={seeds[i]}
+                x={xs[i]}
+                y={y}
+                size={ring}
+                open={open}
+                aim={i === active - 1}
+                held={i < active - 1 || (i === active - 1 && reached[i])}
+                /* binary, like the 020 bullets: 01 · 10 · 11 */
+                n={s.n ?? (i + 1).toString(2).padStart(2, '0')}
+                title={s.title}
+                body={s.children}
+              />
+            ))}
+          </>
+        )}
+      </Orb>
+    </div>
+  )
+}
+
+/* fires once when the orb comes within 60px of (x, y); nothing while x is null */
+function Reach({ orb, x, y, onReach, skip }: { orb: OrbValues; x: number | null; y: number; onReach: () => void; skip: boolean }) {
+  useMotionValueEvent(orb.glowX, 'change', (gx) => {
+    if (x == null || skip) return
+    if (Math.hypot(gx - x, orb.glowY.get() - y) < 60) onReach()
+  })
+  return null
+}
+
+/* a ring that starts out as one of the hero's circles. Once open, only the
+   ring the orb is heading for (`aim`) lights by its distance — the orb comes
+   down from the hero past the others, which must not flicker on the way —
+   and a reached ring is held. */
+function UnfoldStop({
+  orb,
+  seed,
+  x,
+  y,
+  size,
+  open,
+  aim,
+  held,
+  n,
+  title,
+  body,
+}: {
+  orb: OrbValues
+  seed?: { x: number; y: number; r: number }
+  x: number
+  y: number
+  size: number
+  open: boolean
+  aim: boolean
+  held: boolean
+  n: ReactNode
+  title: ReactNode
+  body?: ReactNode
+}) {
+  /* the flags as motion values, so the transform below re-runs on their changes too */
+  const mode = useMotionValue(0)
+  useEffect(() => {
+    mode.set(!open ? 0 : held ? 2 : aim ? 1 : 0)
+  }, [open, aim, held, mode])
+  const lit = useTransform([orb.glowX, orb.glowY, mode], ([gx, gy, m]: number[]) => {
+    if (m === 0) return 0
+    if (m === 2) return 1
+    const d = Math.hypot(gx - x, gy - y)
+    return Math.max(0, Math.min(1, 1 - (d - 60) / 260))
+  })
+  /* the same outline as the wireframe while folded; brightens with the light once open */
+  const border = useTransform(lit, (v) => `rgba(255, 255, 255, ${0.62 + 0.38 * v})`)
+  const halo = useTransform(lit, (v) => `0 0 0 10px rgba(255, 255, 255, ${0.14 * v})`)
+  /* number and title come with the light: nothing on a ring the orb has not reached */
+  const text = useTransform(lit, (v) => v)
+  const rise = useTransform(lit, (v) => 12 * (1 - v))
+  const box =
+    open || !seed
+      ? { x: x - size / 2, y: y - size / 2, width: size, height: size }
+      : { x: seed.x - seed.r, y: seed.y - seed.r, width: 2 * seed.r, height: 2 * seed.r }
+  return (
+    <motion.div className="unfold__ring" style={{ borderColor: border, boxShadow: halo }} initial={false} animate={box} transition={UNFOLD_SPRING}>
+      <motion.span className="unfold__n" style={{ opacity: text }}>
+        {n}
+      </motion.span>
+      <motion.div className="unfold__label" style={{ opacity: text, y: rise }}>
+        <div className="unfold__title">{title}</div>
+        {body && <div className="unfold__body">{body}</div>}
+      </motion.div>
     </motion.div>
   )
 }
@@ -970,6 +1178,9 @@ export function Spotlight({
   box = 'left',
   split = 0.5,
   bullets,
+  hero,
+  heroOrb,
+  heroSeeds,
 }: {
   title: ReactNode
   eyebrow?: ReactNode
@@ -987,15 +1198,39 @@ export function Spotlight({
    * room for them (at={1}, at={5} … for three bullets each).
    */
   bullets?: BulletStyle
+  /**
+   * An opening view: before the first card lights, the box fills the whole
+   * slide with this inside it (drawn under the blob). The first click shrinks
+   * it into its corner and brings the bars in.
+   */
+  hero?: ReactNode
+  /** Where the blob rests in the opening view, in slide px. Default: the middle. */
+  heroOrb?: { x: number; y: number }
+  /**
+   * Circles in the opening view (slide px), one per card in `at` order: the
+   * bars start out as these circles and spring into their slots on the
+   * first click. The bars are then shown from step 0, not faded in.
+   */
+  heroSeeds?: { x: number; y: number; r: number }[]
 }) {
   const slide = useSlide()
   const ref = useRef<HTMLDivElement>(null)
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null)
+  /* own size, plus where this sits on the slide and how big the slide is
+     (stage px), for the opening view that covers the whole slide */
+  const [size, setSize] = useState<{ w: number; h: number; ox: number; oy: number; sw: number; sh: number } | null>(null)
 
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    const measure = () => setSize({ w: el.offsetWidth, h: el.offsetHeight })
+    const measure = () => {
+      const w = el.offsetWidth
+      const h = el.offsetHeight
+      const host = slideOf(el)
+      const a = el.getBoundingClientRect()
+      const b = host?.getBoundingClientRect()
+      const k = b && b.width > 0 && host ? host.offsetWidth / b.width : 1
+      setSize(b && host ? { w, h, ox: (a.left - b.left) * k, oy: (a.top - b.top) * k, sw: host.offsetWidth, sh: host.offsetHeight } : { w, h, ox: 0, oy: 0, sw: w, sh: h })
+    }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
@@ -1048,19 +1283,67 @@ export function Spotlight({
   const barPitch = ats.length > 0 ? (boxH - gap * (ats.length - 1)) / ats.length + gap : 0
   const tailY = activeIndex < 0 ? boxH / 2 : activeIndex * barPitch + (barPitch - gap) / 2
 
-  const orb = useOrb(boxRef, size ? boxW : 0, size ? boxH : 0, { active: !slide.static })
+  /* With a `hero` the box opens full-slide and shrinks into its corner on the
+     first click, so its geometry is animated and the clip-path has to follow
+     it frame by frame — hence motion values rather than plain numbers. */
+  const RAD = 28
+  const full = hero != null && activeAt == null
+  const goal = size ? (full ? { x: -size.ox, y: -size.oy, w: size.sw, h: size.sh, r: 0 } : { x: boxX, y: titleRow, w: boxW, h: boxH, r: RAD }) : null
+  const bxMv = useMotionValue(0)
+  const byMv = useMotionValue(0)
+  const bwMv = useMotionValue(0)
+  const bhMv = useMotionValue(0)
+  const brMv = useMotionValue(RAD)
+  const BOX_SPRING = { stiffness: 150, damping: 24, mass: 0.9 }
+  const bx = useSpring(bxMv, BOX_SPRING)
+  const by = useSpring(byMv, BOX_SPRING)
+  const bw = useSpring(bwMv, BOX_SPRING)
+  const bh = useSpring(bhMv, BOX_SPRING)
+  const br = useSpring(brMv, BOX_SPRING)
+  const placed = useRef(false)
+  useEffect(() => {
+    if (!goal) return
+    const pairs: [typeof bxMv, typeof bx, number][] = [
+      [bxMv, bx, goal.x],
+      [byMv, by, goal.y],
+      [bwMv, bw, goal.w],
+      [bhMv, bh, goal.h],
+      [brMv, br, goal.r],
+    ]
+    /* a box without a hero never moves, so it is always put straight there */
+    const jump = !placed.current || slide.static || hero == null
+    for (const [mv, sp, v] of pairs) {
+      mv.set(v)
+      if (jump) sp.jump(v)
+    }
+    placed.current = true
+  }, [goal?.x, goal?.y, goal?.w, goal?.h, goal?.r, hero, slide.static, bxMv, byMv, bwMv, bhMv, brMv, bx, by, bw, bh, br])
+
+  /* in the opening view the blob rests on the hero (`heroOrb`); the pointer only drifts it */
+  const orb = useOrb(boxRef, goal?.w ?? 0, goal?.h ?? 0, {
+    active: !slide.static,
+    target: full && goal ? (heroOrb ?? { x: goal.w / 2, y: goal.h / 2 }) : null,
+  })
+
+  /* the opening view's circles, in this block's own coordinates, one per bar */
+  const seed = useMemo(() => {
+    if (!full || !heroSeeds || !size) return undefined
+    const m = new Map<number, Rect & { radius: number }>()
+    heroSeeds.forEach((c, i) => {
+      const a = ats[i]
+      if (a != null) m.set(a, { x: c.x - c.r - size.ox, y: c.y - c.r - size.oy, width: 2 * c.r, height: 2 * c.r, radius: c.r })
+    })
+    return m
+  }, [full, heroSeeds, size, ats.join(',')])
 
   /* The tail is a notch in the skin's clip-path, so gradient and glow run
      straight into it. It springs between bars and grows out when lit. */
   const TAIL = 16
-  const RAD = 28
   const tailYMv = useMotionValue(0)
   const tailOnMv = useMotionValue(0)
   const tailYS = useSpring(tailYMv, { stiffness: 260, damping: 28 })
   const tailOnS = useSpring(tailOnMv, { stiffness: 200, damping: 26 })
-  const clip = useTransform([tailYS, tailOnS], ([yRaw, on]: number[]) => {
-    const W = boxW
-    const H = boxH
+  const clip = useTransform([tailYS, tailOnS, bw, bh, br], ([yRaw, on, W, H, RAD]: number[]) => {
     const t = TAIL * on
     const y = Math.max(RAD + TAIL, Math.min(H - RAD - TAIL, yRaw))
     const n = (v: number) => v.toFixed(2)
@@ -1102,15 +1385,27 @@ export function Spotlight({
       </motion.h1>
 
       {size && (
-        <div ref={boxRef} className="spotlight__box" style={{ top: titleRow, left: boxX, width: boxW, height: boxH }}>
+        <motion.div ref={boxRef} className={`spotlight__box${full ? ' spotlight__box--full' : ''}`} style={{ x: bx, y: by, width: bw, height: bh }}>
           <motion.div
             className="spotlight__skin"
             style={{ background: orb.skin, clipPath: clip, left: box === 'right' ? -TAIL : 0, right: box === 'right' ? 0 : -TAIL }}
           >
+            {hero && (
+              <motion.div
+                className="spotlight__hero"
+                initial={false}
+                animate={{ opacity: full ? 1 : 0 }}
+                transition={{ duration: full ? 0.45 : 0.25, ease: 'easeOut' }}
+              >
+                {hero}
+              </motion.div>
+            )}
+            {/* the blob rides above the hero: it is the light on it, not behind it */}
             <OrbLayers orb={orb} left={box === 'right' ? TAIL : 0} />
           </motion.div>
           <AnimatePresence mode="wait" initial={false}>
             {active == null ? (
+              hero ? null : (
               <motion.div
                 key="cover"
                 className="spotlight__cover"
@@ -1122,6 +1417,7 @@ export function Spotlight({
                 {eyebrow && <div className="spotlight__eyebrow">{eyebrow}</div>}
                 <div className="spotlight__cover-title">{title}</div>
               </motion.div>
+              )
             ) : (
               <motion.div
                 key={active.at}
@@ -1146,10 +1442,19 @@ export function Spotlight({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       )}
 
-      <BentoContext.Provider value={{ rects, heroAt: null, detailInCards: false, bar: true, activeAt }}>{children}</BentoContext.Provider>
+      <motion.div
+        className="spotlight__bars"
+        initial={false}
+        animate={{ opacity: full && !heroSeeds ? 0 : 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut', delay: full || slide.static ? 0 : 0.2 }}
+      >
+        <BentoContext.Provider value={{ rects, heroAt: null, detailInCards: false, bar: true, activeAt, seed, seedable: hero != null }}>
+          {children}
+        </BentoContext.Provider>
+      </motion.div>
     </div>
   )
 }
@@ -1239,7 +1544,8 @@ export function Card({
   const bento = useContext(BentoContext)
   const ref = useRef<HTMLDivElement>(null)
   const [ordinal] = useState(() => (at != null ? slide.register(at) : null))
-  const rect = bento && at != null ? bento.rects.get(at) : undefined
+  const seed = bento && at != null ? bento.seed?.get(at) : undefined
+  const rect = seed ?? (bento && at != null ? bento.rects.get(at) : undefined)
   const isHero = bento ? bento.heroAt === at : size === 'lg'
   /* In a spot grid the lit card pops a little; in a Bento it grows for real. */
   const pop = bento ? 1 : size === 'lg' ? 1.03 : 1.06
@@ -1296,10 +1602,14 @@ export function Card({
       ref={ref}
       className={`card card--${tone} card--${isHero ? 'lg' : 'md'} card--${state}${rect ? ' card--placed' : ''}${
         rect && rect.width < 200 ? ' card--narrow' : ''
-      }${rect && (rect.height < 140 || bento?.bar) ? ' card--bar' : ''}`}
+      }${rect && (rect.height < 140 || bento?.bar) ? ' card--bar' : ''}${seed ? ' card--seed' : ''}`}
       style={{ '--pop': pop } as React.CSSProperties}
       initial={false}
-      animate={rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : undefined}
+      animate={
+        rect
+          ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height, ...(bento?.seedable ? { borderRadius: seed ? seed.radius : 28 } : {}) }
+          : undefined
+      }
       transition={{ type: 'spring', stiffness: 170, damping: 26, mass: 1 }}
     >
       <div className="card__bg" aria-hidden="true" />
@@ -1410,6 +1720,50 @@ export function Check({ children, at }: { children: ReactNode; at?: number }) {
  * Two phone outlines. `both`: both ring. `split`: the first has hung up
  * (crossed screen), the second still rings.
  */
+/**
+ * Wireframe of the app's ringing screen — the phone, the caller's lines and
+ * the home bar — drawn in stage px and centred on the slide. Its three
+ * circles (avatar, two call buttons) are not drawn here: they are the
+ * Spotlight's bars in their opening state (`heroSeeds={APP_WIRE.circles}`),
+ * so they can spring out into the bars. `top` is where the blob rests.
+ */
+export const APP_WIRE = (() => {
+  const w = 270
+  const h = 536
+  const x = 640 - w / 2
+  const y = 360 - h / 2
+  return {
+    x,
+    y,
+    w,
+    h,
+    top: { x: 640, y },
+    circles: [
+      { x: 640, y: y + 190, r: 44 },
+      { x: 640 - 62, y: y + 430, r: 32 },
+      { x: 640 + 62, y: y + 430, r: 32 },
+    ],
+  }
+})()
+
+export function AppWire() {
+  const { x, y, w, h } = APP_WIRE
+  const cx = 640
+  return (
+    <svg className="appwire" viewBox="0 0 1280 720" fill="none" aria-hidden="true">
+      <rect x={x} y={y} width={w} height={h} rx="34" />
+      <rect x={x + 10} y={y + 10} width={w - 20} height={h - 20} rx="26" opacity="0.5" />
+      <rect x={cx - 45} y={y + 20} width="90" height="11" rx="5.5" />
+      {/* the caller's two lines: they go with the avatar once it has left as a ring */}
+      <g className="appwire__caller">
+        <rect x={cx - 80} y={y + 258} width="160" height="12" rx="6" />
+        <rect x={cx - 50} y={y + 286} width="100" height="10" rx="5" opacity="0.6" />
+      </g>
+      <rect x={cx - 34} y={y + 504} width="68" height="8" rx="4" opacity="0.5" />
+    </svg>
+  )
+}
+
 export function Phones({ state = 'both' }: { state?: 'both' | 'split' }) {
   const phone = (x: number, ringing: boolean, hung: boolean) => (
     <g transform={`translate(${x} 0)`}>
@@ -1710,6 +2064,7 @@ export const mdxComponents = {
   Stop,
   Act,
   Munch,
+  Unfold,
   Pick,
   Tiles,
   Tile,
@@ -1717,6 +2072,7 @@ export const mdxComponents = {
   Checklist,
   Check,
   Phones,
+  AppWire,
   Deadline,
   List,
   Item,

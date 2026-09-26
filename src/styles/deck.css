@@ -567,7 +567,7 @@
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.05);
   overflow: hidden;
-  transition: background-color 0.4s ease, border-color 0.4s ease, padding 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: background-color 0.4s ease, border-color 0.4s ease, border-width 0.4s ease, padding 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 /* Bento cards are positioned by their slot and spring between slots. */
 .card--placed {
@@ -777,9 +777,58 @@
 }
 .spotlight__box {
   position: absolute;
+  top: 0;
   left: 0;
   border-radius: 28px;
   color: var(--paper);
+}
+/* the bars live in the same coordinate space as the box, and wait out the
+   opening view */
+.spotlight__bars {
+  position: absolute;
+  inset: 0;
+}
+/* opening view: the box is the whole slide and the wireframe sits on it,
+   under the blob */
+.spotlight__hero {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+/* in the opening view the blob is a smaller light resting on the phone; it
+   eases back to the box's size as the box shrinks */
+.spotlight .orb__glow {
+  transition: width 0.5s ease, height 0.5s ease, margin 0.5s ease;
+}
+.spotlight__box--full .orb__glow {
+  width: 340px;
+  height: 340px;
+  margin: -170px 0 0 -170px;
+}
+/* a bar in the opening view is one of the wireframe's circles: the same
+   outline as the line art, nothing inside. On the first click it springs
+   into its slot and its content fades in. */
+.spotlight .card.card--seed {
+  padding: 0;
+  background: transparent;
+  border: 2.5px solid rgba(255, 255, 255, 0.62);
+}
+.spotlight .card.card--seed .card__inner {
+  opacity: 0;
+}
+.appwire {
+  width: 100%;
+  height: 100%;
+  display: block;
+  stroke: rgba(255, 255, 255, 0.62);
+  stroke-width: 2.5;
+}
+/* the caller's lines fade as the circles leave the phone, and come back with them */
+.appwire__caller {
+  transition: opacity 0.45s ease;
+}
+.unfold--open .appwire__caller {
+  opacity: 0;
 }
 /* the box is painted by the skin: it reaches 16px past the bar side and a
    clip-path cuts the rounded box plus the tail notch out of it */
@@ -2104,6 +2153,79 @@
 .stop__body {
   margin-top: -8px;
   font-size: 21px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* ---------------------------------------------------------------- unfold --- */
+/* One page: the hero shrinks up, its circles spring down into rings on a
+   line, the blob lights them. Layers: hero 1 · line 2 · lamp 3 · rings 4. */
+.unfold {
+  position: absolute;
+  inset: 0;
+  color: var(--paper);
+}
+.unfold__hero {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  will-change: transform;
+}
+/* the blob is a small light here: it rests on the hero, then on each ring */
+.unfold .orb__glow {
+  width: 340px;
+  height: 340px;
+  margin: -170px 0 0 -170px;
+}
+.unfold__path {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+/* folded, a ring is one of the wireframe's circles: same stroke, nothing inside */
+.unfold__ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.62);
+  display: grid;
+  place-items: center;
+}
+.unfold__n {
+  font-family: var(--font-eyebrow);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+/* centred by `left`, not by a transform — motion owns this element's transform (its y) */
+.unfold__label {
+  position: absolute;
+  top: 100%;
+  left: calc(50% - 190px);
+  width: 380px;
+  margin-top: 18px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.unfold__title {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.unfold__body {
+  font-size: 19px;
   line-height: 1.3;
   color: rgba(255, 255, 255, 0.78);
 }

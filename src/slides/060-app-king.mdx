@@ -1,11 +1,19 @@
 ---
+layout: full
 notes: |
-  Spotlight, box on the right this time. The app starts everything: without
-  its tokens nobody can reach the device. Three bars, one click each.
+  Opens full-slide: the app's own screen as a wireframe on the gradient, the
+  orb resting on top of the phone. First click: the phone shrinks up out of
+  the way, the orb riding along on top of it, and its three circles — avatar,
+  the two call buttons — drop into three rings along the bottom. From the
+  next click the orb leaves the phone and lights them one per click. The app
+  starts everything: without its tokens nobody can reach the device. Four
+  clicks.
 ---
 
-<Spotlight box="right" title="The app is the king.">
-  <Card at={1} n="01" title="Emits a push token" detail="The OS hands the app a push token — FCM on Android, APNs on iOS. Nobody else can get one for this device." />
-  <Card at={2} n="02" title="Obtains a vendor token" detail="The app signs in with the vendor and gets an access token for this user on this device." />
-  <Card at={3} n="03" title="Pushes the token to the vendor" detail="It registers the push token with the vendor. From now on the vendor can wake this phone." />
-</Spotlight>
+import { APP_WIRE } from '../deck/mdxComponents'
+
+<Unfold hero={<AppWire />} seeds={APP_WIRE.circles} orbAt={APP_WIRE.top}>
+  <Stop title="Emits push token" />
+  <Stop title="Obtains vendor token" />
+  <Stop title="Send push to vendor" />
+</Unfold>
