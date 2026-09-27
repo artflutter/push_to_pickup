@@ -115,7 +115,12 @@ export function branchFrame(p: number, x: number) {
 }
 
 const mix = (a: number, b: number, t: number) => a + (b - a) * t
-const EXIT = { x: 560, y: -220 }
+const CATCH_START = 0.54
+const PINNED = 0.58
+const PIN = { x: 640, y: 680 }
+const TENSION_SCALE = 0.18
+const APEX = 0.93
+const EXIT = { x: 560, y: -360 }
 const FALL_START = 1.06
 const LAND = 1.4
 const BOUNCE_END = 1.58
@@ -128,8 +133,9 @@ function pulledOrb(p: number) {
 
 /**
  * The line finishes at 1; the same clock continues through the orb's landing.
- * Pulling happens in world coordinates. At the fork it launches in stage
- * coordinates, so the settling camera cannot drag its flight or resting spot.
+ * Pulling happens in world coordinates. Before the fork the orb catches on
+ * the screen's bottom edge and compresses as the arrow pulls away. Everything
+ * from that catch onward uses stage coordinates, independent of the camera.
  */
 export function vendorOrbFrame(p: number) {
   const transfer = smooth((p - 0.02) / 0.06)
@@ -138,45 +144,48 @@ export function vendorOrbFrame(p: number) {
   if (p < STEM_END) {
     const orb = pulledOrb(p)
     const direction = Math.cos(orb.angle * Math.PI / 180) ** 2
-    const tension = smooth((p - 0.04) / 0.12)
+    const pull = smooth((p - 0.04) / 0.12)
+    const caught = smooth((p - CATCH_START) / (PINNED - CATCH_START))
+    const tension = smooth((p - PINNED) / (STEM_END - PINNED))
     return {
       ...base,
-      x: orb.x + camera.x,
-      y: orb.y + camera.y,
-      sx: 1 + tension * (0.24 * direction - 0.08),
-      sy: 1 + tension * (0.16 - 0.24 * direction),
+      x: mix(orb.x + camera.x, PIN.x, caught),
+      y: mix(orb.y + camera.y, PIN.y, caught),
+      scale: mix(PULL_SCALE, TENSION_SCALE, tension),
+      sx: mix(1 + pull * (0.24 * direction - 0.08), mix(1, 0.86, tension), caught),
+      sy: mix(1 + pull * (0.16 - 0.24 * direction), mix(1, 0.72, tension), caught),
     }
   }
-  if (p < 0.93) {
-    const t = clamp((p - STEM_END) / (0.93 - STEM_END))
-    const launch = pulledOrb(STEM_END)
-    const atFork = pushCamera(STEM_END)
+  // One uninterrupted growth curve starts on release and reaches full size
+  // on landing. Squash only compresses it, so no axis exceeds the final form.
+  const growth = clamp((p - STEM_END) / (LAND - STEM_END))
+  const flight = { ...base, scale: mix(TENSION_SCALE, 1, 1 - (1 - growth) ** 1.4) }
+  if (p < APEX) {
+    const t = clamp((p - STEM_END) / (APEX - STEM_END))
     const stretch = Math.sin(Math.PI * t)
     return {
-      ...base,
-      x: mix(launch.x + atFork.x, EXIT.x, smooth(t)),
-      y: mix(launch.y + atFork.y, EXIT.y, 1 - (1 - t) ** 2),
-      sx: 1 - 0.08 * (1 - t) - 0.18 * stretch,
-      sy: 1 + 0.16 * (1 - t) + 0.35 * stretch,
+      ...flight,
+      x: mix(PIN.x, EXIT.x, smooth(t)),
+      y: mix(PIN.y, EXIT.y, 1 - (1 - t) ** 2),
+      sx: mix(0.86, 1, smooth(t)) - 0.12 * stretch,
+      sy: mix(0.72, 1, smooth(t / 0.2)),
     }
   }
   if (p < FALL_START) {
-    return { ...base, x: mix(EXIT.x, PUSH_HOME.x, smooth((p - 0.93) / (FALL_START - 0.93))), y: EXIT.y }
+    return { ...flight, x: mix(EXIT.x, PUSH_HOME.x, smooth((p - APEX) / (FALL_START - APEX))), y: EXIT.y }
   }
   if (p < LAND) {
     const t = clamp((p - FALL_START) / (LAND - FALL_START))
-    return { ...base, x: PUSH_HOME.x, y: mix(EXIT.y, PUSH_HOME.y, t * t), sx: 1 - 0.1 * t, sy: 1 + 0.22 * t }
+    return { ...flight, x: PUSH_HOME.x, y: mix(EXIT.y, PUSH_HOME.y, t * t), sx: 1 - 0.08 * Math.sin(Math.PI * t) }
   }
   if (p >= PUSH_END) return { ...base, ...PUSH_HOME, scale: 1 }
   const bounce = clamp((p - LAND) / (BOUNCE_END - LAND))
   const seconds = (p - LAND) * PUSH_ARROW_DURATION
   const squash = Math.cos(seconds * 26) * Math.exp(-seconds * 8)
   return {
-    ...base,
+    ...flight,
     x: PUSH_HOME.x,
     y: PUSH_HOME.y - 4 * 46 * bounce * (1 - bounce),
-    scale: mix(PULL_SCALE, 1, smooth((p - LAND) / (PUSH_END - LAND))),
-    sx: 1 + 0.3 * squash,
-    sy: 1 - 0.34 * squash,
+    sy: 1 - 0.28 * Math.abs(squash),
   }
 }
