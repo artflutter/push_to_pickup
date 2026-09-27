@@ -2313,6 +2313,10 @@
   overflow: hidden;
   pointer-events: none;
 }
+.ball-viewport {
+  position: absolute;
+  inset: 0;
+}
 .ball {
   position: absolute;
   top: 0;

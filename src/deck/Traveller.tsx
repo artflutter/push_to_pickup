@@ -59,6 +59,8 @@ const ball = {
   sy: motionValue(1),
   opacity: motionValue(0),
 }
+/** The outgoing slide's top edge, so its orb cannot spill onto the slide above. */
+const ballClipTop = motionValue(0)
 
 /** lights-out layer a slide can draw (`<OrbLaunch>` on 010) */
 const lights = motionValue(0)
@@ -138,6 +140,7 @@ const wait = (s: number) => new Promise<void>((r) => setTimeout(r, s * 1000))
 const frame = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
 const still = () => {
   for (const v of [ball.x, ball.y, ball.sx, ball.sy, ball.scale, ball.opacity]) v.stop()
+  ballClipTop.jump(0)
 }
 
 /* ----------------------------------------------------------------- moves --- */
@@ -256,6 +259,25 @@ function rest(at: Point, scale: number, owner?: number) {
   ball.opacity.jump(1)
 }
 
+/** Leave the orb on the vendor slide as the camera travels to the UI above it. */
+export function leavePushOrbBehind(camera: MotionValue<number>, owner?: number) {
+  const t = take()
+  hooks.claimedBy = owner ?? null
+  still()
+  const worldY = ball.y.get()
+  const update = (y: number) => {
+    if (!live(t)) return
+    ball.y.set(worldY + y)
+    ballClipTop.set(y)
+  }
+  update(camera.get())
+  const off = camera.on('change', update)
+  return () => {
+    off()
+    if (live(t)) void hide()
+  }
+}
+
 /** Borrow the shared orb from the cloud; one clock keeps it on the arrow's cue. */
 export function followVendorPush(progress: MotionValue<number>, owner?: number) {
   const t = take()
@@ -312,12 +334,15 @@ export function Traveller({ slide }: { slide: number }) {
     else void hide()
   }, [slide])
   const ringScale = useTransform(iris.r, (r) => Math.max(0, r) / 700)
+  const ballClip = useTransform(ballClipTop, (y) => `inset(${y}px 0 0 0)`)
   return (
     <div className="ball-layer" aria-hidden="true">
       <motion.div className="iris-ring" style={{ x: iris.x, y: iris.y, scale: ringScale, opacity: iris.ring }} />
-      <motion.div className="ball" style={{ x: ball.x, y: ball.y, scale: ball.scale, opacity: ball.opacity }}>
-        <motion.div className="ball__glow" style={{ scaleX: ball.sx, scaleY: ball.sy }}>
-          <div className="ball__core" />
+      <motion.div className="ball-viewport" style={{ clipPath: ballClip }}>
+        <motion.div className="ball" style={{ x: ball.x, y: ball.y, scale: ball.scale, opacity: ball.opacity }}>
+          <motion.div className="ball__glow" style={{ scaleX: ball.sx, scaleY: ball.sy }}>
+            <div className="ball__core" />
+          </motion.div>
         </motion.div>
       </motion.div>
       <Vessel />

@@ -3,8 +3,8 @@ import { animate, motion, useIsPresent, useMotionValue, useTransform, type Motio
 import { useSlide } from './slideContext'
 import { APPLE, ANDROID, VendorPush } from './VendorPush'
 import { PUSH_END } from './vendorPushMotion'
-import { flightSkin } from './Traveller'
-import { CRAWL_END, alignContour, bounds, cardArrival, crawlAt, crawlCamera, crawlOutline, outlinePath, smooth, type CrawlShape, type Point, type Rect } from './uiCrawlMotion'
+import { flightSkin, leavePushOrbBehind } from './Traveller'
+import { CRAWL_END, alignContour, bounds, cardArrival, crawlAt, crawlCamera, crawlOutline, makeSnakeFrames, outlinePath, smooth, type CrawlShape, type Point, type Rect } from './uiCrawlMotion'
 
 /** The deck cues this only for the adjacent vendor → UI hand-off. */
 export const UIEntryContext = createContext(false)
@@ -33,11 +33,17 @@ function makeShape(part: number, rect: Rect): CrawlShape {
   const { x, y, width: w, height: h } = rect
   const r = 28
   const target = sample(`M ${x + r} ${y} H ${x + w - r} Q ${x + w} ${y} ${x + w} ${y + r} V ${y + h - r} Q ${x + w} ${y + h} ${x + w - r} ${y + h} H ${x + r} Q ${x} ${y + h} ${x} ${y + h - r} V ${y + r} Q ${x} ${y} ${x + r} ${y} Z`)
-  return {
-    part, points, target: alignContour(points, target),
-    center: { x: box.x + box.width / 2, y: box.y + box.height / 2 },
-    destination: { x: x + w / 2, y: y + h / 2 },
-  }
+  const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+  const destination = { x: x + w / 2, y: y + h / 2 }
+  const snake = makeSnakeFrames(points, center, destination, part)
+  // Carry the original outline along the same grid steps while it becomes a snake.
+  // Align the logo to each existing frame, preserving the snake's route and timing.
+  const departure = snake.slice(0, 4).map(frame => {
+    const at = bounds(frame)
+    const dx = at.x + at.width / 2 - center.x, dy = at.y + at.height / 2 - center.y
+    return alignContour(frame, points).map(p => ({ x: p.x + dx, y: p.y + dy }))
+  })
+  return { part, points, snake, departure, target: alignContour(snake[snake.length - 1], target) }
 }
 
 function Crawler({ clock, part, rect }: { clock: MotionValue<number>; part: number; rect: Rect }) {
@@ -49,10 +55,9 @@ function Crawler({ clock, part, rect }: { clock: MotionValue<number>; part: numb
     fill="#1c1c1f" style={{ opacity, fillOpacity: fill }} />
 }
 
-function CrawlOverlay({ clock, slots }: { clock: MotionValue<number>; slots: Rect[] }) {
+function CrawlOverlay({ clock, camera, slots }: { clock: MotionValue<number>; camera: MotionValue<number>; slots: Rect[] }) {
   const delivery = useMotionValue(PUSH_END)
   const id = useId()
-  const camera = useTransform(clock, crawlCamera)
   const donorOpacity = useTransform(clock, s => 1 - smooth((s - 0.4) / 1.2))
   const background = useTransform(clock, s => 1 - smooth((s - 1.45) / 1.3))
   const visibility = useTransform(clock, s => s >= CRAWL_END ? 'hidden' : 'visible')
@@ -79,8 +84,14 @@ export function UICrawl({ children }: { children: ReactNode }) {
   const present = useIsPresent()
   const [play] = useState(entry && !slide.static && slide.step === 0)
   const clock = useMotionValue(play ? 0 : CRAWL_END)
+  const camera = useTransform(clock, crawlCamera)
   const ref = useRef<HTMLDivElement>(null)
   const [slots, setSlots] = useState(DEFAULT_SLOTS)
+
+  useLayoutEffect(() => {
+    if (!play || slide.static || slide.active === false || !present) return
+    return leavePushOrbBehind(camera, slide.index)
+  }, [slide.static, slide.active, slide.index, present, play, camera])
 
   useLayoutEffect(() => {
     if (!play) return
@@ -113,7 +124,7 @@ export function UICrawl({ children }: { children: ReactNode }) {
   return <CrawlContext.Provider value={clock}>
     <div ref={ref} className="ui-crawl">
       {children}
-      {play && <CrawlOverlay clock={clock} slots={slots} />}
+      {play && <CrawlOverlay clock={clock} camera={camera} slots={slots} />}
     </div>
   </CrawlContext.Provider>
 }

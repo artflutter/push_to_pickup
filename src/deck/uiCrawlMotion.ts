@@ -4,6 +4,7 @@ export const CRAWL_DURATION = 3.6
 export const CRAWL_DELAYS = [0, 0.12, 0.24]
 export const CRAWL_END = CRAWL_DURATION + CRAWL_DELAYS[2] + 0.2
 const CRAWL_HEIGHT = 720
+const SNAKE_CELL = 40
 export const clamp = (n: number) => Math.max(0, Math.min(1, n))
 export const smooth = (n: number) => { const t = clamp(n); return t * t * (3 - 2 * t) }
 const mix = (a: number, b: number, t: number) => a + (b - a) * t
@@ -13,32 +14,80 @@ export const crawlAt = (seconds: number, part: number) => clamp((seconds - CRAWL
 export const crawlCamera = (seconds: number) => CRAWL_HEIGHT * smooth((seconds - 1) / 2.05)
 export const cardArrival = (seconds: number, part: number) => smooth((crawlAt(seconds, part) - 0.94) / 0.06)
 
-export type CrawlShape = { points: Point[]; center: Point; target: Point[]; destination: Point; part: number }
+export type CrawlShape = { points: Point[]; target: Point[]; snake: Point[][]; departure: Point[][]; part: number }
 
-/** Four upward inchworm strides: the body arches as its front and tail gather. */
+/** Three connected grid cells; the tail follows the head around each corner. */
+function snakeBody(route: Point[], tick: number, origin: Point): Point[] {
+  const cells = Array.from({ length: 3 }, (_, i) => tick >= i ? route[tick - i] : { x: 0, y: i - tick })
+  const key = (p: Point) => `${p.x},${p.y}`
+  const occupied = new Set(cells.map(key))
+  const edges = new Map<string, { from: Point; to: Point }>()
+  for (const cell of cells) {
+    const left = 2 * cell.x - 1, right = left + 2, top = 2 * cell.y - 1, bottom = top + 2
+    const sides = [
+      [{ x: 0, y: -1 }, { x: left, y: top }, { x: right, y: top }],
+      [{ x: 1, y: 0 }, { x: right, y: top }, { x: right, y: bottom }],
+      [{ x: 0, y: 1 }, { x: right, y: bottom }, { x: left, y: bottom }],
+      [{ x: -1, y: 0 }, { x: left, y: bottom }, { x: left, y: top }],
+    ]
+    for (const [neighbor, from, to] of sides) {
+      if (!occupied.has(key({ x: cell.x + neighbor.x, y: cell.y + neighbor.y }))) edges.set(key(from), { from, to })
+    }
+  }
+  const first = edges.values().next().value!
+  const polygon: Point[] = []
+  let edge = first
+  do {
+    polygon.push({ x: origin.x + edge.from.x * SNAKE_CELL / 2, y: origin.y + edge.from.y * SNAKE_CELL / 2 })
+    edge = edges.get(key(edge.to))!
+  } while (edge !== first)
+  const lengths = polygon.map((p, i) => Math.hypot(p.x - polygon[(i + 1) % polygon.length].x, p.y - polygon[(i + 1) % polygon.length].y))
+  const perimeter = lengths.reduce((a, b) => a + b, 0)
+  return Array.from({ length: 96 }, (_, i) => {
+    let distance = perimeter * i / 96, segment = 0
+    while (segment < lengths.length - 1 && distance >= lengths[segment]) distance -= lengths[segment++]
+    const a = polygon[segment], b = polygon[(segment + 1) % polygon.length], t = distance / lengths[segment]
+    return { x: mix(a.x, b.x, t), y: mix(a.y, b.y, t) }
+  })
+}
+
+/** Cache each game tick once; all routes go up with two horizontal detours. */
+export function makeSnakeFrames(points: Point[], center: Point, destination: Point, part: number): Point[][] {
+  const route: Point[] = [{ x: 0, y: 0 }]
+  const walk = (dx: number, dy: number, count: number) => {
+    for (let i = 0; i < count; i++) {
+      const last = route[route.length - 1]
+      route.push({ x: last.x + dx, y: last.y + dy })
+    }
+  }
+  const direction = part === 2 ? 1 : -1
+  walk(0, -1, part === 1 ? 4 : 2)
+  walk(direction, 0, 2)
+  walk(0, -1, part === 2 ? 3 : 4)
+  const targetX = Math.round((destination.x - center.x) / SNAKE_CELL)
+  const across = targetX - route[route.length - 1].x
+  walk(Math.sign(across), 0, Math.abs(across))
+  const targetY = Math.round((destination.y - CRAWL_HEIGHT - center.y) / SNAKE_CELL)
+  walk(0, -1, route[route.length - 1].y - targetY)
+  const origin = { x: center.x, y: center.y - SNAKE_CELL }
+  const frames = route.map((_, tick) => snakeBody(route, tick, origin))
+  frames[0] = alignContour(points, frames[0])
+  return frames
+}
+
+/** Classic Snake movement: one grid cell per tick, with right-angle turns. */
 export function crawlOutline(seconds: number, shape: CrawlShape): Point[] {
   const u = crawlAt(seconds, shape.part)
-  const t = clamp((u - 0.08) / 0.7)
-  const phase = t * Math.PI * 8
-  const travel = t - Math.sin(phase) / (Math.PI * 8)
-  const detach = smooth(u / 0.12)
+  const t = clamp((u - 0.1) / 0.68)
+  const tick = Math.min(shape.snake.length - 1, Math.floor(t * (shape.snake.length - 1) + 1e-8))
+  // The first step carries the intact logo piece; it reshapes over the next three.
+  const detach = smooth((t * (shape.snake.length - 1) - 1) / 3)
+  const departure = shape.departure[tick] ?? shape.snake[tick]
   const morph = smooth((u - 0.8) / 0.2)
-  const arch = Math.sin(phase / 2) ** 2 * (1 - morph)
-  const rotation = (shape.part === 0 ? -41 : 0) * Math.PI / 180 * detach
-  const cos = Math.cos(rotation), sin = Math.sin(rotation)
-  const direction = shape.part === 2 ? 1 : -1
-  const center = {
-    x: mix(shape.center.x, shape.destination.x, smooth(t)) + direction * 28 * Math.sin(Math.PI * travel),
-    y: mix(shape.center.y, shape.destination.y - CRAWL_HEIGHT, travel),
-  }
-  const halfLength = shape.part === 0 ? 48 : 61
-  return shape.points.map((point, i) => {
-    const dx = point.x - shape.center.x, dy = point.y - shape.center.y
-    const along = -(dx * sin + dy * cos)
-    const across = dx * cos - dy * sin
+  return departure.map((point, i) => {
     const body = {
-      x: center.x + across * (1 + 0.12 * arch) + direction * 27 * arch * Math.max(0, 1 - (along / halfLength) ** 2),
-      y: center.y - along * (1 - 0.38 * arch),
+      x: mix(point.x, shape.snake[tick][i].x, detach),
+      y: mix(point.y, shape.snake[tick][i].y, detach),
     }
     return {
       x: mix(body.x, shape.target[i].x, morph),
