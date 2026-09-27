@@ -5,6 +5,8 @@ import { BALLOON_DESTINATION, BALLOON_DURATION, BALLOON_TIMING, FLIGHT_HEIGHT, b
 
 /** The phone and vendor occupy one world; only its camera moves. */
 export const flightCamera = motionValue(0)
+/** Slide 070's outgoing push carries the diagram and its shared cloud together. */
+export const vendorCamera = { x: motionValue(0), y: motionValue(0) }
 export const flightSkin = motionValue('linear-gradient(214.375deg, var(--blue) 40%, #4a5cff 100%)')
 
 export function FlightBackdrop({ skin }: { skin: MotionValue<string> }) {
@@ -730,6 +732,7 @@ export async function vesselHide(returnToPhone = false) {
 
 /** the outline, its rigging, the light inside and the name — drawn once by the deck, inside the ball layer */
 function Vessel() {
+  const cameraY = useTransform([flightCamera, vendorCamera.y], ([flight, vendor]: number[]) => flight + vendor)
   const cloudScale = useTransform([ves.scale, ves.shape], ([scale, shape]: number[]) =>
     scale * (1 - 0.3 * Math.max(0, Math.min(1, shape - 1))),
   )
@@ -758,7 +761,7 @@ function Vessel() {
   const glowR = useTransform(ves.shape, [0, 1, 2], GLOW_R)
   const callVisibility = useTransform([ves.label, callOpacity], ([label, call]: number[]) => label * call)
   return (
-    <motion.div className="vessel__camera" style={{ y: flightCamera }}>
+    <motion.div className="vessel__camera" style={{ x: vendorCamera.x, y: cameraY }}>
       <motion.svg className="vessel__tether" viewBox="0 0 1280 720" style={{ opacity: rig, stroke: stringStroke }} aria-hidden="true">
         <motion.path d={string} />
       </motion.svg>
