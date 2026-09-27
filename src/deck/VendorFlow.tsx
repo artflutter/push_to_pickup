@@ -13,8 +13,8 @@ const paths = [
 /** One exchange, progressively annotated; the opening cloud is the same traveller. */
 export function VendorFlow({ steps }: { steps: string[] }) {
   const slide = useSlide()
-  useState(() => slide.register(4))
-  const step = slide.static ? 4 : Math.min(slide.step, 4)
+  useState(() => slide.register(5))
+  const step = slide.static ? 4 : Math.max(0, Math.min(slide.step - 1, 4))
   const active = Math.max(0, step - 1)
   return (
     <div className="vendor-flow" aria-hidden={step === 0}>

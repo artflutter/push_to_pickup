@@ -552,6 +552,8 @@ const ves = {
   tether: motionValue(0),
 }
 const launchClock = motionValue(0)
+const callOpacity = motionValue(0)
+const callRotation = motionValue(0)
 let detachLaunch: (() => void) | null = null
 
 const vstate = {
@@ -754,6 +756,7 @@ function Vessel() {
   /* The light and the outline share the same path throughout the morph. */
   const glowY = useTransform(ves.shape, [0, 1, 2], GLOW_Y.map((v) => VC + v))
   const glowR = useTransform(ves.shape, [0, 1, 2], GLOW_R)
+  const callVisibility = useTransform([ves.label, callOpacity], ([label, call]: number[]) => label * call)
   return (
     <motion.div className="vessel__camera" style={{ y: flightCamera }}>
       <motion.svg className="vessel__tether" viewBox="0 0 1280 720" style={{ opacity: rig, stroke: stringStroke }} aria-hidden="true">
@@ -775,6 +778,14 @@ function Vessel() {
             <motion.circle cx={VC} cy={glowY} r={glowR} fill="url(#vessel-light)" stroke="none" />
           </motion.g>
           <motion.path d={d} />
+          <motion.g style={{ opacity: callVisibility }}>
+            <g transform="translate(228.4 161.8) scale(2.4)" fill="none" stroke="var(--paper)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <motion.g style={{ rotate: callRotation, transformBox: 'fill-box', originX: 0.5, originY: 0.5 }}>
+              <path d="M 5 3 H 9 L 11 8 L 8 10 Q 10 15 15 17 L 17 14 L 22 16 V 20 Q 22 22 19 22 Q 4 19 3 6 Q 3 3 5 3 Z" />
+              </motion.g>
+              <path d="M 15 3 Q 21 3 21 9 M 15 -1 Q 25 -1 25 9" />
+            </g>
+          </motion.g>
         </motion.svg>
         <motion.div className="vessel__label" style={{ opacity: ves.label }}>
           Vendor
@@ -787,14 +798,14 @@ function Vessel() {
 /**
  * Slide 070's opening beat: the camera follows 060's balloon up to the cloud,
  * the slide's own content waiting under it
- * (`.slide--cloud`). The first click parks the cloud in the corner and lets
- * the content in; `until` is the last step that keeps it on screen.
+ * (`.slide--cloud`). A separate click reveals the ringing phone before the
+ * cloud moves into the diagram; `until` is the last step on screen.
  */
 export function CloudIn({
   at = BALLOON_DESTINATION,
   park = { x: 1104, y: 104 },
   parkScale = 0.38,
-  until = 4,
+  until = 5,
 }: {
   at?: Point
   park?: Point
@@ -814,13 +825,26 @@ export function CloudIn({
     if (slide.static || slide.active === false) return
     const was = seen.current
     seen.current = slide.step
-    slideOf(anchor.current)?.classList.toggle('slide--cloud', slide.step === 0)
+    slideOf(anchor.current)?.classList.toggle('slide--cloud', slide.step <= 1)
+    callRotation.jump(0)
     if (slide.step === 0) {
+      callOpacity.jump(0)
       if (vstate.inFlight) void cloudArrive(at, slide.index)
       else if (was != null && was > 0) void cloudHome(at, slide.index)
       else cloudRest(at, slide.index)
+    } else if (slide.step === 1) {
+      if (was != null && was > 1) void cloudHome(at, slide.index)
+      else if (was == null) cloudRest(at, slide.index)
+      const reveal = animate(callOpacity, 1, { duration: 0.2 })
+      const shake = animate(callRotation, [0, -6, 6, -4, 4, 0], { duration: 0.55, delay: 0.2, ease: 'easeInOut' })
+      let cancelled = false
+      void shake.then(() => {
+        if (!cancelled && was === 0) slide.advance?.()
+      })
+      return () => { cancelled = true; reveal.stop(); shake.stop() }
     } else if (slide.step <= until) {
-      if (was === 0) void cloudPark(park, parkScale, slide.index)
+      callOpacity.jump(1)
+      if (was != null && was <= 1) void cloudPark(park, parkScale, slide.index)
       else cloudParkRest(park, parkScale, slide.index)
     } else void vesselHide()
     // eslint-disable-next-line react-hooks/exhaustive-deps
