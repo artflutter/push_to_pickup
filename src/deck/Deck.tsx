@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
+import { useLayoutEffect } from 'react'
 import { SlideView, Stage } from './Slide'
 import { useDeck } from './useDeck'
 import { slides } from './slides'
 import { Overview } from './Overview'
-import { Traveller, useIrisClip, useReveal } from './Traveller'
+import { Traveller, flightCamera, flightSkin, useIrisClip, useReveal } from './Traveller'
+import { FLIGHT_HEIGHT } from './balloonMotion'
 
 const EASE = [0.22, 0.61, 0.36, 1] as const
 type Reveal = { target: number } | null
@@ -19,6 +21,33 @@ const slideMotion = {
     r ? { opacity: 0, transition: { duration: 0.25, delay: 0.9 } } : { opacity: 0, y: -12, transition: { duration: 0.26, ease: EASE } },
 }
 
+const appIndex = slides.findIndex((s) => s.id === '060-app-king')
+const vendorIndex = slides.findIndex((s) => s.id === '070-vendor')
+
+/** Both scenes keep their DOM and state. There is no page transition between them. */
+function FlightScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
+  const atApp = deck.slide === appIndex
+  useLayoutEffect(() => {
+    flightCamera.jump(atApp ? 0 : FLIGHT_HEIGHT)
+    // Set the camera only when entering this world from elsewhere in the deck.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return (
+    <motion.div className="flight-scene" style={{ background: flightSkin }}>
+      <motion.div className="flight-scene__world" style={{ y: flightCamera }}>
+        <div className="flight-scene__phone" aria-hidden={!atApp}>
+          <SlideView slide={slides[appIndex]} step={atApp ? deck.step : 5} index={appIndex} active={atApp}
+            onSteps={atApp ? deck.reportSteps : undefined} onAdvance={atApp ? deck.next : undefined} />
+        </div>
+        <div className="flight-scene__vendor" aria-hidden={atApp} data-waiting={atApp || deck.step === 0}>
+          <SlideView slide={slides[vendorIndex]} step={atApp ? 0 : deck.step} index={vendorIndex} active={!atApp}
+            onSteps={atApp ? undefined : deck.reportSteps} onAdvance={atApp ? undefined : deck.next} />
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export function Deck() {
   const deck = useDeck(slides.length)
   const slide = slides[Math.min(deck.slide, slides.length - 1)]
@@ -26,6 +55,7 @@ export function Deck() {
   const reveal = useReveal()
   const irisClip = useIrisClip()
   const revealing = reveal != null && reveal.target === deck.slide
+  const inFlightScene = deck.slide === appIndex || deck.slide === vendorIndex
 
   return (
     <div
@@ -40,7 +70,7 @@ export function Deck() {
       <Stage>
         <AnimatePresence mode="sync" initial={false} custom={reveal}>
           <motion.div
-            key={slide.id}
+            key={inFlightScene ? 'app-vendor-world' : slide.id}
             className="deck__slide"
             custom={reveal}
             variants={slideMotion}
@@ -49,7 +79,8 @@ export function Deck() {
             exit="exit"
             style={revealing ? { clipPath: irisClip, zIndex: 2 } : undefined}
           >
-            <SlideView slide={slide} step={deck.step} index={deck.slide} onSteps={deck.reportSteps} onAdvance={deck.next} />
+            {inFlightScene ? <FlightScene deck={deck} /> :
+              <SlideView slide={slide} step={deck.step} index={deck.slide} onSteps={deck.reportSteps} onAdvance={deck.next} />}
           </motion.div>
         </AnimatePresence>
         <Traveller slide={deck.slide} />

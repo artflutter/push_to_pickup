@@ -51,6 +51,40 @@
   inset: 0;
 }
 
+/* 060 and 070 occupy one continuous blue world. The camera moves; the
+   phone and its rings keep their positions below the vendor. */
+.flight-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.flight-scene__world,
+.flight-scene__phone,
+.flight-scene__vendor {
+  position: absolute;
+  inset: 0;
+}
+.flight-scene__world {
+  will-change: transform;
+}
+.flight-scene__vendor {
+  top: -720px;
+  bottom: 720px;
+}
+.flight-scene .slide {
+  background: transparent;
+}
+.flight-scene .slide::after {
+  display: none;
+}
+.flight-scene .unfold > .orb,
+.flight-scene__vendor[aria-hidden='true'] {
+  visibility: hidden;
+}
+.flight-scene__vendor[data-waiting='true'] > .slide > .slide__body {
+  opacity: 0;
+}
+
 /* ---------------------------------------------------------------- slide --- */
 .slide {
   width: var(--slide-w);
@@ -2177,6 +2211,13 @@
   height: 340px;
   margin: -170px 0 0 -170px;
 }
+/* The light leaves inside the balloon; the phone and rings stay in the world. */
+.unfold .lamp {
+  transition: opacity 0.18s ease;
+}
+.unfold--away .lamp {
+  opacity: 0;
+}
 .unfold__path {
   position: absolute;
   inset: 0;
@@ -2299,4 +2340,482 @@
     rgba(255, 85, 231, 0) 100%
   );
   will-change: transform, opacity;
+}
+
+/* ---------------------------------------------------------------- vessel --- */
+/* The wireframe that carries the light from one slide to the next: the stop's
+   ring on 060 becomes a balloon, the balloon becomes the vendor's cloud on
+   070 (Traveller.tsx draws it, one outline, three shapes). The glow inside is
+   the orb's own pink; the outline around it is a wireframe like the app's
+   phone — the orb itself never gets a skin. */
+.vessel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  will-change: transform, opacity;
+}
+.vessel__camera {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.vessel__wire {
+  position: absolute;
+  inset: 0;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.72);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* The same straight connector travels with the balloon through the camera pan. */
+.vessel__tether {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* the name, inside the cloud */
+.vessel__label {
+  position: absolute;
+  inset: 100px 0 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: 58px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--paper);
+}
+/* while the cloud holds the slide, the slide's own content waits under it */
+.slide--cloud > .slide__body {
+  opacity: 0;
+}
+.slide[data-slide='070-vendor'] > .slide__body {
+  transition: opacity 0.4s ease;
+}
+
+/* ---------------------------------------------------------- vendor (070) --- */
+/* Five looks for the vendor slide, walked one after another by <Variants>
+   (vendor.tsx). Layers as on the route: base 0 · lines 2 · lamp 3 · text 4. */
+.variants,
+.variants__pane {
+  position: absolute;
+  inset: 0;
+}
+.variants__tag {
+  position: absolute;
+  z-index: 20;
+  top: 22px;
+  right: 26px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+.vendor {
+  position: absolute;
+  inset: 0;
+  color: var(--paper);
+}
+.vendor__title {
+  position: absolute;
+  z-index: 5;
+  top: 72px;
+  left: 72px;
+  margin: 0;
+}
+/* the original slide as it was — the default layout's padding, title and body */
+.vendor--plain {
+  padding: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+/* the poster look, as on the route */
+.vendor__poster {
+  position: absolute;
+  z-index: 5;
+  left: 64px;
+  bottom: 70px;
+  max-width: 900px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 150px;
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+.vendor__word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+.vendor__path {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+/* the blob is a small light on these slides, like on 060; the belt and the
+   hand-off change its size on the way, hence the transition */
+.vendor .orb__glow {
+  width: 340px;
+  height: 340px;
+  margin: -170px 0 0 -170px;
+  transition: width 0.5s ease, height 0.5s ease, margin 0.5s ease;
+}
+
+/* a ring on a spot: number inside, label under (dial, belt) */
+.vring {
+  position: absolute;
+  z-index: 4;
+  width: var(--ring);
+  height: var(--ring);
+  margin: calc(var(--ring) / -2) 0 0 calc(var(--ring) / -2);
+}
+.vring__ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  display: grid;
+  place-items: center;
+}
+.vring__n {
+  font-family: var(--font-eyebrow);
+  font-weight: 700;
+  font-size: calc(var(--ring) * 0.19);
+  letter-spacing: -0.02em;
+}
+.vring__label {
+  position: absolute;
+  top: 100%;
+  left: calc(50% - 200px);
+  width: 400px;
+  margin-top: 22px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vring__title {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.vring__body {
+  font-size: 19px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* stairs: a hairline tread each, the text under it, lit as the orb lands */
+.stairs__row {
+  position: absolute;
+  z-index: 4;
+  right: 72px;
+}
+.stairs__tread {
+  height: 1px;
+}
+.stairs__text {
+  padding: 16px 0 0 55px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stairs__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.stairs__n {
+  flex: none;
+  width: 50px;
+  text-align: center;
+  font-family: var(--font-eyebrow);
+  font-weight: 400;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.85);
+}
+.stairs__title {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.stairs__body {
+  padding-left: 60px;
+  font-size: 19px;
+  line-height: 1.32;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* dial: the title in the hub, rings on the track, the list to the right */
+.dial__track {
+  stroke: rgba(255, 255, 255, 0.2);
+}
+.dial__hub {
+  position: absolute;
+  z-index: 4;
+  left: 380px;
+  top: 420px;
+  transform: translate(-50%, -50%);
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+.dial__row {
+  position: absolute;
+  z-index: 4;
+  left: 720px;
+  width: 488px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dial__row--last {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+}
+.dial__title {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.dial__body {
+  font-size: 19px;
+  line-height: 1.32;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* ledger: numbered rows on the left, the thing in hand in a ring on the right */
+.ledger__rows {
+  position: absolute;
+  z-index: 4;
+  left: 72px;
+  top: 190px;
+  width: 540px;
+  display: flex;
+  flex-direction: column;
+}
+.ledger__row {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  column-gap: 12px;
+  align-items: baseline;
+  padding: 13px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  opacity: 0.32;
+  transition: opacity 0.4s ease;
+}
+.ledger__row:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+}
+.ledger__row.is-on {
+  opacity: 1;
+}
+.ledger__row.is-past {
+  opacity: 0.7;
+}
+.ledger__n {
+  font-family: var(--font-eyebrow);
+  font-weight: 400;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.85);
+}
+.ledger__title {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.ledger__body {
+  grid-column: 2;
+  margin-top: 4px;
+  font-size: 18px;
+  line-height: 1.32;
+  color: rgba(255, 255, 255, 0.78);
+}
+.ledger__lamp {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  will-change: transform;
+}
+.ledger__ring {
+  position: absolute;
+  z-index: 4;
+  left: 960px;
+  top: 400px;
+  width: 300px;
+  height: 300px;
+  margin: -150px 0 0 -150px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+.ledger__thing {
+  position: absolute;
+  inset: 0;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+/* belt: the poster's big glow, then the route's size once the belt is out */
+.belt__world {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  will-change: transform;
+}
+.vendor--belt .orb__glow {
+  width: 1500px;
+  height: 1500px;
+  margin: -750px 0 0 -750px;
+}
+.vendor--belt .orb__sheen {
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+  transition: width 0.5s ease, height 0.5s ease, margin 0.5s ease;
+}
+.vendor--belt.is-open .orb__glow {
+  width: 820px;
+  height: 820px;
+  margin: -410px 0 0 -410px;
+}
+.vendor--belt.is-open .orb__sheen {
+  width: 360px;
+  height: 360px;
+  margin: -180px 0 0 -180px;
+}
+
+/* hand-off: line art like the app wireframe; the orb shrinks inside the rack */
+.hand__art {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.62);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.hand__art .hand__hair {
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 1;
+}
+.vendor--hand.in-rack .orb__glow {
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+}
+.hand__eyebrow {
+  position: absolute;
+  z-index: 4;
+  font-family: var(--font-eyebrow);
+  font-weight: 700;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+}
+.hand__gate {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-eyebrow);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.hand__row {
+  position: absolute;
+  z-index: 4;
+  padding: 14px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.hand__row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.hand__n {
+  flex: none;
+  font-family: var(--font-eyebrow);
+  font-weight: 400;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.85);
+}
+.hand__row .hand__n {
+  width: 36px;
+}
+.hand__title {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.hand__body {
+  font-size: 15px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.78);
+}
+.hand__body--row {
+  padding-left: 46px;
+}
+.hand__gap {
+  position: absolute;
+  z-index: 4;
+  width: 216px;
+  margin-left: -108px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hand__gap--above {
+  bottom: 296px;
+}
+.hand__gap--below {
+  top: 458px;
 }

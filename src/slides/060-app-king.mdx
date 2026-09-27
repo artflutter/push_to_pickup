@@ -6,13 +6,16 @@ notes: |
   the way, the orb riding along on top of it, and its three circles — avatar,
   the two call buttons — drop into three rings along the bottom. From the
   next click the orb leaves the phone and lights them one per click. The app
-  starts everything: without its tokens nobody can reach the device. Four
-  clicks.
+  starts everything: without its tokens nobody can reach the device. On the
+  last click the third ring — send push to vendor — becomes a balloon and
+  carries the light upwards on a straight string. The camera follows it
+  into the vendor's area of the same blue scene; the phone and rings stay
+  below, with no page cut or re-entry from the bottom. Five clicks.
 ---
 
 import { APP_WIRE } from '../deck/mdxComponents'
 
-<Unfold hero={<AppWire />} seeds={APP_WIRE.circles} orbAt={APP_WIRE.top}>
+<Unfold launch hero={<AppWire />} seeds={APP_WIRE.circles} orbAt={APP_WIRE.top}>
   <Stop title="Emits push token" />
   <Stop title="Obtains vendor token" />
   <Stop title="Send push to vendor" />

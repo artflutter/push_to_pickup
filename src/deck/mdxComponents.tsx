@@ -11,11 +11,11 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { AnimatePresence, motion, useMotionTemplate, useMotionValue, useMotionValueEvent, useSpring, useTransform, type MotionValue } from 'motion/react'
+import { animate, AnimatePresence, motion, useMotionTemplate, useMotionValue, useMotionValueEvent, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { useSlide } from './slideContext'
-import { OrbLaunch } from './Traveller'
+import { balloonLaunch, balloonRest, CloudIn, FlightBackdrop, OrbLaunch, vesselHide } from './Traveller'
 
 export function Cols({ children, n = 2, gap = 40 }: { children: ReactNode; n?: number; gap?: number }) {
   return (
@@ -884,6 +884,7 @@ export function Unfold({
   shrink = 0.5,
   y = 470,
   ring = 120,
+  launch = false,
   children,
 }: {
   hero: ReactNode
@@ -900,6 +901,8 @@ export function Unfold({
   y?: number
   /** ring diameter */
   ring?: number
+  /** one more step after the last ring: it becomes a balloon and carries the light off the top, turning the page on its way */
+  launch?: boolean
   children: ReactNode
 }) {
   const slide = useSlide()
@@ -907,15 +910,18 @@ export function Unfold({
     .filter(isValidElement)
     .map((c) => c.props as StopProps)
   const n = stops.length
-  /* one click to unfold, then one per ring */
+  const last = n + 1 + (launch ? 1 : 0)
+  /* one click to unfold, then one per ring, then the launch */
   useState(() => {
-    for (let i = 1; i <= n + 1; i++) slide.register(i)
+    for (let i = 1; i <= last; i++) slide.register(i)
     return null
   })
-  const step = slide.static ? n + 1 : Math.min(n + 1, Math.max(0, slide.step))
+  const step = slide.static ? n + 1 : Math.min(last, Math.max(0, slide.step))
   const open = step > 0
   /* how many rings the orb has been sent to */
-  const active = Math.max(0, step - 1)
+  const active = Math.min(n, Math.max(0, step - 1))
+  /* the last step: the ring the orb sits on lifts off as a balloon and takes the light with it */
+  const away = launch && step === last
   const xs = spread(n)
   /* where the blob's resting spot on the hero ends up once the hero has shrunk */
   const orbAtShrunk = { x: heroTo.x + (orbAt.x - heroAt.x) * shrink, y: heroTo.y + (orbAt.y - heroAt.y) * shrink }
@@ -934,11 +940,37 @@ export function Unfold({
     })
   }, [active])
 
+  /* The launch step: the ring becomes a balloon and the camera follows it
+     into the vendor's area. Both scenes remain mounted in <FlightScene>.
+     Re-entered from the next slide it only shows its rest state — balloon on
+     the ring, no replay and above all no auto-advance. */
+  const alive = useRef(true)
+  useEffect(() => {
+    alive.current = true
+    return () => { alive.current = false }
+  }, [])
+  const seen = useRef<number | null>(null)
+  const latest = useRef({ advance: slide.advance, index: slide.index })
+  latest.current = { advance: slide.advance, index: slide.index }
+  useEffect(() => {
+    if (slide.static || slide.active === false || !launch) return
+    const was = seen.current
+    seen.current = step
+    const at = { x: xs[n - 1], y }
+    const from = { x: (xs[n - 2] ?? xs[n - 1] - 400) + ring / 2 + 14, y }
+    if (step === last) {
+      if (was === last - 1) void balloonLaunch(at, from, latest.current.advance, () => alive.current)
+      else balloonRest(at, from, latest.current.index)
+    } else if (was === last) void vesselHide(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, slide.static, slide.active, launch])
+
   return (
-    <div className={`unfold${open ? ' unfold--open' : ''}`}>
+    <div className={`unfold${open ? ' unfold--open' : ''}${away ? ' unfold--away' : ''}`}>
       <Orb target={target} glow={false}>
         {(orb) => (
           <>
+            {launch && <FlightBackdrop skin={orb.skin} />}
             <Reach orb={orb} x={active > 0 ? xs[active - 1] : null} y={y} onReach={() => setReached((a) => a.map((v, k) => (k === active - 1 ? true : v)))} skip={!!reachedRef.current[active - 1]} />
             <motion.div
               className="unfold__hero"
@@ -958,9 +990,10 @@ export function Unfold({
               animate={{ opacity: open && reached[0] ? 1 : 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              {xs.slice(1).map((x, i) => (
-                <Segment key={i} orb={orb} a={xs[i]} b={x} y={y} inset={ring / 2 + 14} />
-              ))}
+              {xs.slice(1).map((x, i) =>
+                away && i === n - 2 ? null : <Segment key={i} orb={orb} a={xs[i]} b={x} y={y} inset={ring / 2 + 14} />,
+              )}
+              {/* Traveller takes this connector with the ring, keeping one string across the page turn. */}
             </motion.svg>
             {/* one orb: the sheen moves with the glow here, not ahead of it */}
             <Lamp orb={orb} together />
@@ -975,6 +1008,8 @@ export function Unfold({
                 open={open}
                 aim={i === active - 1}
                 held={i < active - 1 || (i === active - 1 && reached[i])}
+                /* the balloon has taken this ring: the circle and its number go, the title stays lit */
+                gone={away && i === n - 1}
                 /* binary, like the 020 bullets: 01 · 10 · 11 */
                 n={s.n ?? (i + 1).toString(2).padStart(2, '0')}
                 title={s.title}
@@ -1010,6 +1045,7 @@ function UnfoldStop({
   open,
   aim,
   held,
+  gone = false,
   n,
   title,
   body,
@@ -1022,6 +1058,8 @@ function UnfoldStop({
   open: boolean
   aim: boolean
   held: boolean
+  /** the balloon has taken this ring's circle: outline and number fade, the label stays */
+  gone?: boolean
   n: ReactNode
   title: ReactNode
   body?: ReactNode
@@ -1037,11 +1075,17 @@ function UnfoldStop({
     const d = Math.hypot(gx - x, gy - y)
     return Math.max(0, Math.min(1, 1 - (d - 60) / 260))
   })
+  /* the circle itself: it fades out when the balloon takes it */
+  const solid = useMotionValue(1)
+  useEffect(() => {
+    animate(solid, gone ? 0 : 1, { duration: gone ? 0.18 : 0.3, ease: 'easeOut' })
+  }, [gone, solid])
   /* the same outline as the wireframe while folded; brightens with the light once open */
-  const border = useTransform(lit, (v) => `rgba(255, 255, 255, ${0.62 + 0.38 * v})`)
-  const halo = useTransform(lit, (v) => `0 0 0 10px rgba(255, 255, 255, ${0.14 * v})`)
+  const border = useTransform([lit, solid], ([v, f]: number[]) => `rgba(255, 255, 255, ${(0.62 + 0.38 * v) * f})`)
+  const halo = useTransform([lit, solid], ([v, f]: number[]) => `0 0 0 10px rgba(255, 255, 255, ${0.14 * v * f})`)
   /* number and title come with the light: nothing on a ring the orb has not reached */
-  const text = useTransform(lit, (v) => v)
+  const text = useTransform([lit, solid], ([v, f]: number[]) => v * f)
+  const label = useTransform(lit, (v) => v)
   const rise = useTransform(lit, (v) => 12 * (1 - v))
   const box =
     open || !seed
@@ -1052,7 +1096,7 @@ function UnfoldStop({
       <motion.span className="unfold__n" style={{ opacity: text }}>
         {n}
       </motion.span>
-      <motion.div className="unfold__label" style={{ opacity: text, y: rise }}>
+      <motion.div className="unfold__label" style={{ opacity: label, y: rise }}>
         <div className="unfold__title">{title}</div>
         {body && <div className="unfold__body">{body}</div>}
       </motion.div>
@@ -2060,6 +2104,7 @@ export const mdxComponents = {
   Lamp,
   Fog,
   OrbLaunch,
+  CloudIn,
   Route,
   Stop,
   Act,

@@ -149,7 +149,98 @@ the same page"); a phone drawn without its frame; a content block inside
 the phone; the blob centred on the phone instead of on top of it.
 `<Spotlight>` still has the `hero` / `heroOrb` / `heroSeeds` opening view
 and cards still take a `seed` rect from the Bento context — built for this
-slide, now unused anywhere.
+slide, now unused anywhere. Five clicks now, not four: the fifth is the
+balloon (below).
+
+## The balloon: 060 hands the push to 070
+
+The last step of 060 (a fifth click, `<Unfold launch>`): the ring the orb has
+just lit — `Send push to vendor` — becomes a balloon, gathers the light inside
+it and rises off the top edge, swaying; the page turns while it is still
+rising (`slide.advance` from the choreography, as on 010). 070 picks it up:
+the balloon comes back in from below — the camera followed it up — settles,
+and the envelope spreads into the vendor's cloud with the light and
+"The vendor." inside. The slide's own content waits under that beat
+(`.slide--cloud`) and comes in on the next click, which parks the cloud small
+in the top-right corner (`<CloudIn>`).
+
+- It is one wireframe, the **vessel**, drawn by `<Traveller>` above the slide
+  layer like the orb, so it survives the slide change (`Vessel` in
+  Traveller.tsx, `.vessel` in deck.css). `shape` runs 0 ring · 1 balloon ·
+  2 cloud and the outline is rebuilt from the lerped points each frame.
+- The shapes are **shipped icons**, not drawings: the balloon is Tabler's
+  `balloon` (its body; its string too, for once it is free) and the cloud is
+  Material Symbols' `cloud`. `fitPath` walks a path and takes its points, so
+  what ends up on screen is the icon itself. The ring is the stop's own 120 px
+  circle. Hand-drawn shapes were tried twice and were slop both times.
+- The ring **inflates**: the balloon swells upward out of the stop's circle
+  with its knot left on the line, and only then rises. It does not move while
+  it fills.
+- The line between the last two stops **is the string** (`<Tether>` in
+  mdxComponents, fed by the exported `vessel` motion values). It stays tied to
+  the stop before, runs dead straight while the balloon fills, and only sags
+  and trails once the balloon climbs. It lets go as the page turns, and from
+  there the balloon carries the string that comes with its icon.
+- The orb rule is intact: the pink glow rides **inside** the outline (clipped
+  to it, `<clipPath>`), never around it.
+- Rejected on the way here: two hand-drawn clouds (a potato and a blob), a
+  pink ball behind the outline instead of light clipped inside it, a hot-air
+  balloon with a basket ("не аэростат — детский шарик"), and the line simply
+  retracting instead of becoming the string.
+
+## Slide 070: the vendor — five looks, one to be picked
+
+`layout: full`. The slide opens on the original look — the vertical
+`<Rail>` of four `<Milestone>`s, one `<F>` each, inside `.vendor--plain`
+(the default layout's padding and title) — the owner asked for it back
+("bring back the original, do not remove the 5 options"). After it come
+five other looks for the same four steps (`src/deck/vendor.tsx`, imported
+into the MDX), all shown one after another through `<Variants>`: each
+`<Variant steps={4} tag="…" label="…">` owns its own run of clicks (its
+step 0 … 4), the click after a look's last step switches to the next look,
+and a mono tag top-right says which is up (0 · Original, A · Stairs,
+B · Dial, C · Ledger, D · Belt, E · Hand-off). `#/4/5` lands on A,
+`#/4/10` on B, `#/4/15` on C, `#/4/20` on D, `#/4/25` on E. The five were
+shown on 2026-09-26 and the owner's verdict was "miserable slop" — none is
+approved, do not build on them without direction. Once the owner picks a
+look, delete the others, `<Variants>` and the tag. On 2026-09-27 the owner
+asked for the text on A–E to be "unreadable abracadabra": they carry
+gibberish of the same lengths (`blah` in the MDX — title, steps, the
+ledger's things, the hand-off's machine labels) so only their form reads;
+the original keeps the real words. The real steps live in option 0.
+The steps live once in the MDX (`export const steps`) and go in as
+`stops`; every look also takes `<Stop title>body</Stop>` children.
+
+All five keep the deck's rules: blue base with the one pink glow (340 px
+here, like 060), binary numbers `01 · 10 · 11 · 100`, text that comes with
+the light, a stop held lit once the orb has reached it, nothing blinking on
+the way back. The orb never has blue in it.
+
+- **A · Stairs** — the call bleeds in over the top edge, then drops tread to
+  tread down a staircase of hairlines, each starting further right; the
+  tread brightens and its text lights as the orb lands at its number.
+- **B · Dial** — "The vendor." sits in the hub; the four rings sit on a
+  faint track around it. The orb leaves the hub for the top ring and orbits
+  clockwise on a polar spring, the arc drawing behind it; the list on the
+  right lights with the rings (rows dim at 32 % until then).
+- **C · Ledger** — numbered rows on the left, step-lit like the 020 bars;
+  a 300 px ring on the right holds the thing in hand — `a call` → `a phone
+  number` → `a user` → `a push token` → `a push` — swapping word by word
+  (the 040 poster motion, 28 px). The orb sits in the ring, breathes on
+  every swap and leaves through the right edge on the last step; the ring
+  goes dark behind it.
+- **D · Belt** — opens on the 150 px poster with the roaming orb (the 040
+  look), then the title goes to the corner and rings on a belt (160 px,
+  460 px pitch) slide under the orb, which holds the centre: the world
+  moves, the light stays. Rings light by their real on-screen distance;
+  only the ring under the orb carries its body (passed rings keep number
+  and title, so labels never collide at the 460 px pitch).
+- **E · Hand-off** — three wireframes on one line (2.5 px, 62 % white, like
+  the app wireframe): the vendor's cloud, your server as a rack with the two
+  lookup rows inside, the gateway (`APNs · FCM`). Steps 01 and 100 are
+  written on the lines between machines and come with the line as it
+  draws; 10 and 11 are the rack rows. The orb flies cloud → rack top,
+  shrinks to 200 px to walk the rows, grows back and flies to the gateway.
 
 ## The travelling orb (Traveller.tsx)
 

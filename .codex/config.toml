@@ -1,0 +1,4 @@
+[mcp_servers.integrated-browser-mcp]
+command = "node"
+args = ["/Users/vasilich/.integrated-browser-mcp/mcp-server.mjs"]
+cwd = "/Users/vasilich/IdeaProjects/push_to_pickup"

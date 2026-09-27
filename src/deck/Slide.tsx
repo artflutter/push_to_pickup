@@ -16,15 +16,18 @@ interface SlideViewProps {
   onAdvance?: () => void
   /** Position of this slide in the deck, for cues that address the next slide. */
   index?: number
+  /** A neighbouring scene stays mounted without issuing traveller cues. */
+  active?: boolean
 }
 
-export function SlideView({ slide, step, onSteps, frozen = false, onAdvance, index }: SlideViewProps) {
+export function SlideView({ slide, step, onSteps, frozen = false, onAdvance, index, active = true }: SlideViewProps) {
   const counter = useRef(0)
 
   const runtime = useMemo<SlideRuntime>(
     () => ({
       step,
       static: frozen,
+      active,
       advance: frozen ? undefined : onAdvance,
       index: frozen ? undefined : index,
       register: (at?: number) => {
@@ -36,7 +39,7 @@ export function SlideView({ slide, step, onSteps, frozen = false, onAdvance, ind
         return counter.current
       },
     }),
-    [step, frozen, onAdvance, index],
+    [step, frozen, onAdvance, index, active],
   )
 
   // Fragments register during the first render pass, so the count is final by
@@ -44,7 +47,7 @@ export function SlideView({ slide, step, onSteps, frozen = false, onAdvance, ind
   useEffect(() => {
     onSteps?.(counter.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slide.id])
+  }, [slide.id, onSteps])
 
   const layout = slide.layout ?? 'default'
 
