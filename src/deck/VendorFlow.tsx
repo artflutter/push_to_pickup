@@ -1,37 +1,45 @@
 import { useEffect, useId, useState } from 'react'
-import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react'
+import { AnimatePresence, animate, motion, useIsPresent, useMotionValue, useTransform } from 'motion/react'
 import { useSlide } from './slideContext'
-import { vendorCamera } from './Traveller'
-import { pushCamera, VendorPush } from './VendorPush'
+import { followVendorPush, vendorCamera } from './Traveller'
+import { VendorPush } from './VendorPush'
+import { PUSH_ARROW_DURATION, PUSH_END, clamp, pushCamera } from './vendorPushMotion'
 
 const ease = [0.22, 0.61, 0.36, 1] as const
 const paths = [
   'M 436 202 H 774',
   'M 774 324 H 436',
-  'M 300 340 V 420',
 ]
 
 /** One exchange, progressively annotated; the opening cloud is the same traveller. */
 export function VendorFlow({ steps }: { steps: string[] }) {
   const slide = useSlide()
+  const present = useIsPresent()
   useState(() => slide.register(5))
   const step = slide.static ? 4 : Math.max(0, Math.min(slide.step - 1, 4))
   const active = Math.max(0, step - 1)
   const arrowId = useId()
   const marker = `url(#${arrowId})`
-  const delivery = useMotionValue(step >= 4 ? 1 : 0)
+  const delivery = useMotionValue(step >= 4 ? PUSH_END : 0)
   const cameraX = useTransform(delivery, (p) => pushCamera(p).x)
   const cameraY = useTransform(delivery, (p) => pushCamera(p).y)
+  const tokens = useTransform(delivery, (p) => 1 - clamp(p / 0.05))
 
   useEffect(() => {
-    if (slide.static) return
+    if (slide.static || !present) return
     if (slide.active === false) { delivery.jump(0); return }
-    const animation = animate(delivery, step >= 4 ? 1 : 0, {
-      duration: step >= 4 ? 3.2 : 1.35,
+    // Re-entering at the deck's last-step sentinel shows the settled pose.
+    if (slide.step > 5) delivery.jump(PUSH_END)
+    // The arrow holds at 1 while the orb finishes its flight. Back starts
+    // retracting immediately, even if the orb had already reached home.
+    if (step < 4) delivery.set(Math.min(delivery.get(), 1))
+    const releaseOrb = step >= 4 ? followVendorPush(delivery, slide.index) : undefined
+    const animation = animate(delivery, step >= 4 ? PUSH_END : 0, {
+      duration: step >= 4 ? (PUSH_END - delivery.get()) * PUSH_ARROW_DURATION : 1.35,
       ease: step >= 4 ? 'linear' : ease,
     })
-    return () => animation.stop()
-  }, [step, slide.static, slide.active, delivery])
+    return () => { animation.stop(); releaseOrb?.() }
+  }, [step, slide.step, slide.static, slide.active, slide.index, present, delivery])
 
   useEffect(() => {
     if (slide.static) return
@@ -82,13 +90,15 @@ export function VendorFlow({ steps }: { steps: string[] }) {
             <text x="612" y="306" textAnchor="middle" className="vendor-flow__packet">route to SIP</text>
           </motion.g>
           <motion.g initial={false} animate={{ opacity: step >= 3 ? 1 : 0, y: step >= 3 ? 0 : -8 }} transition={{ duration: 0.5 }}>
-            <rect x="195" y="412" width="240" height="56" rx="10" className="vendor-flow__rule" />
-            <rect x="187" y="420" width="240" height="56" rx="10" className="vendor-flow__rule" />
-            <rect x="179" y="428" width="240" height="56" rx="10" className="vendor-flow__outline" />
-            <text x="300" y="463" textAnchor="middle" className="vendor-flow__lookup">push tokens</text>
-            <text x="300" y="515" textAnchor="middle" className="vendor-flow__packet">registered devices</text>
+            <motion.g style={{ opacity: tokens }}>
+              <rect x="195" y="412" width="240" height="56" rx="10" className="vendor-flow__rule" />
+              <rect x="187" y="420" width="240" height="56" rx="10" className="vendor-flow__rule" />
+              <rect x="179" y="428" width="240" height="56" rx="10" className="vendor-flow__outline" />
+              <text x="300" y="463" textAnchor="middle" className="vendor-flow__lookup">push tokens</text>
+              <text x="300" y="515" textAnchor="middle" className="vendor-flow__packet">registered devices</text>
+            </motion.g>
           </motion.g>
-          <VendorPush progress={delivery} marker={marker} />
+          <VendorPush progress={delivery} marker={marker} shown={step >= 3} />
         </motion.g>
       </svg>
       <AnimatePresence mode="wait" initial={false}>

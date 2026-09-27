@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { animate, motion, motionValue, useTransform, type MotionValue, type ValueAnimationTransition } from 'motion/react'
 import { useSlide } from './slideContext'
 import { BALLOON_DESTINATION, BALLOON_DURATION, BALLOON_TIMING, FLIGHT_HEIGHT, balloonFrame, balloonString, toStage } from './balloonMotion'
+import { PUSH_HOME, vendorOrbFrame } from './vendorPushMotion'
 
 /** The phone and vendor occupy one world; only its camera moves. */
 export const flightCamera = motionValue(0)
@@ -255,6 +256,30 @@ function rest(at: Point, scale: number, owner?: number) {
   ball.opacity.jump(1)
 }
 
+/** Borrow the shared orb from the cloud; one clock keeps it on the arrow's cue. */
+export function followVendorPush(progress: MotionValue<number>, owner?: number) {
+  const t = take()
+  still()
+  hooks.claimedBy = owner ?? null
+  const update = (p: number) => {
+    if (!live(t)) return
+    const pose = vendorOrbFrame(p)
+    ball.x.set(pose.x)
+    ball.y.set(pose.y)
+    ball.scale.set(pose.scale)
+    ball.sx.set(pose.sx)
+    ball.sy.set(pose.sy)
+    ball.opacity.set(pose.opacity)
+    ves.glow.set(pose.cloudGlow)
+  }
+  update(progress.get())
+  const off = progress.on('change', update)
+  return () => {
+    off()
+    if (live(t)) void hide()
+  }
+}
+
 /* ----------------------------------------------------------------- layer --- */
 /**
  * The orb itself plus the iris rim. Rendered once by the deck, inside the
@@ -307,7 +332,7 @@ const slideOf = (el: HTMLElement | null) => el?.closest<HTMLElement>('.slide') ?
 const SMALL = 0.7
 const HOME = 1
 /** bottom-left corner of the 020 gradient box, where that box's own blob rests */
-const CORNER: Point = { x: 72, y: 648 }
+const CORNER: Point = PUSH_HOME
 
 /**
  * Slide 010, two steps that chain by themselves on one click:
