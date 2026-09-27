@@ -673,14 +673,14 @@ export function cloudRest(at: Point, owner?: number) {
   flightCamera.jump(FLIGHT_HEIGHT)
 }
 
-/** the cloud gives the slide back: it drifts into the corner and drops its name */
+/** The cloud moves into the diagram with its name still inside. */
 export async function cloudPark(to: Point, scale: number, owner?: number) {
   const t = vtake()
   vstill()
   vstate.inFlight = false
   vstate.exit = null
   vstate.claimedBy = owner ?? null
-  void run(ves.label, 0, { duration: 0.3, ease: 'easeIn' })
+  void run(ves.label, 1, { duration: 0.3, ease: 'easeOut' })
   await Promise.all([
     run(ves.x, to.x, { duration: 0.9, ease: EASE }),
     run(ves.y, to.y - FLIGHT_HEIGHT, { duration: 0.9, ease: EASE }),
@@ -700,7 +700,7 @@ export function cloudParkRest(to: Point, scale: number, owner?: number) {
   vstate.inFlight = false
   vstate.exit = null
   vstate.claimedBy = owner ?? null
-  vput({ x: to.x, y: to.y - FLIGHT_HEIGHT }, 2, { scale, label: 0 })
+  vput({ x: to.x, y: to.y - FLIGHT_HEIGHT }, 2, { scale, label: 1 })
   flightCamera.jump(FLIGHT_HEIGHT)
 }
 

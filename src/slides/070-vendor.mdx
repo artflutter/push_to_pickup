@@ -1,9 +1,19 @@
 ---
 layout: full
 notes: |
-  The camera follows 060's balloon into the vendor's cloud.
-  The string retracts as the cloud forms, with "Vendor" inside.
-  This is the only state of this slide; the next click advances to slide 6.
+  The camera follows the balloon into the Vendor cloud. Four clicks trace
+  the incoming-call webhook, the SIP route, registered push tokens, and
+  the push through APNs or FCM.
 ---
 
-<CloudIn />
+import { VendorFlow } from '../deck/VendorFlow'
+
+export const steps = [
+  'Vendor notifies your backend of an incoming call via webhook.',
+  'Your backend maps the called number to a user and routes the call to their SIP address.',
+  'Vendor looks up the user’s registered push tokens.',
+  'Vendor sends the push via APNs or FCM.',
+]
+
+<CloudIn park={{ x: 300, y: 250 }} parkScale={0.8} />
+<VendorFlow steps={steps} />

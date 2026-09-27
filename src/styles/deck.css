@@ -2819,3 +2819,18 @@
 .hand__gap--below {
   top: 458px;
 }
+
+/* The vendor exchange stays in one scene, with one caption per click. */
+.vendor-flow { position: absolute; inset: 0; color: var(--paper); }
+.vendor-flow__map { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.vendor-flow__map text { fill: currentColor; }
+.vendor-flow__outline { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-opacity: .65; }
+.vendor-flow__rule { fill: none; stroke: currentColor; stroke-width: 1; stroke-opacity: .28; }
+.vendor-flow__name { font-size: 34px; font-weight: 600; letter-spacing: -.03em; }
+.vendor-flow__lookup { font-size: 25px; }
+.vendor-flow__server-icon { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.vendor-flow__server-link { fill: none; stroke: currentColor; stroke-width: 1.25; stroke-opacity: .5; stroke-linecap: round; stroke-linejoin: round; }
+.vendor-flow__packet { font-size: 18px; fill: currentColor; opacity: .72; }
+.vendor-flow__gateway { font-size: 30px; font-weight: 500; letter-spacing: -.02em; }
+.vendor-flow__caption { position: absolute; left: 80px; right: 80px; top: 560px; display: flex; align-items: flex-start; gap: 28px; border-top: 1px solid rgba(255,255,255,.28); padding-top: 22px; }
+.vendor-flow__caption p { margin: 0; max-width: 980px; font-size: 32px; line-height: 1.25; letter-spacing: -.02em; }
