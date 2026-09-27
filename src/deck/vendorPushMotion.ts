@@ -125,10 +125,23 @@ const FALL_START = 1.06
 const LAND = 1.4
 const BOUNCE_END = 1.58
 
-/** The arrow takes up the slack, then tows the orb along the very same path. */
+/** Trail the tip with enough slack to flutter across the line like a flag. */
 function pulledOrb(p: number) {
-  const lag = mix(TOKEN_TIP.y - 255.6, 80, smooth((p - 0.08) / 0.24))
-  return stemPoint(stemDistance(p) - lag)
+  const flutter = smooth((p - 0.08) / 0.1) * (1 - smooth((p - 0.5) / (PINNED - 0.5)))
+  const phase = (p - 0.08) * 2 * Math.PI / 0.15
+  const lag = mix(TOKEN_TIP.y - 255.6, 180, smooth((p - 0.08) / 0.24))
+    + 16 * flutter * Math.sin(phase - 0.8)
+  const point = stemPoint(stemDistance(p) - lag)
+  const angle = point.angle * Math.PI / 180
+  // A broad wave carries the orb; a smaller ripple keeps the tow from
+  // reading as regular hops on a floor. The normal turns with the arrow.
+  const lift = flutter * (24 + 48 * Math.sin(phase) + 10 * Math.sin(2 * phase - 0.7))
+  return {
+    ...point,
+    x: point.x + Math.sin(angle) * lift,
+    y: point.y - Math.cos(angle) * lift,
+    ripple: flutter * Math.sin(phase + 0.7),
+  }
 }
 
 /**
@@ -152,8 +165,8 @@ export function vendorOrbFrame(p: number) {
       x: mix(orb.x + camera.x, PIN.x, caught),
       y: mix(orb.y + camera.y, PIN.y, caught),
       scale: mix(PULL_SCALE, TENSION_SCALE, tension),
-      sx: mix(1 + pull * (0.24 * direction - 0.08), mix(1, 0.86, tension), caught),
-      sy: mix(1 + pull * (0.16 - 0.24 * direction), mix(1, 0.72, tension), caught),
+      sx: mix(1 + pull * (0.24 * direction - 0.08) + 0.08 * orb.ripple, mix(1, 0.86, tension), caught),
+      sy: mix(1 + pull * (0.16 - 0.24 * direction) - 0.08 * orb.ripple, mix(1, 0.72, tension), caught),
     }
   }
   // One uninterrupted growth curve starts on release and reaches full size
