@@ -2,10 +2,19 @@
 title: The UI.
 notes: |
   iOS has one door. Android has two — your own screen, or the system call stack.
+  Arriving from the vendor, the Apple leaf and both Android arms detach and
+  inchworm upward, with the camera following them into this slide above.
+  The leaf opens into CallKit, the left arm into
+  Activity, and the right arm into Telecom Manager. Each keeps its own outline
+  through the crawl and morph. The next three clicks highlight the cards.
 ---
 
+import { UICrawl, UIArrival } from '../deck/UICrawl'
+
+<UICrawl>
 <Tiles cols="1fr 1fr" rows="1fr 1fr">
-  <Tile area="1 / 1 / 3 / 2"><Card at={1} size="lg" n="iOS" title="CallKit">The system call screen. There is no other way in.</Card></Tile>
-  <Tile area="1 / 2 / 2 / 3"><Card at={2} size="lg" n="Android" title="Activity">Your own full‑screen ringing screen.</Card></Tile>
-  <Tile area="2 / 2 / 3 / 3"><Card at={3} size="lg" n="Android" title="Telecom Manager">The system call stack, via a ConnectionService.</Card></Tile>
+  <Tile area="1 / 1 / 3 / 2"><UIArrival part={0}><Card at={1} size="lg" n="iOS" title="CallKit">The system call screen. There is no other way in.</Card></UIArrival></Tile>
+  <Tile area="1 / 2 / 2 / 3"><UIArrival part={1}><Card at={2} size="lg" n="Android" title="Activity">Your own full‑screen ringing screen.</Card></UIArrival></Tile>
+  <Tile area="2 / 2 / 3 / 3"><UIArrival part={2}><Card at={3} size="lg" n="Android" title="Telecom Manager">The system call stack, via a ConnectionService.</Card></UIArrival></Tile>
 </Tiles>
+</UICrawl>

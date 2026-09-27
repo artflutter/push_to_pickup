@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useLayoutEffect } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { SlideView, Stage } from './Slide'
 import { useDeck } from './useDeck'
 import { slides } from './slides'
 import { Overview } from './Overview'
 import { Traveller, flightCamera, flightSkin, useIrisClip, useReveal } from './Traveller'
 import { FLIGHT_HEIGHT } from './balloonMotion'
+import { UIEntryContext } from './UICrawl'
 
 const EASE = [0.22, 0.61, 0.36, 1] as const
 type Reveal = { target: number } | null
@@ -23,6 +24,7 @@ const slideMotion = {
 
 const appIndex = slides.findIndex((s) => s.id === '060-app-king')
 const vendorIndex = slides.findIndex((s) => s.id === '070-vendor')
+const uiIndex = slides.findIndex((s) => s.id === '090-ui')
 
 /** Both scenes keep their DOM and state. There is no page transition between them. */
 function FlightScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
@@ -50,6 +52,9 @@ function FlightScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
 
 export function Deck() {
   const deck = useDeck(slides.length)
+  const previousSlide = useRef(deck.slide)
+  const enteringUI = previousSlide.current === vendorIndex && deck.slide === uiIndex && deck.step === 0
+  useLayoutEffect(() => { previousSlide.current = deck.slide }, [deck.slide])
   const slide = slides[Math.min(deck.slide, slides.length - 1)]
   const progress = slides.length > 1 ? deck.slide / (slides.length - 1) : 1
   const reveal = useReveal()
@@ -74,13 +79,15 @@ export function Deck() {
             className="deck__slide"
             custom={reveal}
             variants={slideMotion}
-            initial="enter"
+            initial={enteringUI ? false : 'enter'}
             animate="show"
             exit="exit"
             style={revealing ? { clipPath: irisClip, zIndex: 2 } : undefined}
           >
-            {inFlightScene ? <FlightScene deck={deck} /> :
-              <SlideView slide={slide} step={deck.step} index={deck.slide} onSteps={deck.reportSteps} onAdvance={deck.next} />}
+            <UIEntryContext.Provider value={enteringUI}>
+              {inFlightScene ? <FlightScene deck={deck} /> :
+                <SlideView slide={slide} step={deck.step} index={deck.slide} onSteps={deck.reportSteps} onAdvance={deck.next} />}
+            </UIEntryContext.Provider>
           </motion.div>
         </AnimatePresence>
         <Traveller slide={deck.slide} />

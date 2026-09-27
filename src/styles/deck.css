@@ -1789,6 +1789,35 @@
 }
 
 /* ------------------------------------------------------------ tiles/hops --- */
+.ui-crawl,
+.ui-crawl__slot {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+}
+.ui-crawl {
+  flex-direction: column;
+}
+.ui-crawl__overlay,
+.ui-crawl__blue,
+.ui-crawl__wire {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ui-crawl__overlay {
+  z-index: 5;
+  overflow: hidden;
+}
+.ui-crawl__wire {
+  color: white;
+  fill: currentColor;
+  overflow: visible;
+}
+
 /* Free-form card mosaic and the chevron pipeline share the cards' spot slab. */
 .tiles,
 .hops {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { useIsPresent } from 'motion/react'
 import { useFitScale } from './useFitScale'
 import { MDXProvider } from '@mdx-js/react'
 import { SlideContext, type SlideRuntime } from './slideContext'
@@ -22,6 +23,7 @@ interface SlideViewProps {
 
 export function SlideView({ slide, step, onSteps, frozen = false, onAdvance, index, active = true }: SlideViewProps) {
   const counter = useRef(0)
+  const present = useIsPresent()
 
   const runtime = useMemo<SlideRuntime>(
     () => ({
@@ -45,9 +47,10 @@ export function SlideView({ slide, step, onSteps, frozen = false, onAdvance, ind
   // Fragments register during the first render pass, so the count is final by
   // the time effects run. Report it so the deck knows when to advance.
   useEffect(() => {
-    onSteps?.(counter.current)
+    // Going back during an exit reuses this slide; restore its own step count.
+    if (present) onSteps?.(counter.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slide.id, onSteps])
+  }, [slide.id, onSteps, present])
 
   const layout = slide.layout ?? 'default'
 
