@@ -103,3 +103,16 @@ export function balloonString(
     return { x: mix(tied.x, free.x, released), y: mix(tied.y, free.y, released) }
   })
 }
+
+/** Clawd catches the loose end as it pulls away from the previous ring. */
+export function balloonPassenger(points: Point[], from: Point, shape: number) {
+  const grip = points[points.length - 1]
+  const previous = points[points.length - 3]
+  const pulled = Math.hypot(grip.x - from.x, grip.y - from.y)
+  const angle = Math.atan2(previous.y - grip.y, previous.x - grip.x) * 180 / Math.PI
+  return {
+    ...grip,
+    rot: Math.max(-75, Math.min(25, angle)),
+    opacity: smooth(pulled / 28) * (1 - smooth((shape - 1.8) / 0.2)),
+  }
+}

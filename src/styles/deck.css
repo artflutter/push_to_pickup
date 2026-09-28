@@ -2573,6 +2573,10 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.vessel__clawd {
+  fill: #fff;
+  stroke: none;
+}
 /* the name, inside the cloud */
 .vessel__label {
   position: absolute;

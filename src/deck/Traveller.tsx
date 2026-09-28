@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { animate, motion, motionValue, useTransform, type MotionValue, type ValueAnimationTransition } from 'motion/react'
 import { useSlide } from './slideContext'
-import { BALLOON_DESTINATION, BALLOON_DURATION, BALLOON_TIMING, FLIGHT_HEIGHT, balloonFrame, balloonString, toStage } from './balloonMotion'
+import { BALLOON_DESTINATION, BALLOON_DURATION, BALLOON_TIMING, FLIGHT_HEIGHT, balloonFrame, balloonPassenger, balloonString, toStage } from './balloonMotion'
+import { CLAWD } from './ClaudeMark'
 import { PUSH_HOME, vendorOrbFrame } from './vendorPushMotion'
 
 /** The phone and vendor occupy one world; only its camera moves. */
@@ -787,7 +788,7 @@ function Vessel() {
     scale * (1 - 0.3 * Math.max(0, Math.min(1, shape - 1))),
   )
   const d = useTransform(ves.shape, (s: number) => outline(shapeAt(s)))
-  const string = useTransform([ves.x, ves.y, cloudScale, ves.rot, ves.shape, ves.tether, launchClock], ([x, y, scale, rot, shape, tether, seconds]: number[]) => {
+  const stringPoints = useTransform([ves.x, ves.y, cloudScale, ves.rot, ves.shape, ves.tether, launchClock], ([x, y, scale, rot, shape, tether, seconds]: number[]) => {
     const pose = { x, y, scale, rot, shape }
     const points = balloonString(pose, tether, vstate.tetherFrom, RING, BALLOON, seconds, vstate.launchFrom)
     if (shape > 1) {
@@ -796,11 +797,14 @@ function Vessel() {
       const anchor = toStage(contour[contour.length / 2], pose)
       const head = points[0]
       const remaining = Math.max(0, 2 - shape)
-      return points.map((p, i) => `${i ? 'L' : 'M'} ${(anchor.x + (p.x - head.x) * remaining).toFixed(1)} ${(anchor.y + (p.y - head.y) * remaining).toFixed(1)}`).join(' ')
+      return points.map(p => ({ x: anchor.x + (p.x - head.x) * remaining, y: anchor.y + (p.y - head.y) * remaining }))
     }
-    return points.map((p, i) => `${i ? 'L' : 'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
-  },
-  )
+    return points
+  })
+  const string = useTransform(stringPoints, points => points.map((p, i) => `${i ? 'L' : 'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '))
+  const passenger = useTransform(() => balloonPassenger(stringPoints.get(), vstate.tetherFrom, ves.shape.get()))
+  const passengerTransform = useTransform(passenger, p => `translate(${p.x}px, ${p.y}px) rotate(${p.rot}deg)`)
+  const passengerOpacity = useTransform(passenger, p => p.opacity)
   const rig = useTransform([ves.shape, ves.opacity], ([s, o]: number[]) => o * Math.max(0, Math.min(1, (2 - s) / 0.02)))
   const stringStroke = useTransform(ves.tether, (t) => `rgba(255,255,255,${0.72 - 0.17 * t})`)
   const wireStroke = useTransform(ves.shape, [0, 1], ['rgba(255,255,255,1)', 'rgba(255,255,255,0.72)'])
@@ -814,6 +818,10 @@ function Vessel() {
     <motion.div className="vessel__camera" style={{ x: vendorCamera.x, y: cameraY }}>
       <motion.svg className="vessel__tether" viewBox="0 0 1280 720" style={{ opacity: rig, stroke: stringStroke }} aria-hidden="true">
         <motion.path d={string} />
+        <motion.g className="vessel__clawd" style={{ transform: passengerTransform, opacity: passengerOpacity, originX: 0, originY: 0, transformBox: 'view-box' }}>
+          {/* The end of the rope stays in Clawd's right hand as its body swings. */}
+          <path d={CLAWD} transform="scale(2.5) translate(-22 -12)" />
+        </motion.g>
       </motion.svg>
       <motion.div className="vessel" style={{ x: ves.x, y: ves.y, scale: cloudScale, rotate: ves.rot, opacity: ves.opacity }} aria-hidden="true">
         <motion.svg className="vessel__wire" viewBox={`0 0 ${V_BOX} ${V_BOX}`} style={{ strokeWidth: stroke, stroke: wireStroke }}>

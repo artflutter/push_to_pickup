@@ -190,6 +190,11 @@ in the top-right corner (`<CloudIn>`).
   there the balloon carries the string that comes with its icon.
 - The orb rule is intact: the pink glow rides **inside** the outline (clipped
   to it, `<clipPath>`), never around it.
+- On slide #4, the loose end pulls Clawd out of the previous ring and lifts
+  it by one hand. Use the shared white mascot from `ClaudeMark.tsx` at 2.5×.
+  Its hand follows the string's actual final point in `Traveller.tsx`, including
+  the camera motion and reeling into the cloud; do not give it a separate
+  position animation. It emerges as the end pulls free and fades into the cloud.
 - Rejected on the way here: two hand-drawn clouds (a potato and a blob), a
   pink ball behind the outline instead of light clipped inside it, a hot-air
   balloon with a basket ("не аэростат — детский шарик"), and the line simply
