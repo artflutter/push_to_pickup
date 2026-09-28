@@ -12,7 +12,14 @@ components; this file is for decisions the owner has already made.
   variant slides to present options.
 - Feedback comes as a screenshot plus a one-line directive. Change exactly
   what was pointed at, nothing next to it.
-- Verify in your own browser tab, then close it. No viewport emulation.
+- Use the workspace's VS Code Integrated Browser MCP for browser verification.
+  Before opening or navigating a tab, call `browser_status` to check that the
+  bridge is reachable and inspect its capabilities. A reachable bridge with
+  `cdp: disconnected` can still open a tab; that alone is not a failure.
+  If the bridge is unreachable, report that verification is blocked; do not
+  launch another browser or browser runtime as a fallback.
+  When reachable, verify in your own MCP-managed tab, then close it.
+  No viewport emulation.
 - Don't commit or push unless asked ("push progress" = commit everything on
   `main` and push).
 

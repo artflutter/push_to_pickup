@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { useLayoutEffect, useRef } from 'react'
 import { SlideView, Stage } from './Slide'
 import { useDeck } from './useDeck'
@@ -7,6 +7,9 @@ import { Overview } from './Overview'
 import { Traveller, flightCamera, flightSkin, useIrisClip, useReveal } from './Traveller'
 import { FLIGHT_HEIGHT } from './balloonMotion'
 import { UIEntryContext } from './UICrawl'
+import { BetweenContext } from './Between'
+import { BETWEEN_DURATION, paperAt } from './betweenMotion'
+import { PaperFold } from './PaperFold'
 
 const EASE = [0.22, 0.61, 0.36, 1] as const
 type Reveal = { target: number } | null
@@ -25,6 +28,37 @@ const slideMotion = {
 const appIndex = slides.findIndex((s) => s.id === '060-app-king')
 const vendorIndex = slides.findIndex((s) => s.id === '070-vendor')
 const uiIndex = slides.findIndex((s) => s.id === '090-ui')
+const betweenIndex = slides.findIndex((s) => s.id === '100-between')
+
+/** Fold just the printed UI; the stage and its bottom rule never deform. */
+function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
+  const atBetween = deck.slide === betweenIndex
+  const progress = useMotionValue(atBetween ? 1 : 0)
+  const source = useRef<HTMLDivElement>(null)
+  const visibility = useTransform(progress, p => paperAt(p).fold > 0 ? 'hidden' : 'visible')
+  useLayoutEffect(() => {
+    const target = atBetween ? 1 : 0
+    const animation = animate(progress, target, {
+      duration: Math.abs(target - progress.get()) * BETWEEN_DURATION,
+      ease: 'linear',
+    })
+    return () => animation.stop()
+  }, [atBetween, progress])
+  return <div className="between-scene">
+    <motion.div ref={source} className="between-scene__ui" aria-hidden={atBetween} style={{ visibility }}>
+      <SlideView slide={slides[uiIndex]} step={atBetween ? 3 : deck.step} index={uiIndex} active={!atBetween}
+        onSteps={atBetween ? undefined : deck.reportSteps} onAdvance={atBetween ? undefined : deck.next} />
+    </motion.div>
+    <PaperFold progress={progress} source={source} />
+    <BetweenContext.Provider value={progress}>
+      <div className="between-scene__next" aria-hidden={!atBetween}>
+        <SlideView slide={slides[betweenIndex]} step={atBetween ? deck.step : 0} index={betweenIndex} active={atBetween}
+          onSteps={atBetween ? deck.reportSteps : undefined} onAdvance={atBetween ? deck.next : undefined} />
+      </div>
+    </BetweenContext.Provider>
+    <div className="between-scene__rule" aria-hidden="true" />
+  </div>
+}
 
 /** Both scenes keep their DOM and state. There is no page transition between them. */
 function FlightScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
@@ -61,6 +95,7 @@ export function Deck() {
   const irisClip = useIrisClip()
   const revealing = reveal != null && reveal.target === deck.slide
   const inFlightScene = deck.slide === appIndex || deck.slide === vendorIndex
+  const inBetweenScene = deck.slide === uiIndex || deck.slide === betweenIndex
 
   return (
     <div
@@ -75,7 +110,7 @@ export function Deck() {
       <Stage>
         <AnimatePresence mode="sync" initial={false} custom={reveal}>
           <motion.div
-            key={inFlightScene ? 'app-vendor-world' : slide.id}
+            key={inFlightScene ? 'app-vendor-world' : inBetweenScene ? 'ui-between-world' : slide.id}
             className="deck__slide"
             custom={reveal}
             variants={slideMotion}
@@ -85,7 +120,7 @@ export function Deck() {
             style={revealing ? { clipPath: irisClip, zIndex: 2 } : undefined}
           >
             <UIEntryContext.Provider value={enteringUI}>
-              {inFlightScene ? <FlightScene deck={deck} /> :
+              {inFlightScene ? <FlightScene deck={deck} /> : inBetweenScene ? <BetweenScene deck={deck} /> :
                 <SlideView slide={slide} step={deck.step} index={deck.slide} onSteps={deck.reportSteps} onAdvance={deck.next} />}
             </UIEntryContext.Provider>
           </motion.div>

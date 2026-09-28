@@ -1,15 +1,24 @@
 ---
-title: Between the push and the UI.
+layout: full
 notes: |
-  The two anchors never change; the three steps in the middle light up one
-  by one. Point two is the iOS trap: you must show the call before you can
-  ask the vendor whether it is still there.
+  Coming from The UI, Push and UI fold the content like a sheet of paper.
+  The sheet buckles along creases; the background and bottom rule stay fixed.
+  Both pills keep their opening size throughout; only their horizontal position changes.
+  They then separate, paying out two garlands from behind both pills.
+  The cords start straight and sag progressively as more lamps clear the pills.
+  Both rope ends keep their attachment height; lamp size and horizontal spacing
+  stay fixed as the lamps ride the lowering cord.
+  GET VENDOR TOKEN has 14 lights; CONNECT VENDOR has 13. Spaces have no light.
+  Click through four looks in place: globes, drops, lanterns, luminous letters.
 ---
 
-<Tiles cols="0.55fr 1.6fr 0.55fr" rows="1fr 1fr 1fr">
-  <Tile area="1 / 1 / 4 / 2"><Card size="lg" tone="blue" n="From" title="Push" /></Tile>
-  <Tile area="1 / 2 / 2 / 3"><Card at={1} n="01" title="Obtain the vendor token">Without it the app cannot talk to the vendor at all.</Card></Tile>
-  <Tile area="2 / 2 / 3 / 3"><Card at={2} n="02" title="Connect to the vendor">iOS will not wait for the call status — the UI has to show first.</Card></Tile>
-  <Tile area="3 / 2 / 4 / 3"><Card at={3} n="03" title="Token in the push, or headless Flutter">A one‑time token rides in the payload — or a headless isolate fetches one.</Card></Tile>
-  <Tile area="1 / 3 / 4 / 4"><Card size="lg" tone="pink" n="To" title="UI" /></Tile>
-</Tiles>
+import { Between, Garland } from '../deck/Between'
+
+<Between>
+  <Pick>
+    <Garland look="globes" tag="A" label="Globes" />
+    <Garland look="drops" tag="B" label="Drops" />
+    <Garland look="lanterns" tag="C" label="Lanterns" />
+    <Garland look="letters" tag="D" label="Letters" />
+  </Pick>
+</Between>

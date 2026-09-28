@@ -357,6 +357,175 @@
   padding: 0;
 }
 
+/* The UI and its next slide share a stage, so the pills press the real cards. */
+.between-scene,
+.between-scene__ui,
+.between-scene__next,
+.between,
+.garland,
+.garland__svg {
+  position: absolute;
+  inset: 0;
+}
+.between-scene {
+  background: var(--gradient-deep);
+  overflow: hidden;
+}
+.between-scene__ui > .slide::after,
+.paper-fold__copy::after {
+  display: none;
+}
+.between-scene__rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  z-index: 3;
+  background: linear-gradient(90deg, var(--pink), var(--blue));
+  pointer-events: none;
+}
+.paper-fold,
+.paper-fold__camera,
+.paper-fold__sheet {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.paper-fold {
+  visibility: hidden;
+}
+.paper-fold__camera {
+  perspective: 1600px;
+  perspective-origin: center;
+}
+.paper-fold__sheet {
+  transform-style: preserve-3d;
+}
+.paper-fold__panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  transform-origin: left center;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+.paper-fold__print {
+  position: absolute;
+  width: 1280px;
+  height: 720px;
+}
+.paper-fold__copy,
+.paper-fold__copy * {
+  animation: none !important;
+  transition: none !important;
+}
+.paper-fold__shade {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.50), rgba(0, 0, 0, 0.10));
+  box-shadow: inset 1px 0 rgba(255, 255, 255, 0.22);
+}
+.paper-fold__panel:nth-child(even) .paper-fold__shade {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.17), transparent 40%, rgba(0, 0, 0, 0.12));
+}
+.between-scene__next {
+  pointer-events: none;
+}
+.between-scene__next > .slide {
+  background: transparent;
+}
+.slide[data-slide='100-between']::after {
+  display: none;
+}
+.between {
+  overflow: hidden;
+}
+.between__pill {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  width: 136px;
+  height: 620px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: white;
+  z-index: 2;
+}
+.between__pill--push {
+  background: linear-gradient(160deg, #1677c8, #064d90);
+}
+.between__pill--ui {
+  background: linear-gradient(160deg, #b42b9f, #761466);
+}
+.garland__tag {
+  position: absolute;
+  top: 24px;
+  right: 54px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1;
+}
+.garland__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.garland__row {
+  color: #cbe9ff;
+}
+.garland__row--1 {
+  color: #ffd0f7;
+}
+.garland__wire,
+.garland__drop {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+.garland__socket {
+  fill: currentColor;
+  fill-opacity: 0.48;
+  stroke: currentColor;
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+.garland__glass {
+  fill: currentColor;
+  fill-opacity: 0.1;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.garland__letter {
+  fill: #fff;
+  font-family: var(--font-eyebrow);
+  font-size: 22px;
+  font-weight: 400;
+}
+.garland__rib {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.8;
+  opacity: 0.25;
+}
+.garland--letters .garland__letter {
+  fill: currentColor;
+  font-size: 34px;
+  filter: drop-shadow(0 0 7px currentColor);
+}
+
 /* ------------------------------------------------------------- markdown --- */
 .md-h1 {
   font-size: 40px;
