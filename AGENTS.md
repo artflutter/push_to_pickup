@@ -27,11 +27,10 @@ components; this file is for decisions the owner has already made.
 
 The owner approved making `artflutter/push_to_pickup` public. Deploy automatically
 on every push to `main` at `https://artflutter.github.io/push_to_pickup/`.
-Publish only the opening slide. `npm run build:pages` uses Vite's `pages` mode,
-aliases the slide catalog to `src/deck/slides.pages.ts`, and outputs `dist/pages`
-with base `/push_to_pickup/`. A build check rejects any other MDX slide.
-Keep the two opening portrait steps. Regular dev/build still includes the full deck.
-The Pages workflow always uses `build:pages`; never publish the full-deck `dist`.
+Publish the full deck, using the same slide catalog as local development.
+The owner lifted the original opening-slide-only restriction. `npm run build:pages`
+uses Vite's `pages` mode and outputs `dist/pages` with base `/push_to_pickup/`.
+The Pages workflow always uses `build:pages` so asset paths match the hosted URL.
 
 ## Slide 010: opening portrait
 
@@ -43,6 +42,9 @@ feet aligned to the hair contour, not the circular photo border. The third
 next goes to 020.
 The overlays use the photo's 391 × 391 coordinate space; the photo asset
 stays intact. The opening slide still has no orb.
+The mustache reveal mask uses flat stroke caps and a dash gap longer than the
+whole path: zero-length round dashes painted detached dots at the curls before
+the drawing reached them. Keep the filled handlebar silhouette unchanged.
 
 ## Approved: bullets in the Spotlight box (slide 020)
 

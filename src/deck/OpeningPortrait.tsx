@@ -23,9 +23,11 @@ export function OpeningPortrait({ src, alt }: { src: string; alt: string }) {
           animate={{ opacity: mustache ? 1 : 0 }} transition={{ duration: 0.12 }}>
           {[1, -1].map((direction, i) => <g key={direction} transform={`scale(${direction} 1)`}>
             <defs>
-              <mask id={`${id}-ink-${i}`} maskUnits="userSpaceOnUse" x="-64" y="-26" width="78" height="56">
-                <motion.path d={INK_STROKE} fill="none" stroke="#fff" strokeWidth="26" strokeLinecap="round"
-                  initial={false} animate={{ pathLength: mustache ? 1 : 0 }}
+              <mask id={`${id}-ink-${i}`} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="-64" y="-26" width="78" height="56">
+                {/* A zero-length round dash paints endpoint dots, including the curl.
+                    Flat caps and a longer gap reveal only the continuous ink stroke. */}
+                <motion.path d={INK_STROKE} fill="none" stroke="#fff" strokeWidth="32" strokeLinecap="butt"
+                  initial={false} animate={{ pathLength: mustache ? 1 : 0, pathSpacing: 2 }}
                   transition={{ duration: mustache ? 0.5 : 0.2, delay: mustache ? i * 0.38 : 0, ease: 'easeInOut' }} />
               </mask>
             </defs>

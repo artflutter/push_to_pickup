@@ -1,4 +1,4 @@
-name: Deploy opening slide to Pages
+name: Deploy full deck to Pages
 
 on:
   push:

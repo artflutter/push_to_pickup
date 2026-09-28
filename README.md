@@ -12,10 +12,8 @@ npm run dev        # http://localhost:5273
 
 Public site: [artflutter.github.io/push_to_pickup](https://artflutter.github.io/push_to_pickup/).
 
-Pages publishes only the opening slide, including its two portrait animation
-steps. The rest of the deck remains available in the regular development/build
-commands. The Pages build imports only `010-title.mdx` and fails if another
-slide enters the bundle.
+Pages publishes the full deck with all slide animations, presenter mode, and
+print view. It uses the same slide catalog as local development.
 
 ```bash
 npm run build:pages   # dist/pages, based at /push_to_pickup/

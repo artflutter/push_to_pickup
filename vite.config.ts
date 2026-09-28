@@ -7,23 +7,7 @@ import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 
 export default defineConfig(({ mode }) => ({
   base: mode === 'pages' ? '/push_to_pickup/' : '/',
-  resolve: {
-    alias: mode === 'pages' ? [{
-      find: /^\.\/slides$/,
-      replacement: decodeURIComponent(new URL('./src/deck/slides.pages.ts', import.meta.url).pathname),
-    }] : [],
-  },
   plugins: [
-    {
-      name: 'pages-opening-slide-only',
-      generateBundle() {
-        if (mode !== 'pages') return
-        const slides = [...this.getModuleIds()].filter(id => /\/src\/slides\/.*\.mdx$/.test(id))
-        if (slides.length !== 1 || !slides[0].endsWith('/010-title.mdx')) {
-          this.error('The Pages build must include only 010-title.mdx.')
-        }
-      },
-    },
     {
       // MDX must run before the react plugin so JSX gets transformed + fast-refreshed
       enforce: 'pre',
