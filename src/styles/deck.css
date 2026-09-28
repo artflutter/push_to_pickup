@@ -1886,6 +1886,20 @@
   border-radius: 50%;
   display: block;
 }
+.opening-portrait > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+.opening-portrait__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
 
 .byline {
   position: absolute;

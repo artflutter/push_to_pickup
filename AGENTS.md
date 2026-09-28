@@ -23,6 +23,17 @@ components; this file is for decisions the owner has already made.
 - Don't commit or push unless asked ("push progress" = commit everything on
   `main` and push).
 
+## Slide 010: opening portrait
+
+`<OpeningPortrait>` keeps the original photo and adds two reversible steps:
+first next draws a handlebar mustache over the upper lip in two strokes;
+second next drops white Clawd onto the upper-right crown of the hair, with
+its regular two eyes, no antennae and a small settling bounce. Keep its
+feet aligned to the hair contour, not the circular photo border. The third
+next goes to 020.
+The overlays use the photo's 391 × 391 coordinate space; the photo asset
+stays intact. The opening slide still has no orb.
+
 ## Approved: bullets in the Spotlight box (slide 020)
 
 Chosen style: `bullets="numbered"` on `<Spotlight>` (per-card override is
