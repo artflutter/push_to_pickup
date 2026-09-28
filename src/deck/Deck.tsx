@@ -10,6 +10,8 @@ import { UIEntryContext } from './UICrawl'
 import { BetweenContext } from './Between'
 import { BETWEEN_DURATION, paperAt } from './betweenMotion'
 import { PaperFold } from './PaperFold'
+import { EndpointEntryContext } from './endpointContext'
+import { ENDPOINT_ENTRY_DURATION } from './endpointMotion'
 
 const EASE = [0.22, 0.61, 0.36, 1] as const
 type Reveal = { target: number } | null
@@ -29,33 +31,56 @@ const appIndex = slides.findIndex((s) => s.id === '060-app-king')
 const vendorIndex = slides.findIndex((s) => s.id === '070-vendor')
 const uiIndex = slides.findIndex((s) => s.id === '090-ui')
 const betweenIndex = slides.findIndex((s) => s.id === '100-between')
+const endpointsIndex = slides.findIndex((s) => s.id === '110-active-call')
 
-/** Fold just the printed UI; the stage and its bottom rule never deform. */
+/** The UI folds into garlands, then falling endpoints tear that same scenery apart. */
 function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
+  const atUI = deck.slide === uiIndex
   const atBetween = deck.slide === betweenIndex
-  const progress = useMotionValue(atBetween ? 1 : 0)
+  const atEndpoints = deck.slide === endpointsIndex
+  const progress = useMotionValue(atUI ? 0 : 1)
+  const collapse = useMotionValue(atEndpoints ? ENDPOINT_ENTRY_DURATION : 0)
   const source = useRef<HTMLDivElement>(null)
   const visibility = useTransform(progress, p => paperAt(p).fold > 0 ? 'hidden' : 'visible')
   useLayoutEffect(() => {
-    const target = atBetween ? 1 : 0
+    const target = atUI ? 0 : 1
     const animation = animate(progress, target, {
       duration: Math.abs(target - progress.get()) * BETWEEN_DURATION,
       ease: 'linear',
     })
     return () => animation.stop()
-  }, [atBetween, progress])
+  }, [atUI, progress])
+  useLayoutEffect(() => {
+    const target = atEndpoints ? ENDPOINT_ENTRY_DURATION : 0
+    let animation: ReturnType<typeof animate> | undefined
+    let stopWaiting = () => {}
+    const start = () => {
+      stopWaiting()
+      animation = animate(collapse, target, { duration: Math.abs(target - collapse.get()), ease: 'linear' })
+    }
+    if (atEndpoints && progress.get() < 1) {
+      stopWaiting = progress.on('change', p => { if (p >= 1) start() })
+    } else start()
+    return () => { stopWaiting(); animation?.stop() }
+  }, [atEndpoints, collapse, progress])
   return <div className="between-scene">
-    <motion.div ref={source} className="between-scene__ui" aria-hidden={atBetween} style={{ visibility }}>
-      <SlideView slide={slides[uiIndex]} step={atBetween ? 3 : deck.step} index={uiIndex} active={!atBetween}
-        onSteps={atBetween ? undefined : deck.reportSteps} onAdvance={atBetween ? undefined : deck.next} />
+    <motion.div ref={source} className="between-scene__ui" aria-hidden={!atUI} style={{ visibility }}>
+      <SlideView slide={slides[uiIndex]} step={atUI ? deck.step : 3} index={uiIndex} active={atUI}
+        onSteps={atUI ? deck.reportSteps : undefined} onAdvance={atUI ? deck.next : undefined} />
     </motion.div>
     <PaperFold progress={progress} source={source} />
-    <BetweenContext.Provider value={progress}>
-      <div className="between-scene__next" aria-hidden={!atBetween}>
-        <SlideView slide={slides[betweenIndex]} step={atBetween ? deck.step : 0} index={betweenIndex} active={atBetween}
-          onSteps={atBetween ? deck.reportSteps : undefined} onAdvance={atBetween ? deck.next : undefined} />
+    <EndpointEntryContext.Provider value={collapse}>
+      <BetweenContext.Provider value={progress}>
+        <div className="between-scene__next" aria-hidden={!atBetween}>
+          <SlideView slide={slides[betweenIndex]} step={atBetween ? deck.step : atEndpoints ? 2 : 0} index={betweenIndex} active={atBetween}
+            onSteps={atBetween ? deck.reportSteps : undefined} onAdvance={atBetween ? deck.next : undefined} />
+        </div>
+      </BetweenContext.Provider>
+      <div className="between-scene__endpoints" aria-hidden={!atEndpoints}>
+        <SlideView slide={slides[endpointsIndex]} step={atEndpoints ? deck.step : 0} index={endpointsIndex} active={atEndpoints}
+          onSteps={atEndpoints ? deck.reportSteps : undefined} onAdvance={atEndpoints ? deck.next : undefined} />
       </div>
-    </BetweenContext.Provider>
+    </EndpointEntryContext.Provider>
     <div className="between-scene__rule" aria-hidden="true" />
   </div>
 }
@@ -95,7 +120,7 @@ export function Deck() {
   const irisClip = useIrisClip()
   const revealing = reveal != null && reveal.target === deck.slide
   const inFlightScene = deck.slide === appIndex || deck.slide === vendorIndex
-  const inBetweenScene = deck.slide === uiIndex || deck.slide === betweenIndex
+  const inBetweenScene = deck.slide === uiIndex || deck.slide === betweenIndex || deck.slide === endpointsIndex
 
   return (
     <div

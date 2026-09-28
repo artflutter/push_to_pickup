@@ -1,11 +1,16 @@
 ---
-title: The active call.
+layout: full
 notes: |
-  Same user, two phones. Both ring. Then one of them hangs up — and the
-  other one has to know.
+  One user has many endpoints: iOS phones, Android phones, a closed iPhone Duo,
+  and multiple browser sessions.
+  Coming from the garlands, devices fall onto both ropes. Each cord stretches
+  under their weight, tears, and drops its lights. Push and UI topple outward.
+  The devices bounce into place. Next lights them one by one in a fresh random order
+  with incoming calls. Every device rings once; the order holds through answering.
+  Next picks a random endpoint: it turns green and connects; every other device
+  stops ringing and dims. Answering on one endpoint must end ringing on the rest.
 ---
 
-<Cards rows={[2]}>
-  <Card at={1} size="lg" n="01" title="Two phones, one user" art={<Phones state="both" />}>Both are registered. Both get the push. Both ring.</Card>
-  <Card at={2} size="lg" n="02" title="One hangs up — the other still rings" art={<Phones state="split" />}>A decision on one device has to reach the other.</Card>
-</Cards>
+import { Endpoints } from '../deck/Endpoints'
+
+<Endpoints />

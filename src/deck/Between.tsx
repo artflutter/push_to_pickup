@@ -3,6 +3,8 @@ import { animate, motion, useMotionValue, useTransform, type MotionStyle, type M
 import { betweenAt, GARLAND_CUES, GARLAND_LEFT, GARLAND_ROWS, GARLAND_RUNNER_SCALE, GARLAND_WIDTH, garlandCurveAt, garlandDropAt, garlandLetters, garlandLightAt, garlandRunnerAt, PILL_WIDTH, type GarlandCurve } from './betweenMotion'
 import { CLAWD } from './ClaudeMark'
 import { useSlide } from './slideContext'
+import { useEndpointEntry } from './endpointContext'
+import { pillarFallAt, ropeDebrisOpacity, ropePowerAt, tornRopePathAt, tornRopePointAt } from './endpointMotion'
 
 export const BetweenContext = createContext<MotionValue<number> | null>(null)
 const LightingContext = createContext<MotionValue<number> | null>(null)
@@ -18,6 +20,7 @@ export function Between({ children }: { children: ReactNode }) {
   const slide = useSlide()
   useState(() => slide.register(GARLAND_ROWS.length))
   const progress = useProgress()
+  const collapse = useEndpointEntry()
   const target = GARLAND_CUES[slide.static ? GARLAND_ROWS.length : Math.min(slide.step, GARLAND_ROWS.length)]
   const lighting = useMotionValue(target)
   useLayoutEffect(() => {
@@ -37,13 +40,20 @@ export function Between({ children }: { children: ReactNode }) {
     } else start()
     return () => { stopWaiting(); animation?.stop() }
   }, [lighting, progress, slide.static, target])
-  const left = useTransform(progress, p => betweenAt(p).left - PILL_WIDTH / 2)
-  const right = useTransform(progress, p => betweenAt(p).right - PILL_WIDTH / 2)
-  const opacity = useTransform(progress, p => betweenAt(p).pillOpacity)
+  const leftFall = useTransform(collapse, t => pillarFallAt(t, -1))
+  const rightFall = useTransform(collapse, t => pillarFallAt(t, 1))
+  const left = useTransform(() => betweenAt(progress.get()).left - PILL_WIDTH / 2 + leftFall.get().x)
+  const right = useTransform(() => betweenAt(progress.get()).right - PILL_WIDTH / 2 + rightFall.get().x)
+  const leftY = useTransform(leftFall, p => p.y)
+  const rightY = useTransform(rightFall, p => p.y)
+  const leftAngle = useTransform(leftFall, p => p.angle)
+  const rightAngle = useTransform(rightFall, p => p.angle)
+  const leftOpacity = useTransform(() => betweenAt(progress.get()).pillOpacity * leftFall.get().opacity)
+  const rightOpacity = useTransform(() => betweenAt(progress.get()).pillOpacity * rightFall.get().opacity)
   return <div className="between">
     <LightingContext.Provider value={lighting}>{children}</LightingContext.Provider>
-    <motion.div className="between__pill between__pill--push" style={{ x: left, opacity }}>Push</motion.div>
-    <motion.div className="between__pill between__pill--ui" style={{ x: right, opacity }}>UI</motion.div>
+    <motion.div className="between__pill between__pill--push" style={{ x: left, y: leftY, rotate: leftAngle, opacity: leftOpacity, originX: 0.5, originY: 1 }}>Push</motion.div>
+    <motion.div className="between__pill between__pill--ui" style={{ x: right, y: rightY, rotate: rightAngle, opacity: rightOpacity, originX: 0.5, originY: 1 }}>UI</motion.div>
   </div>
 }
 
@@ -51,11 +61,14 @@ function Light({ letter, t, row, index, glow, curve, lighting }: {
   letter: string; t: number; row: number; index: number; glow: string
   curve: MotionValue<GarlandCurve>; lighting: MotionValue<number>
 }) {
-  const x = GARLAND_LEFT + GARLAND_WIDTH * t
-  const y = useTransform(curve, c => strandY(row) + garlandDropAt(x, c))
-  const light = useTransform(lighting, clock => garlandLightAt(clock, row, index))
+  const collapse = useEndpointEntry()
+  const position = useTransform(() => tornRopePointAt(GARLAND_LEFT + GARLAND_WIDTH * t, row, collapse.get(), curve.get()))
+  const x = useTransform(position, p => p.x)
+  const y = useTransform(position, p => p.y)
+  const rotate = useTransform(position, p => p.angle)
+  const light = useTransform(() => garlandLightAt(lighting.get(), row, index) * ropePowerAt(collapse.get(), row))
   return <motion.g className="garland__light" data-letter={letter}
-    data-side={t < 0.5 ? 'left' : 'right'} style={{ x, y, '--light': light } as MotionStyle}>
+    data-side={t < 0.5 ? 'left' : 'right'} style={{ x, y, rotate, originX: 0, originY: 0, transformBox: 'view-box', '--light': light } as MotionStyle}>
     <path className="garland__drop" d="M 0 0 V 20" />
     <ellipse className="garland__glow" cx="0" cy="43" rx="34" ry="36" fill={`url(#${glow})`} />
     <path className="garland__socket" d="M -5 20 H 5 V 26 H -5 Z" />
@@ -67,6 +80,7 @@ function Light({ letter, t, row, index, glow, curve, lighting }: {
 
 function RopeRunner({ row, curve, lighting }: { row: number; curve: MotionValue<GarlandCurve>; lighting: MotionValue<number> }) {
   const id = useId()
+  const collapse = useEndpointEntry()
   const run = useTransform(lighting, clock => garlandRunnerAt(clock, row))
   const transform = useTransform(() => {
     const runner = run.get()
@@ -76,7 +90,7 @@ function RopeRunner({ row, curve, lighting }: { row: number; curve: MotionValue<
     const y = strandY(row) + garlandDropAt(runner.x, cord) - runner.hop
     return `translate(${runner.x}px, ${y}px) rotate(${angle}deg)`
   })
-  const opacity = useTransform(run, runner => runner.visible ? 1 : 0)
+  const opacity = useTransform(() => collapse.get() === 0 && run.get().visible ? 1 : 0)
   const legA = useTransform(run, runner => runner.legA)
   const legB = useTransform(run, runner => runner.legB)
   return <motion.g className="garland__runner" style={{ transform, opacity, originX: 0, originY: 0, transformBox: 'view-box' }} aria-hidden="true">
@@ -101,23 +115,30 @@ function Strand({ text, row, glow, progress, lighting }: {
   const lights = garlandLetters(text)
   const positions = lights.map(light => light.t)
   const curve = useTransform(progress, p => garlandCurveAt(p, 42, positions))
-  const d = useTransform(curve, c => `M ${c.left} ${y} Q 640 ${y + c.depth * 2} ${c.right} ${y}`)
-  return <g className={`garland__row garland__row--${row}`} role="img" aria-label={text} data-lights={lights.length}>
+  const collapse = useEndpointEntry()
+  const d = useTransform(() => {
+    const c = curve.get()
+    return collapse.get() > 0 ? tornRopePathAt(row, collapse.get(), c) : `M ${c.left} ${y} Q 640 ${y + c.depth * 2} ${c.right} ${y}`
+  })
+  const opacity = useTransform(collapse, clock => ropeDebrisOpacity(clock, row))
+  return <motion.g className={`garland__row garland__row--${row}`} role="img" aria-label={text} data-lights={lights.length} style={{ opacity }}>
     <motion.path className="garland__wire" d={d} />
     {lights.map(({ letter, t }, i) => <Light key={i} letter={letter} t={t} row={row} index={i} glow={glow} curve={curve} lighting={lighting} />)}
     <RopeRunner row={row} curve={curve} lighting={lighting} />
-  </g>
+  </motion.g>
 }
 
 /** Two rows of globes, with one lighting cue per row. */
 export function Garland() {
   const progress = useProgress()
+  const collapse = useEndpointEntry()
   const fullyLit = useMotionValue(GARLAND_CUES[GARLAND_ROWS.length])
   const lighting = useContext(LightingContext) ?? fullyLit
   const id = useId()
-  const left = useTransform(progress, p => betweenAt(p).left + PILL_WIDTH / 2)
-  const width = useTransform(progress, p => {
-    const state = betweenAt(p)
+  const left = useTransform(() => collapse.get() > 0 ? -1280 : betweenAt(progress.get()).left + PILL_WIDTH / 2)
+  const width = useTransform(() => {
+    if (collapse.get() > 0) return 3840
+    const state = betweenAt(progress.get())
     return state.right - state.left - PILL_WIDTH
   })
   const visibility = useTransform(progress, p => betweenAt(p).open > 0 ? 'visible' : 'hidden')

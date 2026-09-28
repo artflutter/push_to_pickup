@@ -322,7 +322,8 @@ Globes (former option A) is approved. The other garland variants and the
 option label are removed. The lamps open unlit; the first next click lights
 `GET VENDOR TOKEN` from left to right, letter by letter. The second lights
 `CONNECT TO VENDOR` from right to left, keeping the first row lit. There are 14 and
-15 lamps respectively; spaces have no lamp. Further next advances the slide.
+15 lamps respectively; spaces have no lamp. Further next brings the falling
+endpoints of 110, which destroy this scenery as described below.
 Keep capitals centred using the font's cap height (`dy="0.5cap"` with an
 alphabetic baseline). Letters are 26 px; rope anchors are at y 230 and 440
 (210 px apart), and Clawd uses a 2.5× icon scale.
@@ -333,6 +334,37 @@ Keep its speed and stride steady through spaces. Lamp timing follows travel
 distance, so word gaps take longer than the gaps between adjacent letters.
 Reuse the shared Clawd path from `ClaudeMark.tsx`, with white fill and
 alternating pixel feet.
+
+## Slide 110: one call, many endpoints
+
+`<Endpoints>` replaces the old two-phone cards. Slides 090, 100 and 110 share
+`BetweenScene`, so the devices fall through the actual ropes rather than a
+page fade. The first device loads each cord, the cord tears into two loose
+halves, its globes lose power and fall with it, and Push / UI pivot outward
+around their feet. The stage's bottom rule stays fixed. The entry clock in
+`endpointMotion.ts` drives devices, ropes, bulbs and pillars together; back
+navigation rebuilds the garlands.
+
+Eight wireframes settle into two loose rows: three iPhones, two Android
+phones, a closed iPhone Duo and two web browsers. No device-name labels below
+the wireframes; let their silhouettes identify them. Both Android phones,
+including the one in the right cluster, have triangle / circle / square
+navigation buttons. The upper-left iPhone has a wide notch, and the upper-right
+iPhone has a narrower notch; both join the screen's top edge. The lower-right
+iPhone keeps its floating camera pill. The Duo stays closed;
+use the wider cover-screen proportions, second shell and hinge to identify
+it, not two spread screens. Match Apple's closed-device reference: 84.1:117.8
+width-to-height, almost square corners on the left hinge edge, rounded right
+corners, and the camera in the upper-right corner. No centred camera pill or
+generic four-rounded-corner phone outline on the Duo. First next lights all
+devices one by one in a freshly shuffled order with incoming-call screens.
+Every device gets one turn; keep that order through answering and rewinding.
+Starting a new incoming-call sequence shuffles again. Second next randomly picks one endpoint, turns it
+green with `Connected` and the shared white Clawd mascot in its screen,
+and stops ringing / dims the other seven with
+`Call ended`. Fast clicks wait for the fall, then complete the ring wave
+before showing the answer. Keep the incoming-call state white and reserve
+green for the answered endpoint.
 
 ## Slide numbering
 
