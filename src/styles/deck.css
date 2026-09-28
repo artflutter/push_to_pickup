@@ -507,8 +507,12 @@
 .garland__letter {
   fill: #fff;
   font-family: var(--font-eyebrow);
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 400;
+}
+.garland__runner {
+  fill: #fff;
+  pointer-events: none;
 }
 
 /* ------------------------------------------------------------- markdown --- */

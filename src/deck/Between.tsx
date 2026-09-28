@@ -1,10 +1,12 @@
 import { createContext, useContext, useId, useLayoutEffect, useState, type ReactNode } from 'react'
 import { animate, motion, useMotionValue, useTransform, type MotionStyle, type MotionValue } from 'motion/react'
-import { betweenAt, GARLAND_CUES, GARLAND_LEFT, GARLAND_ROWS, GARLAND_WIDTH, garlandCurveAt, garlandDropAt, garlandLetters, garlandLightAt, PILL_WIDTH, type GarlandCurve } from './betweenMotion'
+import { betweenAt, GARLAND_CUES, GARLAND_LEFT, GARLAND_ROWS, GARLAND_RUNNER_SCALE, GARLAND_WIDTH, garlandCurveAt, garlandDropAt, garlandLetters, garlandLightAt, garlandRunnerAt, PILL_WIDTH, type GarlandCurve } from './betweenMotion'
+import { CLAWD } from './ClaudeMark'
 import { useSlide } from './slideContext'
 
 export const BetweenContext = createContext<MotionValue<number> | null>(null)
 const LightingContext = createContext<MotionValue<number> | null>(null)
+const strandY = (row: number) => 230 + row * 210
 
 function useProgress() {
   const still = useMotionValue(1)
@@ -50,7 +52,7 @@ function Light({ letter, t, row, index, glow, curve, lighting }: {
   curve: MotionValue<GarlandCurve>; lighting: MotionValue<number>
 }) {
   const x = GARLAND_LEFT + GARLAND_WIDTH * t
-  const y = useTransform(curve, c => 250 + row * 170 + garlandDropAt(x, c))
+  const y = useTransform(curve, c => strandY(row) + garlandDropAt(x, c))
   const light = useTransform(lighting, clock => garlandLightAt(clock, row, index))
   return <motion.g className="garland__light" data-letter={letter}
     data-side={t < 0.5 ? 'left' : 'right'} style={{ x, y, '--light': light } as MotionStyle}>
@@ -63,10 +65,39 @@ function Light({ letter, t, row, index, glow, curve, lighting }: {
   </motion.g>
 }
 
+function RopeRunner({ row, curve, lighting }: { row: number; curve: MotionValue<GarlandCurve>; lighting: MotionValue<number> }) {
+  const id = useId()
+  const run = useTransform(lighting, clock => garlandRunnerAt(clock, row))
+  const transform = useTransform(() => {
+    const runner = run.get()
+    const cord = curve.get()
+    const t = Math.max(0, Math.min(1, (runner.x - cord.left) / (cord.right - cord.left)))
+    const angle = Math.atan(4 * cord.depth * (1 - 2 * t) / (cord.right - cord.left)) * 180 / Math.PI
+    const y = strandY(row) + garlandDropAt(runner.x, cord) - runner.hop
+    return `translate(${runner.x}px, ${y}px) rotate(${angle}deg)`
+  })
+  const opacity = useTransform(run, runner => runner.visible ? 1 : 0)
+  const legA = useTransform(run, runner => runner.legA)
+  const legB = useTransform(run, runner => runner.legB)
+  return <motion.g className="garland__runner" style={{ transform, opacity, originX: 0, originY: 0, transformBox: 'view-box' }} aria-hidden="true">
+    {/* Keep the shipped silhouette; alternate its two pairs of pixel feet. */}
+    <g transform={`scale(${GARLAND_RUNNER_SCALE}) translate(-12 -18)`}>
+      <defs>
+        <clipPath id={`${id}-body`}><rect width="24" height="16" /></clipPath>
+        <clipPath id={`${id}-a`}><path d="M5.5 16h1.5v2H5.5Z M14.5 16H16v2h-1.5Z" /></clipPath>
+        <clipPath id={`${id}-b`}><path d="M8 16h1.5v2H8Z M17 16h1.5v2H17Z" /></clipPath>
+      </defs>
+      <path d={CLAWD} clipPath={`url(#${id}-body)`} />
+      <motion.g style={{ y: legA }}><path d={CLAWD} clipPath={`url(#${id}-a)`} /></motion.g>
+      <motion.g style={{ y: legB }}><path d={CLAWD} clipPath={`url(#${id}-b)`} /></motion.g>
+    </g>
+  </motion.g>
+}
+
 function Strand({ text, row, glow, progress, lighting }: {
   text: string; row: number; glow: string; progress: MotionValue<number>; lighting: MotionValue<number>
 }) {
-  const y = 250 + row * 170
+  const y = strandY(row)
   const lights = garlandLetters(text)
   const positions = lights.map(light => light.t)
   const curve = useTransform(progress, p => garlandCurveAt(p, 42, positions))
@@ -74,6 +105,7 @@ function Strand({ text, row, glow, progress, lighting }: {
   return <g className={`garland__row garland__row--${row}`} role="img" aria-label={text} data-lights={lights.length}>
     <motion.path className="garland__wire" d={d} />
     {lights.map(({ letter, t }, i) => <Light key={i} letter={letter} t={t} row={row} index={i} glow={glow} curve={curve} lighting={lighting} />)}
+    <RopeRunner row={row} curve={curve} lighting={lighting} />
   </g>
 }
 

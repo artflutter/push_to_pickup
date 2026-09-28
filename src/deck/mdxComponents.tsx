@@ -14,6 +14,7 @@ import {
 import { animate, AnimatePresence, motion, useMotionTemplate, useMotionValue, useMotionValueEvent, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
+import { ClaudeMark } from './ClaudeMark'
 import { useSlide } from './slideContext'
 import { balloonLaunch, balloonRest, CloudIn, FlightBackdrop, OrbLaunch, vesselHide } from './Traveller'
 
@@ -1112,17 +1113,6 @@ export function Stop(_: { n?: ReactNode; title: ReactNode; children?: ReactNode 
 /** Data only — a further act of a <Route>: its own title and its own stops. */
 export function Act(_: { title: ReactNode; children?: ReactNode }) {
   return null
-}
-
-/* Clawd, the Claude Code mascot (Iconify `cbi:claude-clawd`), in the current colour */
-const CLAWD = 'M4.5 6h15v5H22v2h-2.5v3h-1v2H17v-2h-1v2h-1.5v-2h-5v2H8v-2H7v2H5.5v-2h-1v-3H2v-2h2.5ZM7 8v3h1V8Zm9 0v3h1V8Z'
-
-function ClaudeMark() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d={CLAWD} />
-    </svg>
-  )
 }
 
 /* Five bites, left to right across the number: at every bite the mark snaps

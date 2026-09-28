@@ -4,9 +4,10 @@ const REVEAL_DURATION = 2.052
 const REVEAL_START = SQUASH_DURATION + HOLD_DURATION
 export const BETWEEN_DURATION = REVEAL_START + REVEAL_DURATION
 export const PILL_WIDTH = 136
-export const GARLAND_ROWS = ['GET VENDOR TOKEN', 'CONNECT VENDOR'] as const
+export const GARLAND_ROWS = ['GET VENDOR TOKEN', 'CONNECT TO VENDOR'] as const
 export const GARLAND_LEFT = 204
 export const GARLAND_WIDTH = 872
+export const GARLAND_RUNNER_SCALE = 2.5
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n))
 const smooth = (n: number) => { const t = clamp(n); return t * t * (3 - 2 * t) }
@@ -53,14 +54,41 @@ export function garlandLetters(text: string) {
 
 const LETTER_INTERVAL = 0.09
 const LETTER_WARMUP = 0.14
+const SLOT_PITCH = GARLAND_WIDTH / (Math.max(...GARLAND_ROWS.map(text => text.length)) + 1)
+const RUN_SPEED = SLOT_PITCH / LETTER_INTERVAL
+// Leave room for the enlarged mascot to clear the pill while tilted on the cord.
+const RUN_MARGIN = 14 * GARLAND_RUNNER_SCALE
+const RUN_WIDTH = GARLAND_WIDTH + RUN_MARGIN * 2
+const RUN_DURATION = RUN_WIDTH / RUN_SPEED
+const RUNS = GARLAND_ROWS.map((text, row) => {
+  const lamps = garlandLetters(text).map(({ t }) => GARLAND_LEFT + GARLAND_WIDTH * t)
+  const reverse = row === 1
+  return {
+    lamps,
+    entry: reverse ? GARLAND_LEFT + GARLAND_WIDTH + RUN_MARGIN : GARLAND_LEFT - RUN_MARGIN,
+    direction: reverse ? -1 : 1,
+    first: reverse ? lamps[lamps.length - 1] : lamps[0],
+  }
+})
+
 // A single clock lets a quick second click queue the lower row after the upper.
-export const GARLAND_CUES = GARLAND_ROWS.reduce<number[]>((cues, text) => {
-  cues.push(cues[cues.length - 1] + (garlandLetters(text).length - 1) * LETTER_INTERVAL + LETTER_WARMUP)
-  return cues
-}, [0])
+export const GARLAND_CUES = Array.from({ length: GARLAND_ROWS.length + 1 }, (_, row) => row * RUN_DURATION)
 
 export function garlandLightAt(clock: number, row: number, index: number) {
-  return smooth((clock - GARLAND_CUES[row] - index * LETTER_INTERVAL) / LETTER_WARMUP)
+  const run = RUNS[row]
+  const arrival = Math.abs(run.lamps[index] - run.entry) / RUN_SPEED
+  return smooth((clock - GARLAND_CUES[row] - arrival + LETTER_WARMUP / 2) / LETTER_WARMUP)
+}
+
+/** Travel at a fixed speed, taking a normal stride through every empty slot. */
+export function garlandRunnerAt(clock: number, row: number) {
+  const time = clock - GARLAND_CUES[row]
+  const run = RUNS[row]
+  const distance = clamp(time / RUN_DURATION) * RUN_WIDTH
+  const x = run.entry + run.direction * distance
+  const step = (distance - Math.abs(run.first - run.entry)) / SLOT_PITCH
+  const stride = Math.sin(step * Math.PI)
+  return { x, hop: Math.abs(stride) * 4, legA: -Math.max(0, stride) * 1.5, legB: Math.min(0, stride) * 1.5, visible: time > 0 && clock < GARLAND_CUES[row + 1] }
 }
 
 export const garlandSag = (t: number, depth: number) => 4 * depth * t * (1 - t)

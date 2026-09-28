@@ -76,7 +76,7 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
   — a title poster with no stops, one breath before the next slide. Eight
   clicks in all.
   Act 2's last ring is `<Stop n={<Munch>11</Munch>} title="" />`: Clawd, the
-  Claude Code mascot (Iconify `cbi:claude-clawd`, the path in `CLAWD`, drawn
+  Claude Code mascot (Iconify `cbi:claude-clawd`, shared in `ClaudeMark.tsx`, drawn
   in `currentColor` so it takes the ring's white — the orange #d97757 was
   tried and dropped), waits where the ring's label would be, then climbs into
   the ring and eats the `11` in five bites, left to right: each bite snaps
@@ -300,10 +300,18 @@ renders the orb itself.
 Globes (former option A) is approved. The other garland variants and the
 option label are removed. The lamps open unlit; the first next click lights
 `GET VENDOR TOKEN` from left to right, letter by letter. The second lights
-`CONNECT VENDOR` the same way, keeping the first row lit. There are 14 and
-13 lamps respectively; spaces have no lamp. Further next advances the slide.
+`CONNECT TO VENDOR` from right to left, keeping the first row lit. There are 14 and
+15 lamps respectively; spaces have no lamp. Further next advances the slide.
 Keep capitals centred using the font's cap height (`dy="0.5cap"` with an
-alphabetic baseline).
+alphabetic baseline). Letters are 26 px; rope anchors are at y 230 and 440
+(210 px apart), and Clawd uses a 2.5× icon scale.
+Clawd runs on each rope as its letters light, using the same clock as the
+lamps. Its feet follow the curve and meet each lamp during its warm-up;
+it runs from behind Push to UI on the first rope, then UI to Push on the second.
+Keep its speed and stride steady through spaces. Lamp timing follows travel
+distance, so word gaps take longer than the gaps between adjacent letters.
+Reuse the shared Clawd path from `ClaudeMark.tsx`, with white fill and
+alternating pixel feet.
 
 ## Slide numbering
 
