@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:pages": "tsc --noEmit && vite build --mode pages",
     "preview": "vite preview",
+    "preview:pages": "vite preview --mode pages",
     "pdf": "node scripts/export-pdf.mjs"
   },
   "dependencies": {

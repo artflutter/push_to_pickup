@@ -8,6 +8,24 @@ npm install
 npm run dev        # http://localhost:5273
 ```
 
+## GitHub Pages
+
+Public site: [artflutter.github.io/push_to_pickup](https://artflutter.github.io/push_to_pickup/).
+
+Pages publishes only the opening slide, including its two portrait animation
+steps. The rest of the deck remains available in the regular development/build
+commands. The Pages build imports only `010-title.mdx` and fails if another
+slide enters the bundle.
+
+```bash
+npm run build:pages   # dist/pages, based at /push_to_pickup/
+npm run preview:pages
+```
+
+`.github/workflows/pages.yml` builds and publishes that output on pushes to
+`main`, or when run manually. GitHub Pages must use **GitHub Actions** as its
+source in the repository settings.
+
 ## Writing slides
 
 One file per slide in [src/slides/](src/slides/), ordered by filename. Numbers

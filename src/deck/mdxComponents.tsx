@@ -1956,7 +1956,7 @@ export function ConfBar({
 }) {
   return (
     <div className="confbar no-nav">
-      <img className="confbar__logo" src="/brand/nextapp-wordmark.png" alt="next.app" />
+      <img className="confbar__logo" src={`${import.meta.env.BASE_URL}brand/nextapp-wordmark.png`} alt="next.app" />
       <span>
         {city} | {dates}
       </span>
@@ -1967,14 +1967,14 @@ export function ConfBar({
 
 /** flutterCon wordmark, sits between the bar and the eyebrow. */
 export function Logo() {
-  return <img className="hero-logo" src="/brand/fluttercon-logo.png" alt="flutterCon" />
+  return <img className="hero-logo" src={`${import.meta.env.BASE_URL}brand/fluttercon-logo.png`} alt="flutterCon" />
 }
 
 /** The 3D flutterCon mark bleeding off the bottom-right, as on the site. */
 export function HeroArt() {
   return (
     <div className="hero-art" aria-hidden="true">
-      <img src="/brand/fluttercon-icon.png" alt="" />
+      <img src={`${import.meta.env.BASE_URL}brand/fluttercon-icon.png`} alt="" />
     </div>
   )
 }
@@ -2011,8 +2011,8 @@ export function Speaker({ name, role, tone = 'blue' }: { name: string; role?: st
 export function Brand() {
   return (
     <div className="brand">
-      <img className="brand__nextapp" src="/brand/nextapp-wordmark.png" alt="next.app" />
-      <img className="brand__fluttercon" src="/brand/fluttercon-logo.png" alt="flutterCon" />
+      <img className="brand__nextapp" src={`${import.meta.env.BASE_URL}brand/nextapp-wordmark.png`} alt="next.app" />
+      <img className="brand__fluttercon" src={`${import.meta.env.BASE_URL}brand/fluttercon-logo.png`} alt="flutterCon" />
     </div>
   )
 }
@@ -2058,7 +2058,7 @@ export function ConfStrip({ children = '#nextapp26 | OCT 7-9, 2026 | BERLIN' }: 
 
 /** Halftone Brandenburg Gate bleeding off the bottom-right. */
 export function Gate() {
-  return <img className="gate" src="/brand/brandenburg-gate.png" alt="" aria-hidden="true" />
+  return <img className="gate" src={`${import.meta.env.BASE_URL}brand/brandenburg-gate.png`} alt="" aria-hidden="true" />
 }
 
 export const mdxComponents = {

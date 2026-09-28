@@ -23,6 +23,16 @@ components; this file is for decisions the owner has already made.
 - Don't commit or push unless asked ("push progress" = commit everything on
   `main` and push).
 
+## GitHub Pages
+
+The owner approved making `artflutter/push_to_pickup` public. Deploy automatically
+on every push to `main` at `https://artflutter.github.io/push_to_pickup/`.
+Publish only the opening slide. `npm run build:pages` uses Vite's `pages` mode,
+aliases the slide catalog to `src/deck/slides.pages.ts`, and outputs `dist/pages`
+with base `/push_to_pickup/`. A build check rejects any other MDX slide.
+Keep the two opening portrait steps. Regular dev/build still includes the full deck.
+The Pages workflow always uses `build:pages`; never publish the full-deck `dist`.
+
 ## Slide 010: opening portrait
 
 `<OpeningPortrait>` keeps the original photo and adds two reversible steps:

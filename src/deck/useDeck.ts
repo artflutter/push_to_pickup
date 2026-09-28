@@ -6,10 +6,14 @@ export const LAST_STEP = 9999
 
 const CHANNEL = 'push-to-pickup-deck'
 
-function readHash(): DeckPosition {
+function clampPosition(position: DeckPosition, total: number): DeckPosition {
+  return { slide: Math.max(0, Math.min(total - 1, position.slide)), step: Math.max(0, position.step) }
+}
+
+function readHash(total: number): DeckPosition {
   const m = /^#\/(\d+)(?:\/(\d+))?/.exec(window.location.hash)
   if (!m) return { slide: 0, step: 0 }
-  return { slide: Number(m[1]), step: Number(m[2] ?? 0) }
+  return clampPosition({ slide: Number(m[1]), step: Number(m[2] ?? 0) }, total)
 }
 
 export interface Deck extends DeckPosition {
@@ -26,7 +30,7 @@ export interface Deck extends DeckPosition {
 }
 
 export function useDeck(total: number): Deck {
-  const [pos, setPos] = useState<DeckPosition>(readHash)
+  const [pos, setPos] = useState<DeckPosition>(() => readHash(total))
   const [stepCount, setStepCount] = useState(0)
   const [overview, setOverview] = useState(false)
   const [blackout, setBlackout] = useState(false)
@@ -40,13 +44,13 @@ export function useDeck(total: number): Deck {
     channel.current = ch
     ch.onmessage = (e: MessageEvent<DeckPosition>) => {
       echo.current = true
-      setPos(e.data)
+      setPos(clampPosition(e.data, total))
     }
     return () => {
       ch.close()
       channel.current = null
     }
-  }, [])
+  }, [total])
 
   const move = useCallback((updater: (p: DeckPosition) => DeckPosition) => {
     setPos((prev) => {
@@ -71,10 +75,10 @@ export function useDeck(total: number): Deck {
   }, [pos])
 
   useEffect(() => {
-    const onHashChange = () => setPos(readHash())
+    const onHashChange = () => setPos(readHash(total))
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
+  }, [total])
 
   // --- navigation ----------------------------------------------------------
   const next = useCallback(() => {
