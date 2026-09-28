@@ -1,14 +1,15 @@
 ---
-title: All of this has to happen fast.
+layout: full
 notes: |
-  Three laps on the clock, one click each; the bar fills as you go. The last
-  click hits the end: 30 seconds, and the call goes to voicemail.
+  Clawd bursts out of the endpoint that answered and flies into this slide,
+  leaving a continuously streaming, pixel-stepped rainbow with passing stars.
+  The mascot keeps bobbing and cycling its feet between clicks.
+  Arrival runs Clawd almost to the far edge without extra clicks. It jumps at
+  each checkpoint, drawing the heartbeat spikes in the rainbow as it moves.
+  Each next reveals one label, keeping the previous ones visible:
+  server processing above, then push delivery below, then on-device call processing above.
 ---
 
-<Cards rows={[3]} height={250}>
-  <Card at={1} n="01" title="Server processing">Webhook, lookup, token, push request.</Card>
-  <Card at={2} n="02" title="Push delivery">APNs or FCM, over whatever network the phone has.</Card>
-  <Card at={3} n="03" title="On‑device call processing">Wake up, get the token, connect, show the UI.</Card>
-</Cards>
+import { Rainbow } from '../deck/Rainbow'
 
-<Deadline laps={3} value="30 s" label="then voicemail" />
+<Rainbow />

@@ -3,6 +3,7 @@ import { animate, motion, useMotionValue, useTransform, type MotionStyle, type M
 import { useSlide } from './slideContext'
 import { useEndpointEntry } from './endpointContext'
 import { CLAWD } from './ClaudeMark'
+import { useRainbow } from './rainbowContext'
 import { ANSWER_DURATION, ENDPOINT_ENTRY_DURATION, ENDPOINTS, RING_DURATION, endpointCallAt, endpointPoseAt, shuffleEndpointOrder, type EndpointSpec } from './endpointMotion'
 
 // Tabler's phone handset, shared by the small incoming-call screens.
@@ -85,6 +86,9 @@ function DeviceFrame({ device }: { device: EndpointSpec }) {
 function Endpoint({ device, index, entry, calls, winner, ringOrder }: {
   device: EndpointSpec; index: number; entry: MotionValue<number>; calls: MotionValue<number>; winner: number; ringOrder: readonly number[]
 }) {
+  const flight = useRainbow()
+  const idle = useMotionValue(0)
+  const mascotOpacity = useTransform(flight?.clock ?? idle, t => t > 0 ? 0 : 1)
   const pose = useTransform(entry, clock => endpointPoseAt(clock, index))
   const transform = useTransform(pose, p => `translate(${p.x}px, ${p.y}px) rotate(${p.angle}deg)`)
   const state = useTransform(calls, clock => endpointCallAt(clock, index, winner, ringOrder))
@@ -111,9 +115,9 @@ function Endpoint({ device, index, entry, calls, winner, ringOrder }: {
       <text className="endpoint__status" y={iconY + 61}>Incoming call</text>
     </motion.g>
     <motion.g style={{ opacity: connected }}>
-      <g className="endpoint__mascot" transform={`translate(-38.4 ${iconY - 38.4}) scale(3.2)`}>
+      <motion.g className="endpoint__mascot" style={{ opacity: mascotOpacity }} transform={`translate(-38.4 ${iconY - 38.4}) scale(3.2)`}>
         <path d={CLAWD} fill="white" />
-      </g>
+      </motion.g>
       <text className="endpoint__status" y={iconY + 61}>Connected</text>
     </motion.g>
     <motion.g style={{ opacity: ended }}>
@@ -126,6 +130,7 @@ function Endpoint({ device, index, entry, calls, winner, ringOrder }: {
 /** Arrival destroys the previous slide; two clicks ring, then answer once. */
 export function Endpoints() {
   const slide = useSlide()
+  const flight = useRainbow()
   useState(() => slide.register(2))
   const entry = useEndpointEntry(ENDPOINT_ENTRY_DURATION)
   const phase = slide.static ? 2 : Math.min(slide.step, 2)
@@ -136,6 +141,16 @@ export function Endpoints() {
   const calls = useMotionValue(target)
   const titleOpacity = useTransform(entry, clock => Math.max(0, Math.min(1, (clock - 2.2) / 0.5)))
   const show = useTransform(entry, clock => clock > 0 ? 'visible' : 'hidden')
+
+  useLayoutEffect(() => {
+    if (!flight) return
+    flight.winner.set(winner)
+    const sync = () => flight.ready.set(entry.get() >= ENDPOINT_ENTRY_DURATION && calls.get() >= RING_DURATION + ANSWER_DURATION)
+    sync()
+    const stopEntry = entry.on('change', sync)
+    const stopCalls = calls.on('change', sync)
+    return () => { stopEntry(); stopCalls() }
+  }, [flight, winner, calls, entry])
 
   useLayoutEffect(() => {
     if (phase > 0 && previous.current === 0 && !slide.static) {

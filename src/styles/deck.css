@@ -359,6 +359,7 @@
 
 /* The UI and its next slide share a stage, so the pills press the real cards. */
 .between-scene,
+.between-scene__world,
 .between-scene__ui,
 .between-scene__next,
 .between-scene__endpoints,
@@ -585,6 +586,63 @@
   fill: currentColor;
   text-anchor: middle;
   font: 400 13px var(--font-eyebrow);
+}
+
+/* Clawd's rainbow continues across two real pages in the same world. */
+.between-scene__world {
+  will-change: transform;
+}
+.between-scene__rainbow {
+  position: absolute;
+  left: 1280px;
+  top: 0;
+  width: 1280px;
+  height: 720px;
+}
+.between-scene__rainbow > .slide {
+  background: transparent;
+}
+.between-scene__rainbow > .slide::after {
+  display: none;
+}
+.rainbow-traveller {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2560px;
+  height: 720px;
+  z-index: 5;
+  pointer-events: none;
+}
+.rainbow__exhaust,
+.rainbow__stars,
+.rainbow-traveller__mascot {
+  shape-rendering: crispEdges;
+}
+.rainbow,
+.rainbow__map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.rainbow__title {
+  position: absolute;
+  top: 57px;
+  left: 72px;
+  margin: 0;
+  max-width: 1100px;
+  font: 400 64px/1.08 var(--font-display);
+  letter-spacing: -0.045em;
+}
+.rainbow__map {
+  z-index: 6;
+  pointer-events: none;
+}
+.rainbow__label {
+  fill: white;
+  text-anchor: middle;
+  font: 400 31px var(--font-display);
 }
 
 /* ------------------------------------------------------------- markdown --- */

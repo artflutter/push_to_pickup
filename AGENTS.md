@@ -366,6 +366,51 @@ and stops ringing / dims the other seven with
 before showing the answer. Keep the incoming-call state white and reserve
 green for the answered endpoint.
 
+## Slide 120: the rainbow route
+
+Slide #8's connected Clawd launches like Nyan Cat into slide #9. Keep 120
+in `BetweenScene` with 090–110 so the selected endpoint and its mascot stay
+continuous across the change. The camera pans one stage to the right; a single
+shared white mascot starts at the connected device's actual position and tilt,
+levels off, grows from 3.2× to 5.2×, and leaves six rainbow bands behind it. Its original
+in-device drawing hides only while that traveller is visible. Fast clicks
+wait for the devices to finish falling and the chosen endpoint to connect.
+
+`Rainbow.tsx` / `rainbowMotion.ts` replace the old cards on 120. The horizontal
+rainbow sits at y 405. Arrival automatically runs Clawd almost to the right edge
+(x 1180), cruising between checkpoints and easing down to 1/3.5 speed through
+each spike. Clawd jumps through
+each heartbeat, with the six colored stripes tracing the jump directly from
+its trailing edge. Keep the original narrow heartbeat shape with its small
+shoulders, sharp peak and deep dip. The broadened, simplified shape was rejected;
+soften Clawd's movement through timing instead. Spike amplitudes vary clearly:
+small, tall, medium (0.94, 1.84, 1.33); 0.94, the former third spike, is the minimum.
+Both Clawd and the trail use the same profile. Captions follow the peak/dip height
+to preserve their clearance as amplitudes grow.
+Spikes draw as it jumps, without a delayed morph; they are part of the
+rainbow itself, with no white/black overlays or circle markers. Each next click reveals
+one label, from left to right: `Server processing` above the first spike,
+then `Push delivery` below the middle one, then `On-device call processing` above
+the last one. Earlier labels stay visible. No binary numbers on these checkpoints.
+The fourth next advances to the following slide.
+Fast clicks finish the run before revealing text. Back hides one label at a time without
+moving Clawd; returning to slide #8 retraces the launch into the same device.
+Direct entry and static overview / print show the appropriate rest state.
+Use the animation at https://www.nyan.cat/ as the motion reference: the original
+GIF has twelve 70 ms frames. Between jumps Clawd flies level with a stepped
+bob and cycling feet. The bob eases out during jumps so the trail stays attached.
+Saturated red / orange / yellow / green / blue / purple exhaust has a
+square ripple streaming left; pixel stars scroll and twinkle. That loop keeps
+running while the presenter waits at a checkpoint, independently of the click
+clock. No smooth rainbow arch, no trail ahead of Clawd, no sprite frozen between
+clicks — that first attempt was rejected.
+The tail is pinned to the connected device's launch point in both axes. Its
+wake follows the launch's height changes and then levels out across slide #9.
+Only the leading edge grows/retracts; bobbing Clawd and the moving pixel ripple
+must not drag the whole rainbow or its starting edge around.
+No extra thin rainbow progress bar along the bottom; the owner removed it.
+The owner also removed the `30 s` / `then voicemail` label and its extra step.
+
 ## Slide numbering
 
 010 title · 020 why · 040–130 the talk outline (030 and 050 were merged into
