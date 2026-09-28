@@ -195,6 +195,11 @@ in the top-right corner (`<CloudIn>`).
   Its hand follows the string's actual final point in `Traveller.tsx`, including
   the camera motion and reeling into the cloud; do not give it a separate
   position animation. It emerges as the end pulls free and fades into the cloud.
+- When the push-token arrow pulls the orb out of the Vendor cloud, Clawd
+  comes with it. The white mascot follows the shared orb's actual position
+  through the flutter, tension and upward release, staying at its 2.5× size.
+  Once Clawd clears the screen's top edge it disappears. The orb falls and
+  lands alone; Clawd must not reappear on the descent or the UI hand-off.
 - Rejected on the way here: two hand-drawn clouds (a potato and a blob), a
   pink ball behind the outline instead of light clipped inside it, a hot-air
   balloon with a basket ("не аэростат — детский шарик"), and the line simply

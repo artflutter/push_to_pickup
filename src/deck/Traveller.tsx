@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { animate, motion, motionValue, useTransform, type MotionValue, type ValueAnimationTransition } from 'motion/react'
 import { useSlide } from './slideContext'
 import { BALLOON_DESTINATION, BALLOON_DURATION, BALLOON_TIMING, FLIGHT_HEIGHT, balloonFrame, balloonPassenger, balloonString, toStage } from './balloonMotion'
-import { CLAWD } from './ClaudeMark'
+import { CLAWD, ClaudeMark } from './ClaudeMark'
 import { PUSH_HOME, vendorOrbFrame } from './vendorPushMotion'
 
 /** The phone and vendor occupy one world; only its camera moves. */
@@ -62,6 +62,8 @@ const ball = {
 }
 /** The outgoing slide's top edge, so its orb cannot spill onto the slide above. */
 const ballClipTop = motionValue(0)
+/** Clawd rides the vendor launch out of the top; the orb returns alone. */
+const ballPassenger = motionValue(0)
 
 /** lights-out layer a slide can draw (`<OrbLaunch>` on 010) */
 const lights = motionValue(0)
@@ -142,6 +144,7 @@ const frame = () => new Promise<void>((r) => requestAnimationFrame(() => request
 const still = () => {
   for (const v of [ball.x, ball.y, ball.sx, ball.sy, ball.scale, ball.opacity]) v.stop()
   ballClipTop.jump(0)
+  ballPassenger.jump(0)
 }
 
 /* ----------------------------------------------------------------- moves --- */
@@ -293,6 +296,7 @@ export function followVendorPush(progress: MotionValue<number>, owner?: number) 
     ball.sx.set(pose.sx)
     ball.sy.set(pose.sy)
     ball.opacity.set(pose.opacity)
+    ballPassenger.set(pose.passengerOpacity)
     ves.glow.set(pose.cloudGlow)
   }
   update(progress.get())
@@ -339,11 +343,14 @@ export function Traveller({ slide }: { slide: number }) {
   return (
     <div className="ball-layer" aria-hidden="true">
       <motion.div className="iris-ring" style={{ x: iris.x, y: iris.y, scale: ringScale, opacity: iris.ring }} />
-      <motion.div className="ball-viewport" style={{ clipPath: ballClip }}>
-        <motion.div className="ball" style={{ x: ball.x, y: ball.y, scale: ball.scale, opacity: ball.opacity }}>
+      <motion.div className="ball-viewport" style={{ clipPath: ballClip, opacity: ball.opacity }}>
+        <motion.div className="ball" style={{ x: ball.x, y: ball.y, scale: ball.scale }}>
           <motion.div className="ball__glow" style={{ scaleX: ball.sx, scaleY: ball.sy }}>
             <div className="ball__core" />
           </motion.div>
+        </motion.div>
+        <motion.div className="ball__clawd" style={{ x: ball.x, y: ball.y, opacity: ballPassenger }}>
+          <ClaudeMark />
         </motion.div>
       </motion.div>
       <Vessel />

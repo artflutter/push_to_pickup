@@ -152,7 +152,7 @@ function pulledOrb(p: number) {
  */
 export function vendorOrbFrame(p: number) {
   const transfer = smooth((p - 0.02) / 0.06)
-  const base = { scale: PULL_SCALE, sx: 1, sy: 1, opacity: transfer, cloudGlow: 1 - transfer }
+  const base = { scale: PULL_SCALE, sx: 1, sy: 1, opacity: transfer, cloudGlow: 1 - transfer, passengerOpacity: p < APEX ? 1 : 0 }
   const camera = pushCamera(p)
   if (p < STEM_END) {
     const orb = pulledOrb(p)
@@ -176,10 +176,13 @@ export function vendorOrbFrame(p: number) {
   if (p < APEX) {
     const t = clamp((p - STEM_END) / (APEX - STEM_END))
     const stretch = Math.sin(Math.PI * t)
+    const y = mix(PIN.y, EXIT.y, 1 - (1 - t) ** 2)
     return {
       ...flight,
       x: mix(PIN.x, EXIT.x, smooth(t)),
-      y: mix(PIN.y, EXIT.y, 1 - (1 - t) ** 2),
+      y,
+      // Let the whole 60px mascot clear the top, then leave it off for the fall.
+      passengerOpacity: y > -30 ? 1 : 0,
       sx: mix(0.86, 1, smooth(t)) - 0.12 * stretch,
       sy: mix(0.72, 1, smooth(t / 0.2)),
     }
