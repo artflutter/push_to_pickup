@@ -295,6 +295,16 @@ renders the orb itself.
   (Spotlight box blob, `<Orb />`, `<Route>`). Convert one slide at a time,
   as the owner directs.
 
+## Slide 100: garlands between Push and UI
+
+Globes (former option A) is approved. The other garland variants and the
+option label are removed. The lamps open unlit; the first next click lights
+`GET VENDOR TOKEN` from left to right, letter by letter. The second lights
+`CONNECT VENDOR` the same way, keeping the first row lit. There are 14 and
+13 lamps respectively; spaces have no lamp. Further next advances the slide.
+Keep capitals centred using the font's cap height (`dy="0.5cap"` with an
+alphabetic baseline).
+
 ## Slide numbering
 
 010 title · 020 why · 040–130 the talk outline (030 and 050 were merged into

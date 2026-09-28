@@ -24,7 +24,6 @@ export function betweenAt(progress: number) {
     right: 1280 - left,
     contentOpacity: 1 - smooth((squash - 6 / 7) * 7),
     pillOpacity: smooth(squash / (0.045 / 0.35)),
-    wireOpacity: smooth((seconds - REVEAL_START) / 0.468),
     open,
   }
 }
@@ -50,6 +49,18 @@ export function garlandLetters(text: string) {
   const slots = Math.max(...GARLAND_ROWS.map(row => row.length))
   const offset = (slots - text.length) / 2
   return [...text].flatMap((letter, i) => letter === ' ' ? [] : [{ letter, t: (i + offset + 1) / (slots + 1) }])
+}
+
+const LETTER_INTERVAL = 0.09
+const LETTER_WARMUP = 0.14
+// A single clock lets a quick second click queue the lower row after the upper.
+export const GARLAND_CUES = GARLAND_ROWS.reduce<number[]>((cues, text) => {
+  cues.push(cues[cues.length - 1] + (garlandLetters(text).length - 1) * LETTER_INTERVAL + LETTER_WARMUP)
+  return cues
+}, [0])
+
+export function garlandLightAt(clock: number, row: number, index: number) {
+  return smooth((clock - GARLAND_CUES[row] - index * LETTER_INTERVAL) / LETTER_WARMUP)
 }
 
 export const garlandSag = (t: number, depth: number) => 4 * depth * t * (1 - t)

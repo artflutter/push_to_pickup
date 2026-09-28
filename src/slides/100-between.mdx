@@ -9,16 +9,13 @@ notes: |
   Both rope ends keep their attachment height; lamp size and horizontal spacing
   stay fixed as the lamps ride the lowering cord.
   GET VENDOR TOKEN has 14 lights; CONNECT VENDOR has 13. Spaces have no light.
-  Click through four looks in place: globes, drops, lanterns, luminous letters.
+  The lamps open unlit. Next lights GET VENDOR TOKEN, one letter at a time.
+  Next lights CONNECT VENDOR, one letter at a time, keeping the first row lit.
+  The selected look is globes; after both rows are lit, next advances the slide.
 ---
 
 import { Between, Garland } from '../deck/Between'
 
 <Between>
-  <Pick>
-    <Garland look="globes" tag="A" label="Globes" />
-    <Garland look="drops" tag="B" label="Drops" />
-    <Garland look="lanterns" tag="C" label="Lanterns" />
-    <Garland look="letters" tag="D" label="Letters" />
-  </Pick>
+  <Garland />
 </Between>

@@ -467,15 +467,6 @@
 .between__pill--ui {
   background: linear-gradient(160deg, #b42b9f, #761466);
 }
-.garland__tag {
-  position: absolute;
-  top: 24px;
-  right: 54px;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  line-height: 1;
-}
 .garland__svg {
   width: 100%;
   height: 100%;
@@ -496,34 +487,28 @@
 }
 .garland__socket {
   fill: currentColor;
-  fill-opacity: 0.48;
+  fill-opacity: calc(0.2 + var(--light) * 0.28);
   stroke: currentColor;
-  stroke-opacity: 0.55;
+  stroke-opacity: calc(0.3 + var(--light) * 0.25);
   stroke-width: 1;
 }
 .garland__glass {
   fill: currentColor;
-  fill-opacity: 0.1;
+  fill-opacity: calc(0.025 + var(--light) * 0.075);
   stroke: currentColor;
+  stroke-opacity: calc(0.35 + var(--light) * 0.65);
   stroke-width: 1.6;
-  filter: drop-shadow(0 0 5px currentColor);
+  filter: drop-shadow(0 0 calc(var(--light) * 5px) currentColor);
+}
+.garland__glow,
+.garland__letter {
+  opacity: var(--light);
 }
 .garland__letter {
   fill: #fff;
   font-family: var(--font-eyebrow);
   font-size: 22px;
   font-weight: 400;
-}
-.garland__rib {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 0.8;
-  opacity: 0.25;
-}
-.garland--letters .garland__letter {
-  fill: currentColor;
-  font-size: 34px;
-  filter: drop-shadow(0 0 7px currentColor);
 }
 
 /* ------------------------------------------------------------- markdown --- */
