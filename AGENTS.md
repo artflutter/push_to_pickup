@@ -406,7 +406,7 @@ rainbow itself, with no white/black overlays or circle markers. Each next click 
 one label, from left to right: `Server processing` above the first spike,
 then `Push delivery` below the middle one, then `On-device call processing` above
 the last one. Earlier labels stay visible. No binary numbers on these checkpoints.
-The fourth next plays the approved rainbow curtain into Metrics (below).
+The fourth next follows Clawd into the Metrics prism (below).
 Fast clicks finish the run before revealing text. Back hides one label at a time without
 moving Clawd; returning to slide #8 retraces the launch into the same device.
 Direct entry and static overview / print show the appropriate rest state.
@@ -425,21 +425,44 @@ must not drag the whole rainbow or its starting edge around.
 No extra thin rainbow progress bar along the bottom; the owner removed it.
 The owner also removed the `30 s` / `then voicemail` label and its extra step.
 
-## 120 → 130: rainbow curtain
+## 120 → 130: Clawd becomes the prism's beam
 
-The owner chose the rainbow curtain and asked to revert the other experiments.
-After the three checkpoint caption clicks, the fourth spreads the six rainbow
-bands over the stage, then Clawd lifts them off to reveal the original white
-Metrics slide. It advances automatically when the 2.5-second curtain finishes.
-Metrics keeps its original title, subtitle, and three columns, one click each.
-No alternate transitions, creative Metrics layouts, option labels, or replay controls.
+The owner replaced the rainbow curtain after choosing Prism lab. On next,
+Clawd keeps moving forward and the camera follows into the adjacent Metrics
+page. The anchored rainbow, its heartbeat spikes, and Clawd compress vertically
+and whiten until they become one straight white input beam. Acceleration builds
+continuously until contact with the prism, with no slowdown on approach. The
+whole approach takes 0.9 seconds, with immediate forward motion and compression
+finished by 0.34 seconds; do not restore the slow lead-in. The
+camera follows that speed curve; white streaks get longer, brighter and faster,
+and the beam glows. Contact stops the rush and produces a small white sparkle
+with rainbow flecks. After a brief impact beat, it splits into three Clawds —
+red, green, blue, taken directly from the rainbow palette — which unfold
+from the thin rays and fly to their metric labels. No curtain, portal preview,
+or slide crossfade here. The bottom brand rule remains fixed.
 
-`RainbowCurtain.tsx` reuses the flight's heartbeat vertices. It waits for the
-flight and captions if the presenter clicks ahead; back or a slide change cancels
-it. Returning to the curtain's last step shows its rest state without automatically
-advancing again. The bottom brand rule stays fixed. The curtain's portal host
-sits outside `.slide__body` so typography cannot change the destination's layout.
-Overview and print retain the rainbow.
+The same `BetweenScene` now includes Metrics at world x=2560. `prismMotion.ts`
+provides one reversible clock for the camera, compression, prism contact, and
+three branches. `RainbowTraveller` keeps the original sprite and wake through
+compression; it does not replace them with a snapshot. The wake stays anchored
+in world coordinates, and its final white beam ends at the prism's split point.
+Fast clicks wait for the rainbow flight and captions before starting this leg.
+Back retraces it, including partial transitions. Entering Metrics directly and
+static overview / print show its completed state.
+
+## Slide 130: Prism lab
+
+The owner chose Prism lab and removed all other Metrics designs.
+`Metrics.tsx` keeps the glass prism, title, metric descriptions, and layout.
+The owner removed the Metrics subtitle and the coloured category eyebrows
+(`The whole journey`, `The time in transit`, `The last mile`), and the caption
+`One call. Three measurements.` beneath the prism. Keep only each
+category's heading and description. Three coloured output Clawds emerge together just after the impact sparkle;
+their flight distances/timings reveal call-processing graph, push delivery delay,
+and on-device processing in order. Each label appears when its Clawd arrives,
+and the Clawds stay at the ends of their rays. The old white Clawd standing to
+the left of the prism is gone — it has become the input beam. Keep regular eyes.
+No option labels, replay controls, or alternate layouts.
 
 ## Slide numbering
 

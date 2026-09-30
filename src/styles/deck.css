@@ -588,7 +588,7 @@
   font: 400 13px var(--font-eyebrow);
 }
 
-/* Clawd's rainbow continues across two real pages in the same world. */
+/* Clawd travels through endpoints, rainbow, and prism in one world. */
 .between-scene__world {
   will-change: transform;
 }
@@ -609,7 +609,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 2560px;
+  width: 3840px;
   height: 720px;
   z-index: 5;
   pointer-events: none;
@@ -645,39 +645,34 @@
   font: 400 31px var(--font-display);
 }
 
-/* The rainbow spreads into a curtain, then lifts to reveal Metrics. */
-.rainbow-curtain-host {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-}
-.rainbow-curtain,
-.rainbow-curtain__source,
-.rainbow-curtain__drawing,
-.rainbow-curtain__target {
+/* The camera follows Clawd into Metrics while the fixed skin changes gently. */
+.between-scene__metrics { position: absolute; left: 2560px; top: 0; width: 1280px; height: 720px; }
+.between-scene__metrics > .slide,
+.between-scene__metrics .metrics-lab { background: transparent; }
+.between-scene__metrics > .slide::after { display: none; }
+.between-scene__prism-skin { position: absolute; inset: 0; background: radial-gradient(ellipse at 32% 57%, #202539, #0c111c 72%); pointer-events: none; }
+
+/* Metrics: one call splits into three measurements through the prism. */
+.metrics-lab {
   position: absolute;
   inset: 0;
   width: 1280px;
   height: 720px;
-}
-.rainbow-curtain {
-  z-index: 8;
   overflow: hidden;
-  background: var(--gradient-deep);
-  pointer-events: auto;
+  background: #101522;
+  color: #f6f5f1;
 }
-.rainbow-curtain__source .rainbow__exhaust,
-.rainbow-curtain__source .rainbow__still-mascot {
-  visibility: hidden;
-}
-.rainbow-curtain__drawing {
-  pointer-events: none;
-  overflow: hidden;
-}
-.rainbow-curtain__target > .slide::after {
-  display: none;
-}
+.metrics-lab__header { position: absolute; top: 45px; left: 72px; z-index: 2; }
+.metrics-lab__header h1 { margin: 0; font: 500 94px/1.05 var(--font-display); letter-spacing: -.065em; }
+.metrics-lab__svg { position: absolute; inset: 0; width: 1280px; height: 720px; pointer-events: none; }
+.metrics-lab__copy { position: relative; }
+.metrics-lab__copy h2 { margin: 0; font: 500 30px/1.08 var(--font-display); letter-spacing: -.04em; }
+.metrics-lab .metrics-lab__copy p { margin: 11px 0 0; font: 400 20px/1.35 var(--font-display); opacity: .6; }
+.metrics-lab--prism { background: radial-gradient(ellipse at 32% 57%, #202539, #0c111c 72%); }
+.prism__metric { position: absolute; left: 788px; width: 408px; }
+.prism__metric .metrics-lab__copy h2 { font-size: 30px; }
+.prism__metric .metrics-lab__copy p { font-size: 19px; max-width: 375px; }
+.prism__clawd { shape-rendering: crispEdges; }
 
 /* ------------------------------------------------------------- markdown --- */
 .md-h1 {

@@ -69,7 +69,8 @@ export function rainbowOrigin(winner: number) {
 export function makeRainbowFlight(winner: number) {
   const origin = rainbowOrigin(winner)
   const samples = new Set<number>([origin.x])
-  for (let x = Math.ceil((origin.x + 16) / 16) * 16; x <= 2560; x += 16) {
+  // Continue through the next page so the collapsed wake can reach the prism.
+  for (let x = Math.ceil((origin.x + 16) / 16) * 16; x <= 3840; x += 16) {
     samples.add(x)
   }
   for (const checkpoint of CHECKPOINTS) {

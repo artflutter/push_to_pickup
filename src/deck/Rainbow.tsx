@@ -3,7 +3,7 @@ import { motion, useAnimationFrame, useMotionValue, useTransform, type MotionVal
 import { CLAWD } from './ClaudeMark'
 import { useSlide } from './slideContext'
 import { useRainbow } from './rainbowContext'
-import { RainbowCurtain } from './RainbowCurtain'
+import { PRISM_HIT, prismBoost, prismCollapse, prismHead, prismPhase, prismTravel } from './prismMotion'
 import { CHECKPOINTS, NYAN_FRAME_MS, RAINBOW_COLORS, RAINBOW_CUES, RAINBOW_Y, makeRainbowFlight, nyanPose, rainbowFrame, rainbowLabels, rainbowTrails } from './rainbowMotion'
 
 const STILL_TRAILS = rainbowTrails(makeRainbowFlight(2), 0)
@@ -24,9 +24,30 @@ function PixelStar({ index, frame }: { index: number; frame: MotionValue<number>
   return <motion.path className="rainbow__star" d={d} fill="white" style={{ x, y, opacity: index % 3 === 0 ? 0.75 : 0.38, scale: index % 2 ? 0.75 : 1, originX: 0, originY: 0, transformBox: 'view-box' }} />
 }
 
-function AnchoredBand({ trails, index }: { trails: MotionValue<string[]>; index: number }) {
+function AnchoredBand({ trails, index, collapse }: { trails: MotionValue<string[]>; index: number; collapse: MotionValue<number> }) {
   const d = useTransform(trails, paths => paths[index])
-  return <motion.path d={d} fill={RAINBOW_COLORS[index]} />
+  const fill = useTransform(collapse, [0, 1], [RAINBOW_COLORS[index], '#ffffff'])
+  return <motion.path d={d} fill={fill} />
+}
+
+/** Streaks get longer, brighter and faster right up to the impact. */
+function SpeedStreak({ index, clock }: { index: number; clock: MotionValue<number> }) {
+  const frame = useTransform(clock, t => {
+    const boost = prismBoost(t)
+    const cycle = ((Math.min(t, PRISM_HIT) * .18 + prismTravel(t) * 2.4 + index * .177) % 1 + 1) % 1
+    const x = prismHead(t).x - 24 - cycle * 1350
+    return {
+      x,
+      tail: x - (120 + index * 37 % 220) * boost,
+      opacity: boost * Math.sin(cycle * Math.PI) * (.32 + index % 3 * .09),
+    }
+  })
+  const x1 = useTransform(frame, f => f.tail)
+  const x2 = useTransform(frame, f => f.x)
+  const opacity = useTransform(frame, f => f.opacity)
+  const y = 407 + [-36, 52, -78, 104, -134, 164, -198, 214, -55, 74, -114, 142][index]
+  return <motion.line className="rainbow__speed-streak" x1={x1} x2={x2} y1={y} y2={y}
+    stroke="white" strokeWidth={index % 4 === 0 ? 2 : 1} style={{ opacity }} />
 }
 
 /** The sprite, rippling exhaust and star field keep looping between clicks. */
@@ -34,7 +55,12 @@ export function RainbowTraveller() {
   const id = useId()
   const flight = useRainbow()!
   const path = useTransform(flight.winner, makeRainbowFlight)
-  const frame = useTransform(() => rainbowFrame(flight.clock.get(), path.get()))
+  const collapse = useTransform(flight.prism, prismCollapse)
+  const frame = useTransform(() => {
+    const base = rainbowFrame(flight.clock.get(), path.get())
+    if (flight.prism.get() <= 0) return base
+    return { ...base, ...prismHead(flight.prism.get()), angle: 0, bob: 1 - collapse.get() }
+  })
   const cycle = useMotionValue(0)
   const elapsed = useRef(0)
   useAnimationFrame((_, delta) => {
@@ -52,25 +78,44 @@ export function RainbowTraveller() {
   const opacity = useTransform(flight.clock, t => t > 0 ? 1 : 0)
   const mascotX = useTransform(() => frame.get().x + pose.get().x * bob.get() * frame.get().bob)
   const mascotY = useTransform(() => frame.get().y + pose.get().y * bob.get() * frame.get().bob)
-  const transform = useTransform(() => `translate(${mascotX.get()}px, ${mascotY.get()}px) rotate(${frame.get().angle}deg) scale(${frame.get().scale})`)
+  const transform = useTransform(() => {
+    const p = collapse.get()
+    const scale = frame.get().scale
+    return `translate(${mascotX.get()}px, ${mascotY.get()}px) rotate(${frame.get().angle}deg) scale(${scale * (1 + p)}, ${scale * (1 - p * .96)})`
+  })
+  const mascotOpacity = useTransform(collapse, p => 1 - prismPhase(p, .86, 1))
   const trailStart = useTransform(frame, f => f.tailStart)
-  const trailWidth = useTransform(() => Math.max(0, mascotX.get() - frame.get().scale * 7 - trailStart.get()))
+  const trailWidth = useTransform(() => Math.max(0, mascotX.get() - frame.get().scale * 7 * (1 - collapse.get()) - trailStart.get()))
   const trails = useTransform(() => rainbowTrails(path.get(), cycle.get() % 6))
-  const trailOpacity = useTransform(flight.clock, t => Math.min(1, t / 0.16))
-  const starsOpacity = useTransform(flight.clock, t => Math.min(1, t / 0.5))
+  const trailOpacity = useTransform(() => Math.min(1, flight.clock.get() / .16) * (1 - prismPhase(collapse.get(), .9, 1)))
+  const beamOpacity = useTransform(collapse, p => prismPhase(p, .75, 1))
+  const beamGlow = useTransform(() => beamOpacity.get() * prismBoost(flight.prism.get()) * .22)
+  const beam = useTransform(() => `M${trailStart.get()} 407H${mascotX.get()}`)
+  const starsOpacity = useTransform(() => Math.min(1, flight.clock.get() / .5) * (1 - collapse.get()))
+  const trailTransform = useTransform(collapse, p => {
+    const scale = 1 - p
+    return `translate(0px, ${RAINBOW_Y * (1 - scale) + p * 2}px) scale(1, ${scale})`
+  })
   const legA = useTransform(pose, p => `translate(${p.aX}px, ${p.aY}px)`)
   const legB = useTransform(pose, p => `translate(${p.bX}px, ${p.bY}px)`)
-  return <motion.svg className="rainbow-traveller" viewBox="0 0 2560 720" style={{ opacity }} aria-hidden="true">
+  return <motion.svg className="rainbow-traveller" viewBox="0 0 3840 720" style={{ opacity }} aria-hidden="true">
     <motion.g className="rainbow__stars" style={{ opacity: starsOpacity }}>
       {Array.from({ length: 20 }, (_, i) => <PixelStar key={i} index={i} frame={cycle} />)}
     </motion.g>
+    <g className="rainbow__speed">
+      {Array.from({ length: 12 }, (_, index) => <SpeedStreak key={index} index={index} clock={flight.prism} />)}
+    </g>
     <defs><clipPath id={`${id}-wake`} clipPathUnits="userSpaceOnUse">
       <motion.rect x={trailStart} y="0" width={trailWidth} height="720" />
     </clipPath></defs>
-    <motion.g className="rainbow__exhaust" clipPath={`url(#${id}-wake)`} style={{ opacity: trailOpacity }}>
-      {RAINBOW_COLORS.map((color, index) => <AnchoredBand key={color} trails={trails} index={index} />)}
-    </motion.g>
-    <motion.g className="rainbow-traveller__mascot" style={{ transform, originX: 0, originY: 0, transformBox: 'view-box' }}>
+    <g clipPath={`url(#${id}-wake)`}>
+      <motion.g className="rainbow__exhaust" style={{ opacity: trailOpacity, transform: trailTransform, originX: 0, originY: 0, transformBox: 'view-box' }}>
+        {RAINBOW_COLORS.map((color, index) => <AnchoredBand key={color} trails={trails} index={index} collapse={collapse} />)}
+      </motion.g>
+    </g>
+    <motion.path d={beam} stroke="white" strokeWidth="10" style={{ opacity: beamGlow }} />
+    <motion.path className="rainbow__white-beam" d={beam} stroke="white" strokeWidth="2.5" style={{ opacity: beamOpacity }} />
+    <motion.g className="rainbow-traveller__mascot" style={{ transform, opacity: mascotOpacity, originX: 0, originY: 0, transformBox: 'view-box' }}>
       <g transform="translate(-12 -12)" fill="white">
         <defs>
           <clipPath id={`${id}-body`}><rect width="24" height="16" /></clipPath>
@@ -129,8 +174,5 @@ export function Rainbow() {
   useState(() => slide.register(RAINBOW_CUES.length - 1))
   const flight = useRainbow()
   const still = useMotionValue(RAINBOW_CUES[RAINBOW_CUES.length - 1])
-  return <>
-    <RainbowArtwork clock={flight?.clock ?? still} standalone={!flight} />
-    <RainbowCurtain source={<RainbowArtwork clock={still} standalone />} />
-  </>
+  return <RainbowArtwork clock={flight?.clock ?? still} standalone={!flight} />
 }

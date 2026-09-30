@@ -1,5 +1,5 @@
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { SlideView, Stage } from './Slide'
 import { useDeck } from './useDeck'
 import { slides } from './slides'
@@ -15,6 +15,7 @@ import { ENDPOINT_ENTRY_DURATION } from './endpointMotion'
 import { RainbowContext } from './rainbowContext'
 import { RAINBOW_CUES, rainbowCamera } from './rainbowMotion'
 import { RainbowTraveller } from './Rainbow'
+import { PRISM_END, PRISM_HIT, prismCamera, prismPhase } from './prismMotion'
 
 const EASE = [0.22, 0.61, 0.36, 1] as const
 type Reveal = { target: number } | null
@@ -38,20 +39,23 @@ const endpointsIndex = slides.findIndex((s) => s.id === '110-active-call')
 const rainbowIndex = slides.findIndex((s) => s.id === '120-fast')
 const metricsIndex = slides.findIndex((s) => s.id === '130-metrics')
 
-/** One world: folded UI, torn garlands, endpoints, then Clawd's rainbow flight. */
+/** One world: folded UI, endpoints, rainbow, and the prism that splits its beam. */
 function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
   const atUI = deck.slide === uiIndex
   const atBetween = deck.slide === betweenIndex
   const atEndpoints = deck.slide === endpointsIndex
   const atRainbow = deck.slide === rainbowIndex
+  const atMetrics = deck.slide === metricsIndex
+  const rainbowEnd = RAINBOW_CUES[RAINBOW_CUES.length - 1]
   const progress = useMotionValue(atUI ? 0 : 1)
-  const collapse = useMotionValue(atEndpoints || atRainbow ? ENDPOINT_ENTRY_DURATION : 0)
-  const clock = useMotionValue(atRainbow ? RAINBOW_CUES[Math.min(deck.step, RAINBOW_CUES.length - 1)] : 0)
+  const collapse = useMotionValue(atEndpoints || atRainbow || atMetrics ? ENDPOINT_ENTRY_DURATION : 0)
+  const clock = useMotionValue(atMetrics ? rainbowEnd : atRainbow ? RAINBOW_CUES[Math.min(deck.step, RAINBOW_CUES.length - 1)] : 0)
+  const prism = useMotionValue(atMetrics ? PRISM_END : 0)
   const winner = useMotionValue(2)
   const ready = useMotionValue(false)
-  const [transitionHost, setTransitionHost] = useState<HTMLDivElement | null>(null)
-  const rainbow = useMemo(() => ({ clock, winner, ready, metrics: slides[metricsIndex], transitionHost }), [clock, winner, ready, transitionHost])
-  const camera = useTransform(clock, t => -rainbowCamera(t))
+  const rainbow = useMemo(() => ({ clock, winner, ready, prism }), [clock, winner, ready, prism])
+  const camera = useTransform(() => -rainbowCamera(clock.get()) - prismCamera(prism.get()))
+  const prismSkin = useTransform(prism, t => prismPhase(t, .025, PRISM_HIT))
   const source = useRef<HTMLDivElement>(null)
   const visibility = useTransform(progress, p => paperAt(p).fold > 0 ? 'hidden' : 'visible')
   useLayoutEffect(() => {
@@ -63,20 +67,20 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
     return () => animation.stop()
   }, [atUI, progress])
   useLayoutEffect(() => {
-    const target = atEndpoints || atRainbow ? ENDPOINT_ENTRY_DURATION : 0
+    const target = atEndpoints || atRainbow || atMetrics ? ENDPOINT_ENTRY_DURATION : 0
     let animation: ReturnType<typeof animate> | undefined
     let stopWaiting = () => {}
     const start = () => {
       stopWaiting()
       animation = animate(collapse, target, { duration: Math.abs(target - collapse.get()), ease: 'linear' })
     }
-    if ((atEndpoints || atRainbow) && progress.get() < 1) {
+    if ((atEndpoints || atRainbow || atMetrics) && progress.get() < 1) {
       stopWaiting = progress.on('change', p => { if (p >= 1) start() })
     } else start()
     return () => { stopWaiting(); animation?.stop() }
-  }, [atEndpoints, atRainbow, collapse, progress])
+  }, [atEndpoints, atRainbow, atMetrics, collapse, progress])
   useLayoutEffect(() => {
-    const target = atRainbow ? RAINBOW_CUES[Math.min(deck.step, RAINBOW_CUES.length - 1)] : 0
+    const target = atMetrics ? rainbowEnd : atRainbow ? RAINBOW_CUES[Math.min(deck.step, RAINBOW_CUES.length - 1)] : 0
     let animation: ReturnType<typeof animate> | undefined
     let stopWaiting = () => {}
     const start = () => {
@@ -88,8 +92,23 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
       stopWaiting = ready.on('change', value => { if (value) start() })
     } else start()
     return () => { stopWaiting(); animation?.stop() }
-  }, [atRainbow, clock, ready, deck.step])
+  }, [atRainbow, atMetrics, clock, ready, deck.step, rainbowEnd])
+  useLayoutEffect(() => {
+    const target = atMetrics ? PRISM_END : 0
+    let animation: ReturnType<typeof animate> | undefined
+    let stopWaiting = () => {}
+    const start = () => {
+      stopWaiting()
+      animation = animate(prism, target, { duration: Math.abs(target - prism.get()), ease: 'linear' })
+    }
+    // A fast next still completes the rainbow run and its three captions first.
+    if (atMetrics && clock.get() < rainbowEnd - .001) {
+      stopWaiting = clock.on('change', t => { if (t >= rainbowEnd - .001) start() })
+    } else start()
+    return () => { stopWaiting(); animation?.stop() }
+  }, [atMetrics, prism, clock, rainbowEnd])
   return <div className="between-scene">
+    <motion.div className="between-scene__prism-skin" style={{ opacity: prismSkin }} />
     <RainbowContext.Provider value={rainbow}>
       <motion.div className="between-scene__world" style={{ x: camera }}>
         <motion.div ref={source} className="between-scene__ui" aria-hidden={!atUI} style={{ visibility }}>
@@ -100,22 +119,25 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
         <EndpointEntryContext.Provider value={collapse}>
           <BetweenContext.Provider value={progress}>
             <div className="between-scene__next" aria-hidden={!atBetween}>
-              <SlideView slide={slides[betweenIndex]} step={atBetween ? deck.step : atEndpoints || atRainbow ? 2 : 0} index={betweenIndex} active={atBetween}
+              <SlideView slide={slides[betweenIndex]} step={atBetween ? deck.step : atEndpoints || atRainbow || atMetrics ? 2 : 0} index={betweenIndex} active={atBetween}
                 onSteps={atBetween ? deck.reportSteps : undefined} onAdvance={atBetween ? deck.next : undefined} />
             </div>
           </BetweenContext.Provider>
           <div className="between-scene__endpoints" aria-hidden={!atEndpoints}>
-            <SlideView slide={slides[endpointsIndex]} step={atEndpoints ? deck.step : atRainbow ? 2 : 0} index={endpointsIndex} active={atEndpoints}
+            <SlideView slide={slides[endpointsIndex]} step={atEndpoints ? deck.step : atRainbow || atMetrics ? 2 : 0} index={endpointsIndex} active={atEndpoints}
               onSteps={atEndpoints ? deck.reportSteps : undefined} onAdvance={atEndpoints ? deck.next : undefined} />
           </div>
         </EndpointEntryContext.Provider>
         <div className="between-scene__rainbow" aria-hidden={!atRainbow}>
-          <SlideView slide={slides[rainbowIndex]} step={atRainbow ? deck.step : 0} index={rainbowIndex} active={atRainbow}
+          <SlideView slide={slides[rainbowIndex]} step={atRainbow ? deck.step : atMetrics ? 3 : 0} index={rainbowIndex} active={atRainbow}
             onSteps={atRainbow ? deck.reportSteps : undefined} onAdvance={atRainbow ? deck.next : undefined} />
+        </div>
+        <div className="between-scene__metrics" aria-hidden={!atMetrics}>
+          <SlideView slide={slides[metricsIndex]} step={0} index={metricsIndex} active={atMetrics}
+            onSteps={atMetrics ? deck.reportSteps : undefined} onAdvance={atMetrics ? deck.next : undefined} />
         </div>
         <RainbowTraveller />
       </motion.div>
-      <div className="rainbow-curtain-host" ref={setTransitionHost} />
     </RainbowContext.Provider>
     <div className="between-scene__rule" aria-hidden="true" />
   </div>
@@ -149,7 +171,6 @@ export function Deck() {
   const deck = useDeck(slides.length)
   const previousSlide = useRef(deck.slide)
   const enteringUI = previousSlide.current === vendorIndex && deck.slide === uiIndex && deck.step === 0
-  const enteringMetrics = previousSlide.current === rainbowIndex && deck.slide === metricsIndex
   useLayoutEffect(() => { previousSlide.current = deck.slide }, [deck.slide])
   const slide = slides[Math.min(deck.slide, slides.length - 1)]
   const progress = slides.length > 1 ? deck.slide / (slides.length - 1) : 1
@@ -157,7 +178,7 @@ export function Deck() {
   const irisClip = useIrisClip()
   const revealing = reveal != null && reveal.target === deck.slide
   const inFlightScene = deck.slide === appIndex || deck.slide === vendorIndex
-  const inBetweenScene = deck.slide === uiIndex || deck.slide === betweenIndex || deck.slide === endpointsIndex || deck.slide === rainbowIndex
+  const inBetweenScene = deck.slide === uiIndex || deck.slide === betweenIndex || deck.slide === endpointsIndex || deck.slide === rainbowIndex || deck.slide === metricsIndex
 
   return (
     <div
@@ -176,7 +197,7 @@ export function Deck() {
             className="deck__slide"
             custom={reveal}
             variants={slideMotion}
-            initial={enteringUI || enteringMetrics ? false : 'enter'}
+            initial={enteringUI ? false : 'enter'}
             animate="show"
             exit="exit"
             style={revealing ? { clipPath: irisClip, zIndex: 2 } : undefined}
