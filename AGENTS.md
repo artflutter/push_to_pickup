@@ -64,7 +64,7 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
 
 ## Other approved details on slide 020
 
-- Title: `What makes a ring special?` — with the question mark.
+- Title: `What makes a call special?` — with the question mark.
 - Bar numbers are hex with the prefix: `0x01` … `0x05`. No icons on the bars.
 - The gradient box reacts to the pointer **only while it is inside the box**:
   the base is blue only, all the pink is one blob that rests in the
