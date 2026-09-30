@@ -645,6 +645,40 @@
   font: 400 31px var(--font-display);
 }
 
+/* The rainbow spreads into a curtain, then lifts to reveal Metrics. */
+.rainbow-curtain-host {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.rainbow-curtain,
+.rainbow-curtain__source,
+.rainbow-curtain__drawing,
+.rainbow-curtain__target {
+  position: absolute;
+  inset: 0;
+  width: 1280px;
+  height: 720px;
+}
+.rainbow-curtain {
+  z-index: 8;
+  overflow: hidden;
+  background: var(--gradient-deep);
+  pointer-events: auto;
+}
+.rainbow-curtain__source .rainbow__exhaust,
+.rainbow-curtain__source .rainbow__still-mascot {
+  visibility: hidden;
+}
+.rainbow-curtain__drawing {
+  pointer-events: none;
+  overflow: hidden;
+}
+.rainbow-curtain__target > .slide::after {
+  display: none;
+}
+
 /* ------------------------------------------------------------- markdown --- */
 .md-h1 {
   font-size: 40px;

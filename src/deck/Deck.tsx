@@ -1,5 +1,5 @@
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react'
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { SlideView, Stage } from './Slide'
 import { useDeck } from './useDeck'
 import { slides } from './slides'
@@ -36,6 +36,7 @@ const uiIndex = slides.findIndex((s) => s.id === '090-ui')
 const betweenIndex = slides.findIndex((s) => s.id === '100-between')
 const endpointsIndex = slides.findIndex((s) => s.id === '110-active-call')
 const rainbowIndex = slides.findIndex((s) => s.id === '120-fast')
+const metricsIndex = slides.findIndex((s) => s.id === '130-metrics')
 
 /** One world: folded UI, torn garlands, endpoints, then Clawd's rainbow flight. */
 function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
@@ -48,7 +49,8 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
   const clock = useMotionValue(atRainbow ? RAINBOW_CUES[Math.min(deck.step, RAINBOW_CUES.length - 1)] : 0)
   const winner = useMotionValue(2)
   const ready = useMotionValue(false)
-  const rainbow = useMemo(() => ({ clock, winner, ready }), [clock, winner, ready])
+  const [transitionHost, setTransitionHost] = useState<HTMLDivElement | null>(null)
+  const rainbow = useMemo(() => ({ clock, winner, ready, metrics: slides[metricsIndex], transitionHost }), [clock, winner, ready, transitionHost])
   const camera = useTransform(clock, t => -rainbowCamera(t))
   const source = useRef<HTMLDivElement>(null)
   const visibility = useTransform(progress, p => paperAt(p).fold > 0 ? 'hidden' : 'visible')
@@ -113,6 +115,7 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
         </div>
         <RainbowTraveller />
       </motion.div>
+      <div className="rainbow-curtain-host" ref={setTransitionHost} />
     </RainbowContext.Provider>
     <div className="between-scene__rule" aria-hidden="true" />
   </div>
@@ -146,6 +149,7 @@ export function Deck() {
   const deck = useDeck(slides.length)
   const previousSlide = useRef(deck.slide)
   const enteringUI = previousSlide.current === vendorIndex && deck.slide === uiIndex && deck.step === 0
+  const enteringMetrics = previousSlide.current === rainbowIndex && deck.slide === metricsIndex
   useLayoutEffect(() => { previousSlide.current = deck.slide }, [deck.slide])
   const slide = slides[Math.min(deck.slide, slides.length - 1)]
   const progress = slides.length > 1 ? deck.slide / (slides.length - 1) : 1
@@ -172,7 +176,7 @@ export function Deck() {
             className="deck__slide"
             custom={reveal}
             variants={slideMotion}
-            initial={enteringUI ? false : 'enter'}
+            initial={enteringUI || enteringMetrics ? false : 'enter'}
             animate="show"
             exit="exit"
             style={revealing ? { clipPath: irisClip, zIndex: 2 } : undefined}

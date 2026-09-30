@@ -20,6 +20,8 @@ components; this file is for decisions the owner has already made.
   launch another browser or browser runtime as a fallback.
   When reachable, verify in your own MCP-managed tab, then close it.
   No viewport emulation.
+  Keep Vite's `server.open: false`; never use `--open` when starting it.
+  `--open false` is a path string in Vite and still launches the system browser.
 - Don't commit or push unless asked ("push progress" = commit everything on
   `main` and push).
 
@@ -404,7 +406,7 @@ rainbow itself, with no white/black overlays or circle markers. Each next click 
 one label, from left to right: `Server processing` above the first spike,
 then `Push delivery` below the middle one, then `On-device call processing` above
 the last one. Earlier labels stay visible. No binary numbers on these checkpoints.
-The fourth next advances to the following slide.
+The fourth next plays the approved rainbow curtain into Metrics (below).
 Fast clicks finish the run before revealing text. Back hides one label at a time without
 moving Clawd; returning to slide #8 retraces the launch into the same device.
 Direct entry and static overview / print show the appropriate rest state.
@@ -422,6 +424,22 @@ Only the leading edge grows/retracts; bobbing Clawd and the moving pixel ripple
 must not drag the whole rainbow or its starting edge around.
 No extra thin rainbow progress bar along the bottom; the owner removed it.
 The owner also removed the `30 s` / `then voicemail` label and its extra step.
+
+## 120 → 130: rainbow curtain
+
+The owner chose the rainbow curtain and asked to revert the other experiments.
+After the three checkpoint caption clicks, the fourth spreads the six rainbow
+bands over the stage, then Clawd lifts them off to reveal the original white
+Metrics slide. It advances automatically when the 2.5-second curtain finishes.
+Metrics keeps its original title, subtitle, and three columns, one click each.
+No alternate transitions, creative Metrics layouts, option labels, or replay controls.
+
+`RainbowCurtain.tsx` reuses the flight's heartbeat vertices. It waits for the
+flight and captions if the presenter clicks ahead; back or a slide change cancels
+it. Returning to the curtain's last step shows its rest state without automatically
+advancing again. The bottom brand rule stays fixed. The curtain's portal host
+sits outside `.slide__body` so typography cannot change the destination's layout.
+Overview and print retain the rainbow.
 
 ## Slide numbering
 

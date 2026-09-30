@@ -22,6 +22,6 @@ export default defineConfig(({ mode }) => ({
     },
     react({ include: /\.(jsx|tsx|mdx)$/ }),
   ],
-  server: { port: 5273, open: true },
+  server: { port: 5273, open: false },
   build: { target: 'es2022', outDir: mode === 'pages' ? 'dist/pages' : 'dist' },
 }))

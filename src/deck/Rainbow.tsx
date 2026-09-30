@@ -3,6 +3,7 @@ import { motion, useAnimationFrame, useMotionValue, useTransform, type MotionVal
 import { CLAWD } from './ClaudeMark'
 import { useSlide } from './slideContext'
 import { useRainbow } from './rainbowContext'
+import { RainbowCurtain } from './RainbowCurtain'
 import { CHECKPOINTS, NYAN_FRAME_MS, RAINBOW_COLORS, RAINBOW_CUES, RAINBOW_Y, makeRainbowFlight, nyanPose, rainbowFrame, rainbowLabels, rainbowTrails } from './rainbowMotion'
 
 const STILL_TRAILS = rainbowTrails(makeRainbowFlight(2), 0)
@@ -102,28 +103,34 @@ function Checkpoint({ index, clock }: { index: number; clock: MotionValue<number
   </g>
 }
 
-export function Rainbow() {
-  const slide = useSlide()
-  useState(() => slide.register(RAINBOW_CUES.length - 1))
+function RainbowArtwork({ clock, standalone = false }: { clock: MotionValue<number>; standalone?: boolean }) {
   const id = useId()
-  const flight = useRainbow()
-  const still = useMotionValue(RAINBOW_CUES[RAINBOW_CUES.length - 1])
-  const clock = flight?.clock ?? still
   const title = useTransform(clock, t => Math.max(0, Math.min(1, (t - 0.45) / 0.55)))
   return <div className="rainbow">
     <motion.h1 className="rainbow__title" style={{ opacity: title }}>All of this has to happen fast.</motion.h1>
     <svg className="rainbow__map" viewBox="0 0 1280 720" role="img" aria-label="Server processing, push delivery, and on-device call processing are checkpoints on a rainbow">
       {/* Static overview / print has no shared traveller above the slide. */}
-      {!flight && <g>
+      {standalone && <g>
         <defs><clipPath id={`${id}-still`}><rect width="1144" height="720" /></clipPath></defs>
         <g clipPath={`url(#${id}-still)`}>
           <g className="rainbow__exhaust" transform="translate(-1280 0)">
             {STILL_TRAILS.map((d, i) => <path key={i} d={d} fill={RAINBOW_COLORS[i]} />)}
           </g>
         </g>
-        <path d={CLAWD} fill="white" transform={`translate(1180 ${RAINBOW_Y}) scale(5.2) translate(-12 -12)`} />
+        <path className="rainbow__still-mascot" d={CLAWD} fill="white" transform={`translate(1180 ${RAINBOW_Y}) scale(5.2) translate(-12 -12)`} />
       </g>}
       {CHECKPOINTS.map((_, i) => <Checkpoint key={i} index={i} clock={clock} />)}
     </svg>
   </div>
+}
+
+export function Rainbow() {
+  const slide = useSlide()
+  useState(() => slide.register(RAINBOW_CUES.length - 1))
+  const flight = useRainbow()
+  const still = useMotionValue(RAINBOW_CUES[RAINBOW_CUES.length - 1])
+  return <>
+    <RainbowArtwork clock={flight?.clock ?? still} standalone={!flight} />
+    <RainbowCurtain source={<RainbowArtwork clock={still} standalone />} />
+  </>
 }
