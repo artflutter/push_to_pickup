@@ -1,0 +1,14 @@
+{
+  "name": "From Push to Pickup",
+  "short_name": "Push to Pickup",
+  "description": "The Anatomy of a Flutter VoIP Call — FlutterCon Berlin 2026",
+  "start_url": ".",
+  "scope": ".",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "icons": [
+    { "src": "brand/fluttercon-icon.png", "sizes": "1600x1353", "type": "image/png" }
+  ]
+}

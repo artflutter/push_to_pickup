@@ -9,6 +9,12 @@ import './styles/print.css'
 
 preloadHighlighter()
 
+// Offline first: the built deck caches itself (scripts/offline.mjs), so it
+// still opens with no network once it has been loaded.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
+}
+
 const params = new URLSearchParams(window.location.search)
 const View = params.has('presenter') ? Presenter : params.has('print') ? Print : Deck
 

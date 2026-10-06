@@ -4,6 +4,7 @@ import mdx from '@mdx-js/rollup'
 import remarkGfm from 'remark-gfm'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
+import { offline } from './scripts/offline.mjs'
 
 export default defineConfig(({ mode }) => ({
   base: mode === 'pages' ? '/push_to_pickup/' : '/',
@@ -21,6 +22,7 @@ export default defineConfig(({ mode }) => ({
       }),
     },
     react({ include: /\.(jsx|tsx|mdx)$/ }),
+    offline(),
   ],
   server: { port: 5273, open: false },
   build: { target: 'es2022', outDir: mode === 'pages' ? 'dist/pages' : 'dist' },

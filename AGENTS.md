@@ -34,6 +34,12 @@ The owner lifted the original opening-slide-only restriction. `npm run build:pag
 uses Vite's `pages` mode and outputs `dist/pages` with base `/push_to_pickup/`.
 The Pages workflow always uses `build:pages` so asset paths match the hosted URL.
 
+The deck is offline first so the owner can read it on a flight: every build
+writes `sw.js` (`scripts/offline.mjs`) precaching all built files, served
+cache first; `public/manifest.webmanifest` makes it installable. One online
+visit is enough. Keep the deck free of external network requests (CDN fonts,
+remote images, Iconify fetches) — they would break offline.
+
 ## Slide 010: opening portrait
 
 `<OpeningPortrait>` keeps the original photo and adds two reversible steps:
