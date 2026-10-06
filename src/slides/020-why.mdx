@@ -8,9 +8,9 @@ notes: |
 ---
 
 <Spotlight box="left" title="What makes a call special?" bullets="numbered">
-  <Card at={1} n="0x01" title="Not a regular task" detail="Nobody tapped anything. The app is dead, the screen is off — and it still has to ring, on time." bullets={['Rare — nothing like everyday CRUD', 'Sporadic documentation', 'Few have shipped one — no one to ask']} />
+  <Card at={1} n="0x01" title="Not a regular task" detail="Nobody tapped anything. The app is dead, the screen is off — and it still has to ring, on time." bullets={['Nothing like everyday CRUD', 'Sporadic documentation', 'Few have shipped one']} />
   <Card at={2} n="0x02" title="Platform specific" detail="iOS: VoIP push + CallKit, one mandatory path. Android: FCM, then your own Activity or a ConnectionService." bullets={['iOS: VoIP push + CallKit', 'Android: FCM, ConnectionService / full‑screen Activity']} />
   <Card at={3} n="0x03" title="Metric heavy" detail="Time‑to‑ring, answer rate, missed calls. Every hop has a millisecond budget, and someone is measuring it." bullets={['Server delays', 'Push delivery delay', 'Call connect delay']} />
   <Card at={4} n="0x04" title="Inside out" detail="Flutter calls native as usual. But the push is handled natively first, and sometimes native has to wake a headless Flutter engine to finish the job." bullets={['Flutter → native, as usual', 'Real processing on the native side', 'Native → headless Flutter, when needed']} />
-  <Card at={5} n="0x05" title="Nothing ships as first built." detail="You start with the naive flow. Each of the points above adds a patch, and what finally ships barely resembles what you designed." bullets={['Day one: the naive flow', 'Every point above adds a patch', 'What ships barely resembles the plan']} />
+  <Card at={5} n="0x05" title="Nothing ships as first built." detail="You start with the naive flow. Each of the points above adds a patch, and what finally ships barely resembles what you designed." bullets={['Breaks on other devices', 'App lifecycle adds missing paths', 'Multiple devices introduce races']} />
 </Spotlight>
