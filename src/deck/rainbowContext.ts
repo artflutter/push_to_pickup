@@ -6,5 +6,6 @@ export const RainbowContext = createContext<{
   winner: MotionValue<number>
   ready: MotionValue<boolean>
   prism: MotionValue<number>
+  finale: MotionValue<number>
 } | null>(null)
 export const useRainbow = () => useContext(RainbowContext)

@@ -3,6 +3,7 @@ import { motion, useAnimationFrame, useMotionValue, useTransform, type MotionVal
 import { CLAWD } from './ClaudeMark'
 import { useSlide } from './slideContext'
 import { useRainbow } from './rainbowContext'
+import { finaleExit } from './finaleMotion'
 import { PRISM_HIT, prismBoost, prismCollapse, prismHead, prismPhase, prismTravel } from './prismMotion'
 import { CHECKPOINTS, NYAN_FRAME_MS, RAINBOW_COLORS, RAINBOW_CUES, RAINBOW_RUN_END, RAINBOW_Y, makeRainbowFlight, nyanPose, rainbowFrame, rainbowLabels, rainbowTrails } from './rainbowMotion'
 
@@ -93,7 +94,7 @@ export function RainbowTraveller() {
   })
   const pose = useTransform(cycle, nyanPose)
   const bob = useTransform(flight.clock, t => Math.min(1, t / 0.25))
-  const opacity = useTransform(flight.clock, t => t > 0 ? 1 : 0)
+  const opacity = useTransform(() => flight.clock.get() > 0 ? finaleExit(flight.finale.get()) : 0)
   const mascotX = useTransform(() => frame.get().x + pose.get().x * bob.get() * frame.get().bob)
   const mascotY = useTransform(() => frame.get().y + pose.get().y * bob.get() * frame.get().bob)
   const transform = useTransform(() => {

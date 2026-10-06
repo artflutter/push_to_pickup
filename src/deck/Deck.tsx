@@ -16,6 +16,7 @@ import { RainbowContext } from './rainbowContext'
 import { RAINBOW_CUES, rainbowCamera } from './rainbowMotion'
 import { RainbowTraveller } from './Rainbow'
 import { PRISM_END, PRISM_HIT, prismCamera, prismPhase } from './prismMotion'
+import { FINALE_END } from './finaleMotion'
 
 const EASE = [0.22, 0.61, 0.36, 1] as const
 type Reveal = { target: number } | null
@@ -51,9 +52,10 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
   const collapse = useMotionValue(atEndpoints || atRainbow || atMetrics ? ENDPOINT_ENTRY_DURATION : 0)
   const clock = useMotionValue(atMetrics ? rainbowEnd : atRainbow ? RAINBOW_CUES[Math.min(deck.step, RAINBOW_CUES.length - 1)] : 0)
   const prism = useMotionValue(atMetrics ? PRISM_END : 0)
+  const finale = useMotionValue(atMetrics && deck.step > 0 ? FINALE_END : 0)
   const winner = useMotionValue(2)
   const ready = useMotionValue(false)
-  const rainbow = useMemo(() => ({ clock, winner, ready, prism }), [clock, winner, ready, prism])
+  const rainbow = useMemo(() => ({ clock, winner, ready, prism, finale }), [clock, winner, ready, prism, finale])
   const camera = useTransform(() => -rainbowCamera(clock.get()) - prismCamera(prism.get()))
   const prismSkin = useTransform(prism, t => prismPhase(t, .025, PRISM_HIT))
   const source = useRef<HTMLDivElement>(null)
@@ -90,9 +92,11 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
     // A fast next click still lets the chosen endpoint connect before taking off.
     if (target > clock.get() && !ready.get()) {
       stopWaiting = ready.on('change', value => { if (value) start() })
+    } else if (!atMetrics && finale.get() > 0) {
+      stopWaiting = finale.on('change', t => { if (t <= 0) start() })
     } else start()
     return () => { stopWaiting(); animation?.stop() }
-  }, [atRainbow, atMetrics, clock, ready, deck.step, rainbowEnd])
+  }, [atRainbow, atMetrics, clock, ready, deck.step, rainbowEnd, finale])
   useLayoutEffect(() => {
     const target = atMetrics ? PRISM_END : 0
     let animation: ReturnType<typeof animate> | undefined
@@ -104,9 +108,25 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
     // A fast next still completes the rainbow run and its three captions first.
     if (atMetrics && clock.get() < rainbowEnd - .001) {
       stopWaiting = clock.on('change', t => { if (t >= rainbowEnd - .001) start() })
+    } else if (!atMetrics && finale.get() > 0) {
+      stopWaiting = finale.on('change', t => { if (t <= 0) start() })
     } else start()
     return () => { stopWaiting(); animation?.stop() }
-  }, [atMetrics, prism, clock, rainbowEnd])
+  }, [atMetrics, prism, clock, rainbowEnd, finale])
+  useLayoutEffect(() => {
+    const target = atMetrics && deck.step > 0 ? FINALE_END : 0
+    let animation: ReturnType<typeof animate> | undefined
+    let stopWaiting = () => {}
+    const start = () => {
+      stopWaiting()
+      animation = animate(finale, target, { duration: Math.abs(target - finale.get()), ease: 'linear' })
+    }
+    // A fast next lets all three Clawds reach their metric before gathering them.
+    if (target > 0 && prism.get() < PRISM_END) {
+      stopWaiting = prism.on('change', t => { if (t >= PRISM_END) start() })
+    } else start()
+    return () => { stopWaiting(); animation?.stop() }
+  }, [atMetrics, deck.step, finale, prism])
   return <div className="between-scene">
     <motion.div className="between-scene__prism-skin" style={{ opacity: prismSkin }} />
     <RainbowContext.Provider value={rainbow}>
@@ -133,7 +153,7 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
             onSteps={atRainbow ? deck.reportSteps : undefined} onAdvance={atRainbow ? deck.next : undefined} />
         </div>
         <div className="between-scene__metrics">
-          <SlideView slide={slides[metricsIndex]} step={0} index={metricsIndex} active={atMetrics}
+          <SlideView slide={slides[metricsIndex]} step={atMetrics ? deck.step : 0} index={metricsIndex} active={atMetrics}
             onSteps={atMetrics ? deck.reportSteps : undefined} onAdvance={atMetrics ? deck.next : undefined} />
         </div>
         <RainbowTraveller />
@@ -213,9 +233,6 @@ export function Deck() {
 
       <div className="deck__chrome">
         <div className="deck__progress" style={{ transform: `scaleX(${progress})` }} />
-        <div className="deck__counter">
-          {deck.slide + 1} / {slides.length}
-        </div>
       </div>
 
       {deck.blackout && <div className="deck__blackout" />}

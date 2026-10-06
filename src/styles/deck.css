@@ -720,6 +720,41 @@
 .prism__metric .metrics-lab__copy p { font-size: 19px; max-width: 375px; }
 .prism__clawd { shape-rendering: crispEdges; }
 
+/* The three prism sprites spin away to reveal the opening portrait. */
+.metrics-finale { position: absolute; inset: 0; }
+.metrics-finale__portrait { position: absolute; width: 360px; height: 360px; border-radius: 50%; overflow: hidden; }
+.metrics-finale__portrait > svg { display: block; width: 100%; height: 100%; }
+.metrics-finale__caption {
+  position: absolute;
+  top: 423px;
+  left: 268px;
+  width: 744px;
+  margin: 0;
+  text-align: center;
+  line-height: 0;
+  filter: drop-shadow(2px 5px 0 #651419);
+}
+.metrics-finale__caption img { display: block; width: 100%; height: auto; }
+.metrics-finale__links {
+  position: absolute;
+  top: 58px;
+  left: 58px;
+  right: 58px;
+  display: flex;
+  justify-content: space-between;
+}
+.metrics-finale .metrics-finale__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 256px;
+  color: inherit;
+  text-decoration: none;
+}
+.metrics-finale__link img { display: block; width: 256px; height: 256px; border-radius: 18px; }
+.metrics-finale__link-title { margin-top: 15px; font: 500 28px/1.1 var(--font-display); letter-spacing: -.025em; }
+.metrics-finale__link:focus-visible { outline: 2px solid white; outline-offset: 10px; }
+
 /* ------------------------------------------------------------- markdown --- */
 .md-h1 {
   font-size: 40px;
@@ -1878,14 +1913,6 @@
   background: linear-gradient(90deg, var(--pink), var(--blue));
   transform-origin: 0 50%;
   transition: transform 0.3s ease;
-}
-.deck__counter {
-  position: fixed;
-  right: 18px;
-  bottom: 14px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.35);
 }
 .deck__blackout {
   position: fixed;

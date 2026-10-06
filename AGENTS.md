@@ -503,6 +503,32 @@ and the Clawds stay at the ends of their rays. The old white Clawd standing to
 the left of the prism is gone — it has become the input beam. Keep regular eyes.
 No option labels, replay controls, or alternate layouts.
 
+## Slide 130: closing step
+
+Next from Metrics (`#/9/1`) sends the same three coloured Clawds spinning around
+a circle, with real revolutions, then fades them out as the opening portrait
+appears. Do not keep them orbiting as satellites. Simply moving them to three
+fixed points was also rejected. The look follows the classic Bugs
+Bunny / Looney Tunes ending: red concentric rings, a dark central opening,
+a circular photo of Vasyl with the opening slide's handlebar mustache inside,
+and the original script `That’s all
+Folks!` below. The lettering is a bundled SVG, extracted from the Wikimedia
+vector with its source noted in the asset. QR codes are 256 px, in the upper-left
+and upper-right corners, labelled only `LinkedIn` and `Slides` respectively.
+The QR codes and their labels descend together from above the slide into
+those positions; back lifts them out again on the same reversible clock.
+This is one extra step inside 130.
+`finaleMotion.ts` uses polar paths; the shared clock waits for the prism
+branches before starting, including on fast clicks. Back reverses the fade
+and spin and returns the same sprites to their metric labels. Direct entry
+at step 1, overview and print show the finished closing card with the portrait.
+The central Clawd was replaced at the owner's request. `MustachedPortrait`
+reuses the original photo and exact mustache silhouette from `OpeningPortrait`;
+there is no mascot on the photo and no additional step.
+The QR SVGs in `public/qr/` are bundled, with four-module quiet zones, encoding
+`https://www.linkedin.com/in/vasyl-dytsiak` and
+`https://artflutter.github.io/push_to_pickup/`. Their labels are clickable too.
+
 ## Slide numbering
 
 010 title · 020 why · 040–130 the talk outline (030 and 050 were merged into

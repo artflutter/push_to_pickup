@@ -7,6 +7,16 @@ import { useSlide } from './slideContext'
 const MUSTACHE = 'M 0 -1 C -7 -14 -19 -13 -28 -5 C -37 4 -49 0 -48 -9 C -53 -3 -49 6 -42 9 C -24 16 -9 9 0 -1 Z'
 const INK_STROKE = 'M 0 -1 C -12 5 -25 6 -35 5 S -51 -1 -48 -9'
 
+/** The opening photo and its finished mustache, without deck steps or Clawd. */
+export function MustachedPortrait({ src }: { src: string }) {
+  return <svg viewBox="0 0 391 391" role="img" aria-label="Vasyl Dytsiak with a handlebar mustache">
+    <image href={src} width="391" height="391" />
+    <g transform="translate(205 228)">
+      {[1, -1].map(direction => <path key={direction} d={MUSTACHE} fill="#211527" transform={`scale(${direction} 1)`} />)}
+    </g>
+  </svg>
+}
+
 /** Two opening-slide jokes, both registered as ordinary reversible deck steps. */
 export function OpeningPortrait({ src }: { src: string }) {
   const slide = useSlide()
