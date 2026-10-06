@@ -341,6 +341,29 @@ renders the orb itself.
   (Spotlight box blob, `<Orb />`, `<Route>`). Convert one slide at a time,
   as the owner directs.
 
+## 070 → 090: the worms pause on a black canvas
+
+Next from the platform pushes detaches the Apple leaf and Android arms. They
+take their first grid step intact, become three-cell Snake bodies, and crawl
+onto an empty black canvas. The camera follows one stage upward. This is
+`#/5/0`: no UI title or cards yet. Each worm keeps choosing a fresh random
+legal turn on every grid tick, indefinitely, within the canvas. Do not use a
+repeating route, fixed roaming targets, or an automatic timeout.
+Once they reach black, the first snake (the Apple leaf) turns on a soft white
+headlight. Its glow sits on the head cell's leading face and points along the
+head-to-neck direction on every turn. It follows the same live body into the
+UI and fades as that body becomes its card; there is no light during departure.
+
+The next tap (`#/5/1`) plans each onward route from its exact current head,
+neck, and tail. The camera follows them one more stage upward into the UI;
+they become CallKit, Activity, and Telecom Manager. No reset, teleport, or
+replacement sprite at the hand-off. The next three taps highlight the cards
+(`#/5/2` through `#/5/4`). Back retraces the arrival and resumes random
+crawling. Fast taps during departure queue the onward journey; card highlights
+wait for arrival. Direct entry at step 0 starts roaming; later entry, overview,
+and print show the appropriate completed UI. `UICrawl.tsx` owns the live
+session, and `uiCrawlJourney.ts` keeps the body histories and reversible routes.
+
 ## Slide 100: garlands between Push and UI
 
 Globes (former option A) is approved. The other garland variants and the

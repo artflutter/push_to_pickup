@@ -2084,6 +2084,7 @@
   flex-direction: column;
 }
 .ui-crawl__overlay,
+.ui-crawl__black,
 .ui-crawl__blue,
 .ui-crawl__wire {
   position: absolute;
@@ -2096,6 +2097,7 @@
   z-index: 5;
   overflow: hidden;
 }
+.ui-crawl__black { background: #000; }
 .ui-crawl__wire {
   color: white;
   fill: currentColor;

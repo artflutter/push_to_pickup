@@ -112,7 +112,7 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
     <RainbowContext.Provider value={rainbow}>
       <motion.div className="between-scene__world" style={{ x: camera }}>
         <motion.div ref={source} className="between-scene__ui" style={{ visibility }}>
-          <SlideView slide={slides[uiIndex]} step={atUI ? deck.step : 3} index={uiIndex} active={atUI}
+          <SlideView slide={slides[uiIndex]} step={atUI ? deck.step : 4} index={uiIndex} active={atUI}
             onSteps={atUI ? deck.reportSteps : undefined} onAdvance={atUI ? deck.next : undefined} />
         </motion.div>
         <PaperFold progress={progress} source={source} />
