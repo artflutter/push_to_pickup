@@ -668,6 +668,28 @@
   text-anchor: middle;
   font: 400 31px var(--font-display);
 }
+.rainbow__timer {
+  fill: white;
+  shape-rendering: geometricPrecision;
+}
+.rainbow__timer-outline,
+.rainbow__timer-face {
+  fill: var(--ink);
+  stroke: white;
+  stroke-width: .4;
+}
+.rainbow__timer-progress {
+  fill: none;
+  stroke: white;
+  stroke-width: .25;
+  opacity: .55;
+}
+.rainbow__timer-digits {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font: 500 4.9px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
 
 /* The camera follows Clawd into Metrics while the fixed skin changes gently. */
 .between-scene__metrics { position: absolute; left: 2560px; top: 0; width: 1280px; height: 720px; }

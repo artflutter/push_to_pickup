@@ -4,9 +4,23 @@ import { CLAWD } from './ClaudeMark'
 import { useSlide } from './slideContext'
 import { useRainbow } from './rainbowContext'
 import { PRISM_HIT, prismBoost, prismCollapse, prismHead, prismPhase, prismTravel } from './prismMotion'
-import { CHECKPOINTS, NYAN_FRAME_MS, RAINBOW_COLORS, RAINBOW_CUES, RAINBOW_Y, makeRainbowFlight, nyanPose, rainbowFrame, rainbowLabels, rainbowTrails } from './rainbowMotion'
+import { CHECKPOINTS, NYAN_FRAME_MS, RAINBOW_COLORS, RAINBOW_CUES, RAINBOW_RUN_END, RAINBOW_Y, makeRainbowFlight, nyanPose, rainbowFrame, rainbowLabels, rainbowTrails } from './rainbowMotion'
 
 const STILL_TRAILS = rainbowTrails(makeRainbowFlight(2), 0)
+const TIMER_SECONDS = 30
+
+/** Held by the forward hand, in the same local space as the moving mascot. */
+function HandTimer({ seconds }: { seconds: MotionValue<number> }) {
+  const digits = useTransform(seconds, s => String(s).padStart(2, '0'))
+  const spent = useTransform(seconds, s => 1 - s / TIMER_SECONDS)
+  return <g className="rainbow__timer" transform="translate(11.5 0)">
+    <path className="rainbow__timer-outline" d="M0-5.5V-7M-1.5-7h3M4-4l1-1" />
+    <circle className="rainbow__timer-face" r="5.5" />
+    <motion.circle className="rainbow__timer-progress" r="4.6" pathLength="1"
+      strokeDasharray="1" strokeDashoffset={spent} transform="rotate(-90)" />
+    <motion.text className="rainbow__timer-digits">{digits}</motion.text>
+  </g>
+}
 
 const STAR_FRAMES = [
   'M-2-2h4v4h-4Z',
@@ -63,6 +77,10 @@ export function RainbowTraveller() {
   })
   const cycle = useMotionValue(0)
   const elapsed = useRef(0)
+  // The displayed 30 seconds elapse over the flight, reaching zero on arrival.
+  // Sharing its clock also makes rewinds and direct entry show the right value.
+  const seconds = useTransform(flight.clock, t =>
+    Math.ceil(TIMER_SECONDS * (1 - Math.max(0, Math.min(1, t / RAINBOW_RUN_END)))))
   useAnimationFrame((_, delta) => {
     if (flight.clock.get() <= 0) {
       elapsed.current = 0
@@ -126,6 +144,7 @@ export function RainbowTraveller() {
         <motion.g className="rainbow__feet" style={{ transform: legA }}><path d={CLAWD} clipPath={`url(#${id}-a)`} /></motion.g>
         <motion.g className="rainbow__feet" style={{ transform: legB }}><path d={CLAWD} clipPath={`url(#${id}-b)`} /></motion.g>
       </g>
+      <HandTimer seconds={seconds} />
     </motion.g>
   </motion.svg>
 }
@@ -150,6 +169,7 @@ function Checkpoint({ index, clock }: { index: number; clock: MotionValue<number
 
 function RainbowArtwork({ clock, standalone = false }: { clock: MotionValue<number>; standalone?: boolean }) {
   const id = useId()
+  const stillSeconds = useMotionValue(0)
   const title = useTransform(clock, t => Math.max(0, Math.min(1, (t - 0.45) / 0.55)))
   return <div className="rainbow">
     <motion.h1 className="rainbow__title" style={{ opacity: title }}>All of this has to happen fast.</motion.h1>
@@ -162,7 +182,10 @@ function RainbowArtwork({ clock, standalone = false }: { clock: MotionValue<numb
             {STILL_TRAILS.map((d, i) => <path key={i} d={d} fill={RAINBOW_COLORS[i]} />)}
           </g>
         </g>
-        <path className="rainbow__still-mascot" d={CLAWD} fill="white" transform={`translate(1180 ${RAINBOW_Y}) scale(5.2) translate(-12 -12)`} />
+        <g transform={`translate(1180 ${RAINBOW_Y}) scale(5.2)`}>
+          <path className="rainbow__still-mascot" d={CLAWD} fill="white" transform="translate(-12 -12)" />
+          <HandTimer seconds={stillSeconds} />
+        </g>
       </g>}
       {CHECKPOINTS.map((_, i) => <Checkpoint key={i} index={i} clock={clock} />)}
     </svg>

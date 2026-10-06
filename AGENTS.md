@@ -458,6 +458,11 @@ Only the leading edge grows/retracts; bobbing Clawd and the moving pixel ripple
 must not drag the whole rainbow or its starting edge around.
 No extra thin rainbow progress bar along the bottom; the owner removed it.
 The owner also removed the `30 s` / `then voicemail` label and its extra step.
+On 2026-10-07 the owner added a stopwatch directly in Clawd's forward hand:
+no extended arm or handle, and no `s` suffix. Its 30-to-0 countdown shares the
+flight clock and expires when Clawd finishes the run, then holds at zero.
+It follows the mascot through jumps and prism compression; rewinding reverses
+the countdown. Direct entry and overview / print show zero. No extra click.
 
 ## 120 → 130: Clawd becomes the prism's beam
 
