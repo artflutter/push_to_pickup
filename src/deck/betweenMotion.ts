@@ -71,8 +71,38 @@ const RUNS = GARLAND_ROWS.map((text, row) => {
   }
 })
 
+/** Twilio rings without a vendor token, so a tag hangs under TOKEN once its row is lit. */
+export const GARLAND_TAG = (() => {
+  const row = 0
+  const word = 'TOKEN'
+  const text = GARLAND_ROWS[row]
+  const first = text.slice(0, text.lastIndexOf(word)).replaceAll(' ', '').length
+  return { row, index: first + Math.floor(word.length / 2), lines: ['Twilio brings', 'its own'] }
+})()
+const TAG_SETTLE = 1.6
+const TAG_START = (() => {
+  const run = RUNS[GARLAND_TAG.row]
+  const last = run.direction > 0 ? run.lamps[run.lamps.length - 1] : run.lamps[0]
+  return Math.abs(last - run.entry) / RUN_SPEED + LETTER_WARMUP
+})()
+
+// A row lasts until its lamps are lit and the tag has settled.
+const ROW_DURATIONS = GARLAND_ROWS.map((_, row) => row === GARLAND_TAG.row ? Math.max(RUN_DURATION, TAG_START + TAG_SETTLE) : RUN_DURATION)
+
 // A single clock lets a quick second click queue the lower row after the upper.
-export const GARLAND_CUES = Array.from({ length: GARLAND_ROWS.length + 1 }, (_, row) => row * RUN_DURATION)
+export const GARLAND_CUES = ROW_DURATIONS.reduce((cues, duration) => [...cues, cues[cues.length - 1] + duration], [0])
+
+/** Drops in on its thread, swung aside, and rocks to rest. */
+export function garlandTagAt(clock: number) {
+  const time = Math.max(0, clock - GARLAND_CUES[GARLAND_TAG.row] - TAG_START)
+  const enter = smooth(time / 0.25)
+  return {
+    opacity: enter,
+    y: (enter - 1) * 14,
+    // The envelope reaches zero as the row's clock stops, so the tag rests plumb.
+    angle: 30 * Math.exp(-2.6 * time) * Math.cos(time * Math.PI * 2 / 0.95) * clamp(1 - time / TAG_SETTLE),
+  }
+}
 
 export function garlandLightAt(clock: number, row: number, index: number) {
   const run = RUNS[row]

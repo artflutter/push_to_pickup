@@ -15,8 +15,8 @@ const paths = [
 export function VendorFlow({ steps }: { steps: string[] }) {
   const slide = useSlide()
   const present = useIsPresent()
-  useState(() => slide.register(5))
-  const step = slide.static ? 4 : Math.max(0, Math.min(slide.step - 1, 4))
+  useState(() => slide.register(6))
+  const step = slide.static ? 4 : Math.max(0, Math.min(slide.step - 2, 4))
   const active = Math.max(0, step - 1)
   const arrowId = useId()
   const marker = `url(#${arrowId})`
@@ -29,7 +29,7 @@ export function VendorFlow({ steps }: { steps: string[] }) {
     if (slide.static || !present) return
     if (slide.active === false) { delivery.jump(0); return }
     // Re-entering at the deck's last-step sentinel shows the settled pose.
-    if (slide.step > 5) delivery.jump(PUSH_END)
+    if (slide.step > 6) delivery.jump(PUSH_END)
     // The arrow holds at 1 while the orb finishes its flight. Back starts
     // retracting immediately, even if the orb had already reached home.
     if (step < 4) delivery.set(Math.min(delivery.get(), 1))
@@ -72,7 +72,7 @@ export function VendorFlow({ steps }: { steps: string[] }) {
             <rect x="790" y="160.54" width="340" height="178.92" rx="16" className="vendor-flow__outline" />
             <text x="612" y="178" textAnchor="middle" className="vendor-flow__packet">incoming call · webhook</text>
           </motion.g>
-          {['called number', 'user', 'SIP address'].map((label, i) => (
+          {['called number', 'user', 'their app'].map((label, i) => (
             <motion.g key={label} initial={false}
               animate={{ opacity: step >= 2 ? 1 : 0, y: step >= 2 ? 0 : -6 }}
               transition={{ duration: 0.35, delay: step === 2 ? i * 0.2 : 0 }}>
@@ -87,7 +87,7 @@ export function VendorFlow({ steps }: { steps: string[] }) {
             </motion.g>
           ))}
           <motion.g initial={false} animate={{ opacity: step >= 2 ? 1 : 0 }} transition={{ duration: 0.5 }}>
-            <text x="612" y="306" textAnchor="middle" className="vendor-flow__packet">route to SIP</text>
+            <text x="612" y="306" textAnchor="middle" className="vendor-flow__packet">ring user</text>
           </motion.g>
           <motion.g initial={false} animate={{ opacity: step >= 3 ? 1 : 0, y: step >= 3 ? 0 : -8 }} transition={{ duration: 0.5 }}>
             <motion.g style={{ opacity: tokens }}>

@@ -1,0 +1,10 @@
+Vendor logo artwork, retrieved 2026-10-06. Bundled locally for offline slides.
+
+Twilio: https://www.twilio.com/content/dam/twilio-com/core-assets/customer-logos/t-z/twilio.svg
+Telnyx: https://dila2qpfw3s64.cloudfront.net/_next/static/media/telnyx-logo-text.3ol7qfk480jrf.svg
+  Linked from https://telnyx.com/
+Vonage: https://developer.vonage.com/_nuxt/vonage-logo.BqMLbflE.svg
+  Original logo group retained; the separate DEVELOPER suffix is omitted.
+
+Original vector paths retained. Twilio and Telnyx fills use white for this deck.
+All trademarks belong to their respective owners.

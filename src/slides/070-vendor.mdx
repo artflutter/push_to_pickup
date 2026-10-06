@@ -1,8 +1,10 @@
 ---
 layout: full
 notes: |
-  The camera follows the balloon into the Vendor cloud. The next click
-  reveals a ringing phone; after it shakes, the cloud moves into the diagram.
+  The camera follows the balloon into the Vendor cloud. The next click raises
+  the Twilio, Telnyx, and Vonage logos from behind it. The following click hides
+  them behind the cloud and reveals a ringing phone; after it shakes, the
+  cloud moves into the diagram.
   Four diagram steps trace
   the incoming-call webhook, the SIP route, registered push tokens, and
   the push. The camera follows the outgoing arrow as it grows and branches
@@ -22,7 +24,7 @@ import { VendorFlow } from '../deck/VendorFlow'
 
 export const steps = [
   'Vendor notifies your backend of an incoming call via webhook.',
-  'Your backend maps the called number to a user and routes the call to their SIP address.',
+  'Your backend works out who owns the number and sends the call to them.',
   'Vendor looks up the user’s registered push tokens.',
   'Vendor sends a VoIP push to iOS or an FCM push to Android.',
 ]

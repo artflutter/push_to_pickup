@@ -200,8 +200,12 @@ rising (`slide.advance` from the choreography, as on 010). 070 picks it up:
 the balloon comes back in from below — the camera followed it up — settles,
 and the envelope spreads into the vendor's cloud with the light and
 "The vendor." inside. The slide's own content waits under that beat
-(`.slide--cloud`) and comes in on the next click, which parks the cloud small
-in the top-right corner (`<CloudIn>`).
+(`.slide--cloud`). At `#/4/0`, the next click raises the Twilio, Telnyx, and
+Vonage logos from behind the cloud, with staggered springs. The following
+click lowers them behind the cloud while revealing the ringing phone.
+After its shake, the cloud moves into the vendor diagram (`<CloudIn>`).
+The logos are bundled SVGs, masked by the vessel's actual outline; back
+navigation reverses the reveal.
 
 - It is one wireframe, the **vessel**, drawn by `<Traveller>` above the slide
   layer like the orb, so it survives the slide change (`Vessel` in
@@ -383,7 +387,7 @@ Every device gets one turn; keep that order through answering and rewinding.
 Starting a new incoming-call sequence shuffles again. Second next randomly picks one endpoint, turns it
 green with `Connected` and the shared white Clawd mascot in its screen,
 and stops ringing / dims the other seven with
-`Call ended`. Fast clicks wait for the fall, then complete the ring wave
+`Answered elsewhere` (was `Call ended` until the 2026-10-06 fact-check: the call goes on, only the ring ends there). Fast clicks wait for the fall, then complete the ring wave
 before showing the answer. Keep the incoming-call state white and reserve
 green for the answered endpoint.
 

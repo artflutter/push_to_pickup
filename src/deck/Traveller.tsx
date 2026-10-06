@@ -4,6 +4,7 @@ import { useSlide } from './slideContext'
 import { BALLOON_DESTINATION, BALLOON_DURATION, BALLOON_TIMING, FLIGHT_HEIGHT, balloonFrame, balloonPassenger, balloonString, toStage } from './balloonMotion'
 import { CLAWD, ClaudeMark } from './ClaudeMark'
 import { PUSH_HOME, vendorOrbFrame } from './vendorPushMotion'
+import { cueVendorLogos, VendorLogos } from './VendorLogos'
 
 /** The phone and vendor occupy one world; only its camera moves. */
 export const flightCamera = motionValue(0)
@@ -831,6 +832,7 @@ function Vessel() {
         </motion.g>
       </motion.svg>
       <motion.div className="vessel" style={{ x: ves.x, y: ves.y, scale: cloudScale, rotate: ves.rot, opacity: ves.opacity }}>
+        <VendorLogos outline={d} opacity={ves.label} />
         <motion.svg className="vessel__wire" viewBox={`0 0 ${V_BOX} ${V_BOX}`} style={{ strokeWidth: stroke, stroke: wireStroke }}>
           <defs>
             <radialGradient id="vessel-light">
@@ -866,14 +868,15 @@ function Vessel() {
 /**
  * Slide 070's opening beat: the camera follows 060's balloon up to the cloud,
  * the slide's own content waiting under it
- * (`.slide--cloud`). A separate click reveals the ringing phone before the
- * cloud moves into the diagram; `until` is the last step on screen.
+ * (`.slide--cloud`). First the vendor logos rise behind it; the next click
+ * lowers them and reveals the ringing phone before the cloud moves into the
+ * diagram. `until` is the last step on screen.
  */
 export function CloudIn({
   at = BALLOON_DESTINATION,
   park = { x: 1104, y: 104 },
   parkScale = 0.38,
-  until = 5,
+  until = 6,
 }: {
   at?: Point
   park?: Point
@@ -886,35 +889,41 @@ export function CloudIn({
 
   useEffect(() => {
     const el = slideOf(anchor.current)
-    return () => el?.classList.remove('slide--cloud')
+    return () => {
+      el?.classList.remove('slide--cloud')
+      if (!slide.static) cueVendorLogos(false, true)
+    }
   }, [])
 
   useEffect(() => {
     if (slide.static || slide.active === false) return
     const was = seen.current
     seen.current = slide.step
-    slideOf(anchor.current)?.classList.toggle('slide--cloud', slide.step <= 1)
+    slideOf(anchor.current)?.classList.toggle('slide--cloud', slide.step <= 2)
+    const stopLogos = cueVendorLogos(slide.step === 1, was == null)
     callRotation.jump(0)
-    if (slide.step === 0) {
+    if (slide.step <= 1) {
       callOpacity.jump(0)
       if (vstate.inFlight) void cloudArrive(at, slide.index)
-      else if (was != null && was > 0) void cloudHome(at, slide.index)
-      else cloudRest(at, slide.index)
-    } else if (slide.step === 1) {
-      if (was != null && was > 1) void cloudHome(at, slide.index)
+      else if (was != null && was > 2) void cloudHome(at, slide.index)
+      // Keep the homeward motion continuous when rewinding through the phone.
+      else if (was == null || (slide.step === 0 && was === 0)) cloudRest(at, slide.index)
+    } else if (slide.step === 2) {
+      if (was != null && was > 2) void cloudHome(at, slide.index)
       else if (was == null) cloudRest(at, slide.index)
       const reveal = animate(callOpacity, 1, { duration: 0.2 })
       const shake = animate(callRotation, [0, -6, 6, -4, 4, 0], { duration: 0.55, delay: 0.2, ease: 'easeInOut' })
       let cancelled = false
       void shake.then(() => {
-        if (!cancelled && was === 0) slide.advance?.()
+        if (!cancelled && was === 1) slide.advance?.()
       })
-      return () => { cancelled = true; reveal.stop(); shake.stop() }
+      return () => { cancelled = true; reveal.stop(); shake.stop(); stopLogos() }
     } else if (slide.step <= until) {
       callOpacity.jump(1)
-      if (was != null && was <= 1) void cloudPark(park, parkScale, slide.index)
+      if (was != null && was <= 2) void cloudPark(park, parkScale, slide.index)
       else cloudParkRest(park, parkScale, slide.index)
     } else void vesselHide()
+    return stopLogos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slide.step, slide.static, slide.active])
 

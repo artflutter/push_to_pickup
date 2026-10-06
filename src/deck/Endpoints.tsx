@@ -122,7 +122,8 @@ function Endpoint({ device, index, entry, calls, winner, ringOrder }: {
     </motion.g>
     <motion.g style={{ opacity: ended }}>
       <g transform={`translate(-12 ${iconY - 12})`}><path className="endpoint__handset" d={HANDSET} /><path className="endpoint__handset" d="M 3 21 L 21 3" /></g>
-      <text className="endpoint__status" y={iconY + 61}>Call ended</text>
+      {/* Phone screens are narrower than the label, so it breaks there; browsers keep one line. */}
+      <text className="endpoint__status" y={iconY + 61}>{web ? 'Answered elsewhere' : <><tspan x="0">Answered</tspan><tspan x="0" dy="1.2em">elsewhere</tspan></>}</text>
     </motion.g>
   </motion.g>
 }

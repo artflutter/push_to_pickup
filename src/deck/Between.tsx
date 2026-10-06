@@ -1,6 +1,6 @@
 import { createContext, useContext, useId, useLayoutEffect, useState, type ReactNode } from 'react'
 import { animate, motion, useMotionValue, useTransform, type MotionStyle, type MotionValue } from 'motion/react'
-import { betweenAt, GARLAND_CUES, GARLAND_LEFT, GARLAND_ROWS, GARLAND_RUNNER_SCALE, GARLAND_WIDTH, garlandCurveAt, garlandDropAt, garlandLetters, garlandLightAt, garlandRunnerAt, PILL_WIDTH, type GarlandCurve } from './betweenMotion'
+import { betweenAt, GARLAND_CUES, GARLAND_LEFT, GARLAND_ROWS, GARLAND_RUNNER_SCALE, GARLAND_TAG, GARLAND_WIDTH, garlandCurveAt, garlandDropAt, garlandLetters, garlandLightAt, garlandRunnerAt, garlandTagAt, PILL_WIDTH, type GarlandCurve } from './betweenMotion'
 import { CLAWD } from './ClaudeMark'
 import { useSlide } from './slideContext'
 import { useEndpointEntry } from './endpointContext'
@@ -57,6 +57,22 @@ export function Between({ children }: { children: ReactNode }) {
   </div>
 }
 
+/** A paper tag tied under its lamp; it rides the lamp through the sag and the fall. */
+function Tag({ lighting }: { lighting: MotionValue<number> }) {
+  const state = useTransform(lighting, garlandTagAt)
+  const opacity = useTransform(state, s => s.opacity)
+  const y = useTransform(state, s => s.y)
+  const rotate = useTransform(state, s => s.angle)
+  return <g transform="translate(0 65)">
+    <motion.g className="garland__tag" style={{ opacity, y, rotate, originX: 0, originY: 0, transformBox: 'view-box' }}>
+      <path className="garland__tag-thread" d="M 0 0 V 22" />
+      <path className="garland__tag-card" d="M -56 22 H 56 L 72 38 V 92 Q 72 98 66 98 H -66 Q -72 98 -72 92 V 38 Z" />
+      <circle className="garland__tag-hole" cx="0" cy="33" r="4" />
+      {GARLAND_TAG.lines.map((line, i) => <text key={line} className="garland__tag-text" y={62 + i * 24} textAnchor="middle">{line}</text>)}
+    </motion.g>
+  </g>
+}
+
 function Light({ letter, t, row, index, glow, curve, lighting }: {
   letter: string; t: number; row: number; index: number; glow: string
   curve: MotionValue<GarlandCurve>; lighting: MotionValue<number>
@@ -74,6 +90,7 @@ function Light({ letter, t, row, index, glow, curve, lighting }: {
     <circle className="garland__glass" cx="0" cy="45" r="20" />
     {/* Centre the visible capitals, using the loaded font's cap height. */}
     <text className="garland__letter" y="45" dy="0.5cap" textAnchor="middle" dominantBaseline="alphabetic">{letter}</text>
+    {row === GARLAND_TAG.row && index === GARLAND_TAG.index && <Tag lighting={lighting} />}
   </motion.g>
 }
 
