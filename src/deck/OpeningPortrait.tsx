@@ -8,7 +8,7 @@ const MUSTACHE = 'M 0 -1 C -7 -14 -19 -13 -28 -5 C -37 4 -49 0 -48 -9 C -53 -3 -
 const INK_STROKE = 'M 0 -1 C -12 5 -25 6 -35 5 S -51 -1 -48 -9'
 
 /** Two opening-slide jokes, both registered as ordinary reversible deck steps. */
-export function OpeningPortrait({ src, alt }: { src: string; alt: string }) {
+export function OpeningPortrait({ src }: { src: string }) {
   const slide = useSlide()
   useState(() => slide.register(2))
   const id = useId()
@@ -16,8 +16,8 @@ export function OpeningPortrait({ src, alt }: { src: string; alt: string }) {
   const mascot = slide.static || slide.step >= 2
 
   return <div className="avatar opening-portrait">
-    <img src={src} alt={alt} />
-    <svg className="opening-portrait__overlay" viewBox="0 0 391 391" aria-hidden="true">
+    <img src={src} />
+    <svg className="opening-portrait__overlay" viewBox="0 0 391 391">
       <g transform="translate(205 228)">
         <motion.g initial={false}
           animate={{ opacity: mustache ? 1 : 0 }} transition={{ duration: 0.12 }}>

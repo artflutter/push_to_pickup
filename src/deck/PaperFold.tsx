@@ -53,7 +53,7 @@ export function PaperFold({ progress, source }: { progress: MotionValue<number>;
   }, [progress, source])
 
   let offset = PAPER.x
-  return <div ref={root} className="paper-fold" aria-hidden="true" inert>
+  return <div ref={root} className="paper-fold" inert>
     <div className="paper-fold__camera">
       <div className="paper-fold__sheet">
         {PAPER_PANELS.map((width, i) => {

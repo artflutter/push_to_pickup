@@ -341,7 +341,7 @@ export function Traveller({ slide }: { slide: number }) {
   const ringScale = useTransform(iris.r, (r) => Math.max(0, r) / 700)
   const ballClip = useTransform(ballClipTop, (y) => `inset(${y}px 0 0 0)`)
   return (
-    <div className="ball-layer" aria-hidden="true">
+    <div className="ball-layer">
       <motion.div className="iris-ring" style={{ x: iris.x, y: iris.y, scale: ringScale, opacity: iris.ring }} />
       <motion.div className="ball-viewport" style={{ clipPath: ballClip, opacity: ball.opacity }}>
         <motion.div className="ball" style={{ x: ball.x, y: ball.y, scale: ball.scale }}>
@@ -443,7 +443,7 @@ export function OrbLaunch() {
   return (
     <>
       <span ref={anchor} hidden />
-      <motion.div className="lights" style={{ opacity: lights }} aria-hidden="true" />
+      <motion.div className="lights" style={{ opacity: lights }} />
     </>
   )
 }
@@ -823,14 +823,14 @@ function Vessel() {
   const callVisibility = useTransform([ves.label, callOpacity], ([label, call]: number[]) => label * call)
   return (
     <motion.div className="vessel__camera" style={{ x: vendorCamera.x, y: cameraY }}>
-      <motion.svg className="vessel__tether" viewBox="0 0 1280 720" style={{ opacity: rig, stroke: stringStroke }} aria-hidden="true">
+      <motion.svg className="vessel__tether" viewBox="0 0 1280 720" style={{ opacity: rig, stroke: stringStroke }}>
         <motion.path d={string} />
         <motion.g className="vessel__clawd" style={{ transform: passengerTransform, opacity: passengerOpacity, originX: 0, originY: 0, transformBox: 'view-box' }}>
           {/* The end of the rope stays in Clawd's right hand as its body swings. */}
           <path d={CLAWD} transform="scale(2.5) translate(-22 -12)" />
         </motion.g>
       </motion.svg>
-      <motion.div className="vessel" style={{ x: ves.x, y: ves.y, scale: cloudScale, rotate: ves.rot, opacity: ves.opacity }} aria-hidden="true">
+      <motion.div className="vessel" style={{ x: ves.x, y: ves.y, scale: cloudScale, rotate: ves.rot, opacity: ves.opacity }}>
         <motion.svg className="vessel__wire" viewBox={`0 0 ${V_BOX} ${V_BOX}`} style={{ strokeWidth: stroke, stroke: wireStroke }}>
           <defs>
             <radialGradient id="vessel-light">

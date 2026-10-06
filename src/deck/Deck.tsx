@@ -111,35 +111,35 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
     <motion.div className="between-scene__prism-skin" style={{ opacity: prismSkin }} />
     <RainbowContext.Provider value={rainbow}>
       <motion.div className="between-scene__world" style={{ x: camera }}>
-        <motion.div ref={source} className="between-scene__ui" aria-hidden={!atUI} style={{ visibility }}>
+        <motion.div ref={source} className="between-scene__ui" style={{ visibility }}>
           <SlideView slide={slides[uiIndex]} step={atUI ? deck.step : 3} index={uiIndex} active={atUI}
             onSteps={atUI ? deck.reportSteps : undefined} onAdvance={atUI ? deck.next : undefined} />
         </motion.div>
         <PaperFold progress={progress} source={source} />
         <EndpointEntryContext.Provider value={collapse}>
           <BetweenContext.Provider value={progress}>
-            <div className="between-scene__next" aria-hidden={!atBetween}>
+            <div className="between-scene__next">
               <SlideView slide={slides[betweenIndex]} step={atBetween ? deck.step : atEndpoints || atRainbow || atMetrics ? 2 : 0} index={betweenIndex} active={atBetween}
                 onSteps={atBetween ? deck.reportSteps : undefined} onAdvance={atBetween ? deck.next : undefined} />
             </div>
           </BetweenContext.Provider>
-          <div className="between-scene__endpoints" aria-hidden={!atEndpoints}>
+          <div className="between-scene__endpoints">
             <SlideView slide={slides[endpointsIndex]} step={atEndpoints ? deck.step : atRainbow || atMetrics ? 2 : 0} index={endpointsIndex} active={atEndpoints}
               onSteps={atEndpoints ? deck.reportSteps : undefined} onAdvance={atEndpoints ? deck.next : undefined} />
           </div>
         </EndpointEntryContext.Provider>
-        <div className="between-scene__rainbow" aria-hidden={!atRainbow}>
+        <div className="between-scene__rainbow">
           <SlideView slide={slides[rainbowIndex]} step={atRainbow ? deck.step : atMetrics ? 3 : 0} index={rainbowIndex} active={atRainbow}
             onSteps={atRainbow ? deck.reportSteps : undefined} onAdvance={atRainbow ? deck.next : undefined} />
         </div>
-        <div className="between-scene__metrics" aria-hidden={!atMetrics}>
+        <div className="between-scene__metrics">
           <SlideView slide={slides[metricsIndex]} step={0} index={metricsIndex} active={atMetrics}
             onSteps={atMetrics ? deck.reportSteps : undefined} onAdvance={atMetrics ? deck.next : undefined} />
         </div>
         <RainbowTraveller />
       </motion.div>
     </RainbowContext.Provider>
-    <div className="between-scene__rule" aria-hidden="true" />
+    <div className="between-scene__rule" />
   </div>
 }
 
@@ -154,7 +154,7 @@ function FlightScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
   return (
     <motion.div className="flight-scene" style={{ background: flightSkin }}>
       <motion.div className="flight-scene__world" style={{ y: flightCamera }}>
-        <div className="flight-scene__phone" aria-hidden={!atApp}>
+        <div className="flight-scene__phone">
           <SlideView slide={slides[appIndex]} step={atApp ? deck.step : 5} index={appIndex} active={atApp}
             onSteps={atApp ? deck.reportSteps : undefined} onAdvance={atApp ? deck.next : undefined} />
         </div>

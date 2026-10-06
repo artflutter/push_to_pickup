@@ -5,7 +5,7 @@ export interface SlideRuntime {
   step: number
   /** Called once per fragment during its first render. Returns its 1-based ordinal. */
   register: (at?: number) => number
-  /** True in the presenter preview / overview — fragments render fully revealed. */
+  /** True in the overview / print — fragments render fully revealed. */
   static: boolean
   /** False for a retained neighbouring scene; it must not cue the traveller. */
   active?: boolean

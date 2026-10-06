@@ -12,8 +12,7 @@ npm run dev        # http://localhost:5273
 
 Public site: [artflutter.github.io/push_to_pickup](https://artflutter.github.io/push_to_pickup/).
 
-Pages publishes the full deck with all slide animations, presenter mode, and
-print view. It uses the same slide catalog as local development.
+Pages publishes the full deck with all slide animations and the print view. It uses the same slide catalog as local development.
 
 ```bash
 npm run build:pages   # dist/pages, based at /push_to_pickup/
@@ -36,7 +35,7 @@ subtitle: …which is worse
 layout: default        # title | card | section | default | full | quote | end
 theme: dark            # dark | light — light is the site's white section
 notes: |
-  Only the presenter window sees this.
+  Author notes; not rendered anywhere.
 ---
 
 <F>Revealed on the first click.</F>
@@ -127,15 +126,13 @@ Languages are bundled explicitly in
 | --- | --- |
 | `→` `space` `n` | next step / slide |
 | `←` `p` | back |
-| `s` | open the presenter window (notes, next slide, timer) |
 | `o` | slide overview, click to jump |
 | `b` or `.` | blackout |
 | `f` | fullscreen |
 | `Home` / `End` | first / last slide |
 
-The presenter window and the audience window stay in sync over
-`BroadcastChannel` — put one on each screen. The position also lives in the URL
-hash (`#/6/2`), so a reload lands you exactly where you were.
+Open deck windows stay in sync over `BroadcastChannel`. The position also
+lives in the URL hash (`#/6/2`), so a reload lands you exactly where you were.
 
 ## Export
 

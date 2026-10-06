@@ -56,8 +56,8 @@ export function VendorFlow({ steps }: { steps: string[] }) {
   }, [slide.static, slide.active, cameraX, cameraY])
 
   return (
-    <div className="vendor-flow" aria-hidden={step === 0}>
-      <svg className="vendor-flow__map" viewBox="0 0 1280 720" role="img" aria-label="Vendor exchanges a webhook and SIP route with your backend, finds push tokens, then sends VoIP push to iOS and FCM push to Android.">
+    <div className="vendor-flow">
+      <svg className="vendor-flow__map" viewBox="0 0 1280 720">
         <defs>
           <marker id={arrowId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 2 1 L 7 5 L 2 9" fill="none" stroke="currentColor" strokeWidth="1.3" /></marker>
         </defs>

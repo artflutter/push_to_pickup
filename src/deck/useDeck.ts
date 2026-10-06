@@ -38,7 +38,7 @@ export function useDeck(total: number): Deck {
   const channel = useRef<BroadcastChannel | null>(null)
   const echo = useRef(false)
 
-  // --- cross-window sync (presenter view <-> audience view) -----------------
+  // --- cross-window sync (every open deck window follows) ------------------
   useEffect(() => {
     const ch = new BroadcastChannel(CHANNEL)
     channel.current = ch
@@ -157,10 +157,6 @@ export function useDeck(total: number): Deck {
           e.preventDefault()
           if (document.fullscreenElement) void document.exitFullscreen()
           else void document.documentElement.requestFullscreen()
-          break
-        case 's':
-          e.preventDefault()
-          window.open(`${window.location.pathname}?presenter${window.location.hash}`, 'presenter', 'width=1280,height=800')
           break
       }
     }

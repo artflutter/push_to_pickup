@@ -28,7 +28,7 @@
   transform-origin: center;
 }
 
-/* Shared scaled-slide box: overview cells and presenter panes. */
+/* Shared scaled-slide box: overview cells. */
 .thumb {
   position: relative;
   width: 100%;
@@ -1891,77 +1891,6 @@
 .overview__caption span {
   font-family: var(--font-mono);
   color: var(--pink-2);
-}
-
-/* ------------------------------------------------------------ presenter --- */
-.presenter {
-  min-height: 100%;
-  background: #06060a;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.presenter__bar {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-family: var(--font-mono);
-}
-.presenter__bar button {
-  all: unset;
-  cursor: pointer;
-  padding: 4px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-}
-.presenter__timer {
-  font-size: 34px;
-  font-weight: 700;
-}
-.presenter__clock,
-.presenter__pos {
-  color: var(--muted);
-  font-size: 14px;
-}
-.presenter__pos {
-  margin-left: auto;
-}
-.presenter__grid {
-  display: grid;
-  grid-template-columns: 1.45fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-.presenter__side {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.presenter__label {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-.presenter__notes {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-}
-.presenter__notes p {
-  margin: 0;
-  font-size: 19px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-.presenter__end {
-  display: grid;
-  place-items: center;
-  height: 100%;
-  color: var(--muted);
 }
 
 /* ---------------------------------------------------------- card (title) --- */

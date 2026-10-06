@@ -497,7 +497,7 @@ export function Orb({
   const orb = useOrb(ref, size?.w ?? 0, size?.h ?? 0, { active: !slide.static, listen: listen === 'slide' ? slideOf : undefined, target })
   return (
     <>
-      <motion.div ref={ref} className="orb" style={{ background: orb.skin }} aria-hidden="true">
+      <motion.div ref={ref} className="orb" style={{ background: orb.skin }}>
         {glow && <OrbLayers orb={orb} />}
       </motion.div>
       {children?.(orb)}
@@ -508,7 +508,7 @@ export function Orb({
 /** The blob and its sheen on their own layer — a transform-only mover, cheap to stack above a fog. */
 export function Lamp({ orb, together = false }: { orb: OrbValues; together?: boolean }) {
   return (
-    <div className="lamp" aria-hidden="true">
+    <div className="lamp">
       <OrbLayers orb={orb} together={together} />
     </div>
   )
@@ -543,7 +543,6 @@ export function Fog({
   return (
     <motion.div
       className="fog"
-      aria-hidden="true"
       style={{ WebkitMaskImage: layers, maskImage: layers, WebkitMaskComposite: 'source-in', maskComposite: 'intersect', ...vars }}
       initial={false}
       animate={{ opacity: on ? 1 : 0 }}
@@ -752,7 +751,6 @@ function ActLayer({
         <motion.svg
           className="route__path"
           viewBox="0 0 1280 720"
-          aria-hidden="true"
           initial={false}
           animate={{ opacity: active > 0 && reached[0] ? 1 : 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -986,7 +984,6 @@ export function Unfold({
             <motion.svg
               className="unfold__path"
               viewBox="0 0 1280 720"
-              aria-hidden="true"
               initial={false}
               animate={{ opacity: open && reached[0] ? 1 : 0 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -1524,9 +1521,9 @@ function BoxBullets({
               transition={{ duration: 0.3, ease: [0.22, 0.61, 0.36, 1] }}
             >
               {style === 'numbered' && <span className="sb__n">{(k + 1).toString(2).padStart(2, '0')}</span>}
-              {(style === 'list' || style === 'steps' || style === 'rail') && <span className="sb__dot" aria-hidden="true" />}
+              {(style === 'list' || style === 'steps' || style === 'rail') && <span className="sb__dot" />}
               {style === 'ticks' && (
-                <span className="sb__tick" aria-hidden="true">
+                <span className="sb__tick">
                   <svg viewBox="0 0 24 24">
                     <path d="M5 12.5l4.5 4.5L19 7.5" />
                   </svg>
@@ -1646,7 +1643,7 @@ export function Card({
       }
       transition={{ type: 'spring', stiffness: 170, damping: 26, mass: 1 }}
     >
-      <div className="card__bg" aria-hidden="true" />
+      <div className="card__bg" />
       <div className="card__inner">
         {n != null && <div className="card__n">{n}</div>}
         {title && <div className="card__title">{title}</div>}
@@ -1705,7 +1702,7 @@ export function Hops({ children, gap = 14 }: { children: ReactNode; gap?: number
   items.forEach((child, i) => {
     if (i > 0)
       cells.push(
-        <div key={`a${i}`} className="hops__arrow" aria-hidden="true">
+        <div key={`a${i}`} className="hops__arrow">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 5l7 7-7 7" />
           </svg>
@@ -1739,7 +1736,7 @@ export function Check({ children, at }: { children: ReactNode; at?: number }) {
   const done = slide.static || slide.step >= ordinal
   return (
     <div className={`check${done ? ' is-done' : ''}`}>
-      <span className="check__box" aria-hidden="true">
+      <span className="check__box">
         <svg viewBox="0 0 24 24">
           <path d="M5 12.5l4.5 4.5L19 7.5" />
         </svg>
@@ -1784,7 +1781,7 @@ export function AppWire() {
   const { x, y, w, h } = APP_WIRE
   const cx = 640
   return (
-    <svg className="appwire" viewBox="0 0 1280 720" fill="none" aria-hidden="true">
+    <svg className="appwire" viewBox="0 0 1280 720" fill="none">
       <rect x={x} y={y} width={w} height={h} rx="34" />
       <rect x={x + 10} y={y + 10} width={w - 20} height={h - 20} rx="26" opacity="0.5" />
       <rect x={cx - 45} y={y + 20} width="90" height="11" rx="5.5" />
@@ -1821,7 +1818,6 @@ export function Phones({ state = 'both' }: { state?: 'both' | 'split' }) {
       strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      aria-hidden="true"
     >
       {phone(0, state === 'both', state === 'split')}
       {phone(176, true, false)}
@@ -1956,7 +1952,7 @@ export function ConfBar({
 }) {
   return (
     <div className="confbar no-nav">
-      <img className="confbar__logo" src={`${import.meta.env.BASE_URL}brand/nextapp-wordmark.png`} alt="next.app" />
+      <img className="confbar__logo" src={`${import.meta.env.BASE_URL}brand/nextapp-wordmark.png`} />
       <span>
         {city} | {dates}
       </span>
@@ -1967,14 +1963,14 @@ export function ConfBar({
 
 /** flutterCon wordmark, sits between the bar and the eyebrow. */
 export function Logo() {
-  return <img className="hero-logo" src={`${import.meta.env.BASE_URL}brand/fluttercon-logo.png`} alt="flutterCon" />
+  return <img className="hero-logo" src={`${import.meta.env.BASE_URL}brand/fluttercon-logo.png`} />
 }
 
 /** The 3D flutterCon mark bleeding off the bottom-right, as on the site. */
 export function HeroArt() {
   return (
-    <div className="hero-art" aria-hidden="true">
-      <img src={`${import.meta.env.BASE_URL}brand/fluttercon-icon.png`} alt="" />
+    <div className="hero-art">
+      <img src={`${import.meta.env.BASE_URL}brand/fluttercon-icon.png`} />
     </div>
   )
 }
@@ -2011,15 +2007,15 @@ export function Speaker({ name, role, tone = 'blue' }: { name: string; role?: st
 export function Brand() {
   return (
     <div className="brand">
-      <img className="brand__nextapp" src={`${import.meta.env.BASE_URL}brand/nextapp-wordmark.png`} alt="next.app" />
-      <img className="brand__fluttercon" src={`${import.meta.env.BASE_URL}brand/fluttercon-logo.png`} alt="flutterCon" />
+      <img className="brand__nextapp" src={`${import.meta.env.BASE_URL}brand/nextapp-wordmark.png`} />
+      <img className="brand__fluttercon" src={`${import.meta.env.BASE_URL}brand/fluttercon-logo.png`} />
     </div>
   )
 }
 
 /** Round halftone portrait with the blue ring. The PNG is already masked round. */
-export function Avatar({ src, alt = '' }: { src: string; alt?: string }) {
-  return <img className="avatar" src={src} alt={alt} />
+export function Avatar({ src }: { src: string }) {
+  return <img className="avatar" src={src} />
 }
 
 /** First and last name on two lines, role in ink, optional company in blue. */
@@ -2058,7 +2054,7 @@ export function ConfStrip({ children = '#nextapp26 | OCT 7-9, 2026 | BERLIN' }: 
 
 /** Halftone Brandenburg Gate bleeding off the bottom-right. */
 export function Gate() {
-  return <img className="gate" src={`${import.meta.env.BASE_URL}brand/brandenburg-gate.png`} alt="" aria-hidden="true" />
+  return <img className="gate" src={`${import.meta.env.BASE_URL}brand/brandenburg-gate.png`} />
 }
 
 export const mdxComponents = {

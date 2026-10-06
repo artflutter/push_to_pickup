@@ -36,7 +36,7 @@ function PrismRay({ index, clock }: Clock & { index: number }) {
   const mascotOpacity = useTransform(clock, t => prismPhase(t, PRISM_SPLIT, PRISM_SPLIT + .05))
   const target = 255 + index * 152
   return <>
-    <svg className="metrics-lab__svg" viewBox="0 0 1280 720" aria-hidden="true" data-prism-branch={index + 1}>
+    <svg className="metrics-lab__svg" viewBox="0 0 1280 720">
       <motion.path d={`M462 407L738 ${target}`} stroke={METRICS[index].color} strokeWidth="14" opacity=".07" style={{ pathLength: ray }} />
       <motion.path d={`M462 407L738 ${target}`} stroke={METRICS[index].color} strokeWidth="2.5" style={{ pathLength: ray }} />
       <motion.path className="prism__clawd" d={CLAWD} fill={METRICS[index].color}
@@ -52,7 +52,7 @@ function PrismSparkle({ clock }: Clock) {
   const impact = useTransform(clock, prismImpact)
   const opacity = useTransform(impact, p => p.opacity)
   const transform = useTransform(impact, p => `translate(${PRISM_POINT.x}px, ${PRISM_POINT.y}px) scale(${.45 + p.spread * .85})`)
-  return <svg className="metrics-lab__svg prism__sparkle" viewBox="0 0 1280 720" aria-hidden="true">
+  return <svg className="metrics-lab__svg prism__sparkle" viewBox="0 0 1280 720">
     <motion.g style={{ opacity, transform, originX: 0, originY: 0, transformBox: 'view-box' }}>
       <path d="M0-23L3-3L23 0L3 3L0 23L-3 3L-23 0L-3-3Z" fill="white" />
       {RAINBOW_COLORS.map((color, i) => <path key={color} d="M22 0h7" stroke={color} strokeWidth="2"
@@ -65,7 +65,7 @@ function Prism({ clock, standalone }: Clock & { standalone: boolean }) {
   const id = useId()
   return <div className="metrics-lab metrics-lab--prism">
     <Header />
-    <svg className="metrics-lab__svg" viewBox="0 0 1280 720" aria-hidden="true">
+    <svg className="metrics-lab__svg" viewBox="0 0 1280 720">
       <defs>
         <linearGradient id={`${id}-glass`} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#d5e2fa" stopOpacity=".2" /><stop offset=".5" stopColor="#99b1dd" stopOpacity=".035" /><stop offset="1" stopColor="#ff69c5" stopOpacity=".13" /></linearGradient>
       </defs>

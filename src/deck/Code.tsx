@@ -78,7 +78,7 @@ export function Code({ children, code, lang = 'dart', title, marks, size = 'md',
   }, [highlighter, source, lang, marked])
 
   return (
-    <figure className={`code code--${size} ${className ?? ''}`} data-lang={lang}>
+    <figure className={`code code--${size} ${className ?? ''}`}>
       {title && <figcaption className="code__title">{title}</figcaption>}
       {html ? (
         <div className="code__body" dangerouslySetInnerHTML={{ __html: html }} />
@@ -116,7 +116,7 @@ export function CodeMorph({ steps, lang = 'dart', title, size = 'md' }: CodeMorp
   const code = (steps[index] ?? '').replace(/\n$/, '')
 
   return (
-    <figure className={`code code--morph code--${size}`} data-lang={lang}>
+    <figure className={`code code--morph code--${size}`}>
       {title && <figcaption className="code__title">{title}</figcaption>}
       <div className="code__body">
         {highlighter ? (

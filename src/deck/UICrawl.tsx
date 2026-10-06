@@ -51,7 +51,7 @@ function Crawler({ clock, part, rect }: { clock: MotionValue<number>; part: numb
   const d = useTransform(clock, s => outlinePath(crawlOutline(s, shape)))
   const opacity = useTransform(clock, s => 1 - cardArrival(s, part))
   const fill = useTransform(clock, s => smooth((crawlAt(s, part) - 0.84) / 0.12) * 0.9)
-  return <motion.path data-crawler={['leaf', 'left-arm', 'right-arm'][part]} d={d} stroke="white" strokeWidth="2.5"
+  return <motion.path d={d} stroke="white" strokeWidth="2.5"
     fill="#1c1c1f" style={{ opacity, fillOpacity: fill }} />
 }
 
@@ -61,7 +61,7 @@ function CrawlOverlay({ clock, camera, slots }: { clock: MotionValue<number>; ca
   const donorOpacity = useTransform(clock, s => 1 - smooth((s - 0.4) / 1.2))
   const background = useTransform(clock, s => 1 - smooth((s - 1.45) / 1.3))
   const visibility = useTransform(clock, s => s >= CRAWL_END ? 'hidden' : 'visible')
-  return <motion.div className="ui-crawl__overlay" style={{ visibility }} aria-hidden="true">
+  return <motion.div className="ui-crawl__overlay" style={{ visibility }}>
     <motion.div className="ui-crawl__blue" style={{ opacity: background, background: flightSkin }} />
     <svg viewBox="0 0 1280 720" className="ui-crawl__wire">
       <defs>
@@ -133,5 +133,5 @@ export function UIArrival({ part, children }: { part: number; children: ReactNod
   const fallback = useMotionValue(CRAWL_END)
   const clock = useContext(CrawlContext) ?? fallback
   const opacity = useTransform(clock, s => cardArrival(s, part))
-  return <motion.div className="ui-crawl__slot" data-ui-part={part} style={{ opacity }}>{children}</motion.div>
+  return <motion.div className="ui-crawl__slot" style={{ opacity }}>{children}</motion.div>
 }

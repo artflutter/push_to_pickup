@@ -180,8 +180,9 @@ from the route: only the ring the orb is *heading for* lights by distance
 (`aim`) — coming down from the phone it passes within ~280 px of ring 02,
 which flickered to 14 % on the way ("why 02 blinks"). Four clicks. Stepping back folds it all up again; nothing
 blinks.
-The rings read `Emits push token` · `Obtains vendor token` · `Send push to
-vendor` (the owner's words). Rejected on the way here: the box shrinking
+The rings read `Emits push token` · `Obtains vendor token` · `Registers push
+token with vendor` (the owner's words; ring 11 was `Send push to vendor` until
+the 2026-10-06 fact-check: the app registers its token, the vendor sends the push). Rejected on the way here: the box shrinking
 into the Spotlight layout with bars on the left ("everything should be on
 the same page"); a phone drawn without its frame; a content block inside
 the phone; the blob centred on the phone instead of on top of it.
@@ -193,7 +194,7 @@ balloon (below).
 ## The balloon: 060 hands the push to 070
 
 The last step of 060 (a fifth click, `<Unfold launch>`): the ring the orb has
-just lit — `Send push to vendor` — becomes a balloon, gathers the light inside
+just lit — `Registers push token with vendor` — becomes a balloon, gathers the light inside
 it and rises off the top edge, swaying; the page turns while it is still
 rising (`slide.advance` from the choreography, as on 010). 070 picks it up:
 the balloon comes back in from below — the camera followed it up — settles,

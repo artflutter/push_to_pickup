@@ -382,9 +382,9 @@ export function Dial({ title = 'The vendor.', stops, children }: VProps) {
   const reached = useReached([glowX, glowY], (i) => pts[i], orb, n, step, slide.static)
   return (
     <div className="vendor vendor--dial">
-      <div className="orb" style={{ background: 'linear-gradient(225deg, var(--blue) 40%, #4a5cff 100%)' }} aria-hidden="true" />
+      <div className="orb" style={{ background: 'linear-gradient(225deg, var(--blue) 40%, #4a5cff 100%)' }} />
       {/* the track: the dial's circle, ring to ring, faint — the bright arc draws over it */}
-      <svg className="vendor__path dial__track" viewBox="0 0 1280 720" aria-hidden="true">
+      <svg className="vendor__path dial__track" viewBox="0 0 1280 720">
         {DIAL_ANGLES.map((from, i) => (
           <path key={i} d={arcPath(from, from + 90)} />
         ))}
@@ -392,7 +392,6 @@ export function Dial({ title = 'The vendor.', stops, children }: VProps) {
       <motion.svg
         className="vendor__path"
         viewBox="0 0 1280 720"
-        aria-hidden="true"
         initial={false}
         animate={{ opacity: step > 0 && reached[0] ? 1 : 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -401,7 +400,7 @@ export function Dial({ title = 'The vendor.', stops, children }: VProps) {
           <Arc key={i} angle={aS} from={DIAL_ANGLES[i]} to={to} />
         ))}
       </motion.svg>
-      <div className="lamp" aria-hidden="true">
+      <div className="lamp">
         <motion.div className="orb__glow" style={{ x: glowX, y: glowY }} />
         <motion.div className="orb__sheen" style={{ x: glowX, y: glowY }} />
       </div>
@@ -587,7 +586,6 @@ function BeltBody({ orb, items, step }: { orb: OrbValues; items: StopData[]; ste
       <motion.svg
         className="vendor__path"
         viewBox="0 0 1280 720"
-        aria-hidden="true"
         style={{ x: beltX }}
         initial={false}
         animate={{ opacity: open && reached[0] ? 1 : 0 }}
@@ -730,7 +728,7 @@ function HandBody({ orb, items, step, labels }: { orb: OrbValues; items: StopDat
   const [s1, s2, s3, s4] = items
   return (
     <>
-      <svg className="hand__art" viewBox="0 0 1280 720" aria-hidden="true">
+      <svg className="hand__art" viewBox="0 0 1280 720">
         <motion.path
           d={CLOUD_PATH}
           transform={`translate(${CLOUD_AT.x} ${CLOUD_AT.y}) scale(${CLOUD_K})`}

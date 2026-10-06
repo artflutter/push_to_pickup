@@ -42,7 +42,7 @@ function NotchedScreen({ w, h, notch }: { w: number; h: number; notch: 'wide' | 
   const bottom = h / 2 - 7
   const half = notch === 'wide' ? 29 : 18
   const depth = notch === 'wide' ? 13 : 11
-  return <path className="endpoint__screen" data-notch={notch} d={`
+  return <path className="endpoint__screen" d={`
     M ${left + 14} ${top} H ${-half - 2}
     Q ${-half} ${top} ${-half} ${top + 2} V ${top + depth - 5}
     Q ${-half} ${top + depth} ${-half + 5} ${top + depth} H ${half - 5}
@@ -104,7 +104,7 @@ function Endpoint({ device, index, entry, calls, winner, ringOrder }: {
   const ringing = useTransform(state, s => s.ring > 0.1 && s.answered < 0.05 ? 'running' : 'paused')
   const web = device.kind === 'web'
   const iconY = web ? -5 : -17
-  return <motion.g className={`endpoint endpoint--${device.kind}`} data-endpoint={device.id} aria-label={device.label}
+  return <motion.g className={`endpoint endpoint--${device.kind}`}
     style={{ transform, opacity, color, originX: 0, originY: 0, transformBox: 'view-box', '--endpoint-light': light, '--ringing': ringing } as MotionStyle}>
     <DeviceFrame device={device} />
     <motion.g style={{ opacity: ring }}>
@@ -176,9 +176,9 @@ export function Endpoints() {
     return () => { stopWaiting(); animation?.stop() }
   }, [calls, entry, slide.static, target])
 
-  return <motion.div className="endpoints" style={{ visibility: show }} data-phase={phase} data-winner={phase === 2 ? ENDPOINTS[winner].id : undefined}>
+  return <motion.div className="endpoints" style={{ visibility: show }}>
     <motion.h1 className="endpoints__title" style={{ opacity: titleOpacity }}>One call. Many endpoints.</motion.h1>
-    <svg className="endpoints__devices" viewBox="0 0 1280 720" role="img" aria-label="One user's iOS phones, Android phones, closed iPhone Duo and web browsers">
+    <svg className="endpoints__devices" viewBox="0 0 1280 720">
       {ENDPOINTS.map((device, i) => <Endpoint key={device.id} device={device} index={i} entry={entry} calls={calls} winner={winner} ringOrder={ringOrder} />)}
     </svg>
   </motion.div>

@@ -7,7 +7,7 @@ export interface SlideMeta {
   title?: string
   subtitle?: string
   layout?: Layout
-  /** Speaker notes — shown only in the presenter window. */
+  /** Author notes — not rendered anywhere. */
   notes?: string
   /** Optional background override, any CSS background value. */
   background?: string

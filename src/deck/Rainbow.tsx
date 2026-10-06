@@ -98,7 +98,7 @@ export function RainbowTraveller() {
   })
   const legA = useTransform(pose, p => `translate(${p.aX}px, ${p.aY}px)`)
   const legB = useTransform(pose, p => `translate(${p.bX}px, ${p.bY}px)`)
-  return <motion.svg className="rainbow-traveller" viewBox="0 0 3840 720" style={{ opacity }} aria-hidden="true">
+  return <motion.svg className="rainbow-traveller" viewBox="0 0 3840 720" style={{ opacity }}>
     <motion.g className="rainbow__stars" style={{ opacity: starsOpacity }}>
       {Array.from({ length: 20 }, (_, i) => <PixelStar key={i} index={i} frame={cycle} />)}
     </motion.g>
@@ -139,8 +139,8 @@ function Checkpoint({ index, clock }: { index: number; clock: MotionValue<number
     : 128 + Math.max(0, checkpoint.amplitude - 1.45) * 46
   const labels = useTransform(clock, t => rainbowLabels(t, index))
   const labelY = useTransform(labels, t => (1 - t) * (above ? 12 : -12))
-  return <g className="rainbow__checkpoint" data-checkpoint={index + 1} transform={`translate(${checkpoint.x} ${RAINBOW_Y})`}>
-    <motion.g className="rainbow__caption" data-side={above ? 'above' : 'below'} style={{ opacity: labels, y: labelY }}>
+  return <g className="rainbow__checkpoint" transform={`translate(${checkpoint.x} ${RAINBOW_Y})`}>
+    <motion.g className="rainbow__caption" style={{ opacity: labels, y: labelY }}>
       <text className="rainbow__label" y={textY}>
         {checkpoint.lines.map((line, i) => <tspan key={line} x="0" dy={i ? 35 : 0}>{line}</tspan>)}
       </text>
@@ -153,7 +153,7 @@ function RainbowArtwork({ clock, standalone = false }: { clock: MotionValue<numb
   const title = useTransform(clock, t => Math.max(0, Math.min(1, (t - 0.45) / 0.55)))
   return <div className="rainbow">
     <motion.h1 className="rainbow__title" style={{ opacity: title }}>All of this has to happen fast.</motion.h1>
-    <svg className="rainbow__map" viewBox="0 0 1280 720" role="img" aria-label="Server processing, push delivery, and on-device call processing are checkpoints on a rainbow">
+    <svg className="rainbow__map" viewBox="0 0 1280 720">
       {/* Static overview / print has no shared traveller above the slide. */}
       {standalone && <g>
         <defs><clipPath id={`${id}-still`}><rect width="1144" height="720" /></clipPath></defs>

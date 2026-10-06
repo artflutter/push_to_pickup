@@ -20,7 +20,7 @@ function Platform({ progress, kind, x, detached = false }: { progress: MotionVal
   const label = useTransform(progress, (p) => clamp((p - 0.94) / 0.06))
   const paths = kind === 'ios' ? APPLE : ANDROID
   return (
-    <g className={`vendor-flow__platform vendor-flow__platform--${kind}`} aria-label={kind === 'ios' ? 'iOS: VoIP push' : 'Android: FCM push'}
+    <g className={`vendor-flow__platform vendor-flow__platform--${kind}`}
       transform={`translate(${x} ${PLATFORM_Y + 108}) scale(1.5) translate(${-x} ${-PLATFORM_Y - 108})`}>
       <motion.g style={{ opacity: outline }}>
         <g transform={`translate(${x - 144} ${PLATFORM_Y - 144}) scale(0.5625)`} className="vendor-flow__os-logo">

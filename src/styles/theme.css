@@ -85,7 +85,6 @@ body {
   overflow: hidden;
 }
 
-html[data-view='print'] body,
-html[data-view='presenter'] body {
+html[data-view='print'] body {
   overflow: auto;
 }

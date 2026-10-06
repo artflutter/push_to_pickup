@@ -67,8 +67,7 @@ function Light({ letter, t, row, index, glow, curve, lighting }: {
   const y = useTransform(position, p => p.y)
   const rotate = useTransform(position, p => p.angle)
   const light = useTransform(() => garlandLightAt(lighting.get(), row, index) * ropePowerAt(collapse.get(), row))
-  return <motion.g className="garland__light" data-letter={letter}
-    data-side={t < 0.5 ? 'left' : 'right'} style={{ x, y, rotate, originX: 0, originY: 0, transformBox: 'view-box', '--light': light } as MotionStyle}>
+  return <motion.g className="garland__light" style={{ x, y, rotate, originX: 0, originY: 0, transformBox: 'view-box', '--light': light } as MotionStyle}>
     <path className="garland__drop" d="M 0 0 V 20" />
     <ellipse className="garland__glow" cx="0" cy="43" rx="34" ry="36" fill={`url(#${glow})`} />
     <path className="garland__socket" d="M -5 20 H 5 V 26 H -5 Z" />
@@ -93,7 +92,7 @@ function RopeRunner({ row, curve, lighting }: { row: number; curve: MotionValue<
   const opacity = useTransform(() => collapse.get() === 0 && run.get().visible ? 1 : 0)
   const legA = useTransform(run, runner => runner.legA)
   const legB = useTransform(run, runner => runner.legB)
-  return <motion.g className="garland__runner" style={{ transform, opacity, originX: 0, originY: 0, transformBox: 'view-box' }} aria-hidden="true">
+  return <motion.g className="garland__runner" style={{ transform, opacity, originX: 0, originY: 0, transformBox: 'view-box' }}>
     {/* Keep the shipped silhouette; alternate its two pairs of pixel feet. */}
     <g transform={`scale(${GARLAND_RUNNER_SCALE}) translate(-12 -18)`}>
       <defs>
@@ -121,7 +120,7 @@ function Strand({ text, row, glow, progress, lighting }: {
     return collapse.get() > 0 ? tornRopePathAt(row, collapse.get(), c) : `M ${c.left} ${y} Q 640 ${y + c.depth * 2} ${c.right} ${y}`
   })
   const opacity = useTransform(collapse, clock => ropeDebrisOpacity(clock, row))
-  return <motion.g className={`garland__row garland__row--${row}`} role="img" aria-label={text} data-lights={lights.length} style={{ opacity }}>
+  return <motion.g className={`garland__row garland__row--${row}`} style={{ opacity }}>
     <motion.path className="garland__wire" d={d} />
     {lights.map(({ letter, t }, i) => <Light key={i} letter={letter} t={t} row={row} index={i} glow={glow} curve={curve} lighting={lighting} />)}
     <RopeRunner row={row} curve={curve} lighting={lighting} />
