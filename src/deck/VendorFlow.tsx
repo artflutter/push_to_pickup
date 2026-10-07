@@ -72,7 +72,7 @@ export function VendorFlow({ steps }: { steps: string[] }) {
             <rect x="790" y="160.54" width="340" height="178.92" rx="16" className="vendor-flow__outline" />
             <text x="612" y="178" textAnchor="middle" className="vendor-flow__packet">incoming call · webhook</text>
           </motion.g>
-          {['called number', 'user', 'their app'].map((label, i) => (
+          {['called number', 'user', 'number owner'].map((label, i) => (
             <motion.g key={label} initial={false}
               animate={{ opacity: step >= 2 ? 1 : 0, y: step >= 2 ? 0 : -6 }}
               transition={{ duration: 0.35, delay: step === 2 ? i * 0.2 : 0 }}>
