@@ -98,17 +98,6 @@
   position: relative;
 }
 
-.slide::after {
-  /* thin brand rule along the bottom edge */
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 6px;
-  background: linear-gradient(90deg, var(--pink), var(--blue));
-}
-
 .slide__title {
   font-family: var(--font-display);
   font-size: 56px;
@@ -376,16 +365,6 @@
 .between-scene__ui > .slide::after,
 .paper-fold__copy::after {
   display: none;
-}
-.between-scene__rule {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 6px;
-  z-index: 6;
-  background: linear-gradient(90deg, var(--pink), var(--blue));
-  pointer-events: none;
 }
 .paper-fold,
 .paper-fold__camera,

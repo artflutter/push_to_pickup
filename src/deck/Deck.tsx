@@ -159,7 +159,6 @@ function BetweenScene({ deck }: { deck: ReturnType<typeof useDeck> }) {
         <RainbowTraveller />
       </motion.div>
     </RainbowContext.Provider>
-    <div className="between-scene__rule" />
   </div>
 }
 
