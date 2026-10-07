@@ -146,7 +146,7 @@ Other cuts (`list`, `ticks`, `chips`, `steps`, `rail`, `big`, `hero`) exist in
 ## Slide 060: the app is the king
 
 `layout: full`, one page throughout — no title, no Spotlight box, no bars.
-`<Unfold hero={<AppWire />} seeds={APP_WIRE.circles} orbAt={APP_WIRE.top}>`
+`<Unfold billiards hero={<AppWire />} seeds={APP_WIRE.circles} orbAt={APP_WIRE.top}>`
 with three `<Stop title>body</Stop>` (the slide imports `APP_WIRE` from
 mdxComponents — plain MDX ESM).
 Step 0: the whole slide is the gradient, the app's ringing screen as a
@@ -155,10 +155,17 @@ caller's two lines), and the blob — small, 340 px (`.unfold .orb__glow`;
 820 → 260 → 340 were tried) — resting on the top edge of the phone. The
 wireframe's three circles (avatar, then the two call buttons) are not in
 the SVG: they are the three rings in their folded state, drawn as the same
-2.5 px outline with nothing inside.
+2.5 px outline. The avatar carries the shared white Clawd, half visible and
+clipped to the circle; the left button has a decline handset and the right
+an accept handset, with no text. This content rides inside the circles and
+fades out as they move down, returning when they fold back into the phone.
 First click: the phone shrinks to half around its centre and moves up to
-(640, 200), and the circles spring down into a row of rings (120 px, on
-the 240 / 640 / 1040 line of slide 040, y 470), all on one spring — empty
+(640, 200). The avatar drops straight down and strikes the stationary call
+buttons like billiard balls: decline shoots left, accept right, and the
+avatar stays in the middle. Contact uses the circles' actual radii; the
+buttons only move after contact. One reversible clock in `unfoldMotion.ts`
+settles them into a row of rings (120 px, on
+the 240 / 640 / 1040 line of slide 040, y 470) — empty
 rings: the number inside (binary, `01` · `10` · `11`, like the 020
 bullets) and the title under come with the light, so a
 ring shows nothing until the orb reaches it ("the number and subtitle

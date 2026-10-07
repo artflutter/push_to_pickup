@@ -15,6 +15,7 @@ import { animate, AnimatePresence, motion, useMotionTemplate, useMotionValue, us
 import { F } from './Fragment'
 import { Code, CodeMorph, Pre } from './Code'
 import { ClaudeMark } from './ClaudeMark'
+import { UNFOLD_DURATION, unfoldCircleAt, unfoldContact, type UnfoldCircle } from './unfoldMotion'
 import { useSlide } from './slideContext'
 import { balloonLaunch, balloonRest, CloudIn, FlightBackdrop, OrbLaunch, vesselHide } from './Traveller'
 
@@ -867,12 +868,13 @@ function StopView({
  * One page, no layout change: a full-slide gradient with a hero drawing on
  * it and the blob resting on the hero. On the first click the hero shrinks
  * up out of the way and its circles (`seeds`, in slide px, one per <Stop>)
- * spring down into a row of rings, number inside, title and body under —
+ * unfold into a row of rings, number inside, title and body under —
  * the blob stays on the hero, riding its shrink. Only the next click moves
  * it: it lights the rings one per click, the line drawing in behind it,
  * exactly like <Route>. Stepping back folds it up again.
  */
 const UNFOLD_SPRING = { type: 'spring' as const, stiffness: 150, damping: 24, mass: 0.9 }
+type UnfoldSeed = UnfoldCircle & { content?: ReactNode }
 
 export function Unfold({
   hero,
@@ -884,11 +886,12 @@ export function Unfold({
   y = 470,
   ring = 120,
   launch = false,
+  billiards = false,
   children,
 }: {
   hero: ReactNode
   /** the hero's circles the stops start out as, in slide px, in stop order */
-  seeds: { x: number; y: number; r: number }[]
+  seeds: UnfoldSeed[]
   /** where the blob rests on the hero */
   orbAt: { x: number; y: number }
   /** the hero's centre — what it shrinks around */
@@ -902,6 +905,8 @@ export function Unfold({
   ring?: number
   /** one more step after the last ring: it becomes a balloon and carries the light off the top, turning the page on its way */
   launch?: boolean
+  /** The central avatar drops into the two buttons and knocks them outwards. */
+  billiards?: boolean
   children: ReactNode
 }) {
   const slide = useSlide()
@@ -917,6 +922,13 @@ export function Unfold({
   })
   const step = slide.static ? n + 1 : Math.min(last, Math.max(0, slide.step))
   const open = step > 0
+  const unfold = useMotionValue(open ? 1 : 0)
+  useLayoutEffect(() => {
+    const to = open ? 1 : 0
+    const animation = animate(unfold, to, { duration: UNFOLD_DURATION * Math.abs(to - unfold.get()), ease: 'linear' })
+    return () => animation.stop()
+  }, [open, unfold])
+  const contact = billiards && seeds.length === 3 ? unfoldContact(seeds[1], seeds[0], ring / 2) : undefined
   /* how many rings the orb has been sent to */
   const active = Math.min(n, Math.max(0, step - 1))
   /* the last step: the ring the orb sits on lifts off as a balloon and takes the light with it */
@@ -1000,6 +1012,8 @@ export function Unfold({
                 key={i}
                 orb={orb}
                 seed={seeds[i]}
+                unfold={unfold}
+                contact={contact}
                 x={xs[i]}
                 y={y}
                 size={ring}
@@ -1037,6 +1051,8 @@ function Reach({ orb, x, y, onReach, skip }: { orb: OrbValues; x: number | null;
 function UnfoldStop({
   orb,
   seed,
+  unfold,
+  contact,
   x,
   y,
   size,
@@ -1049,7 +1065,9 @@ function UnfoldStop({
   body,
 }: {
   orb: OrbValues
-  seed?: { x: number; y: number; r: number }
+  seed?: UnfoldSeed
+  unfold: MotionValue<number>
+  contact?: { x: number; y: number }
   x: number
   y: number
   size: number
@@ -1085,12 +1103,16 @@ function UnfoldStop({
   const text = useTransform([lit, solid], ([v, f]: number[]) => v * f)
   const label = useTransform(lit, (v) => v)
   const rise = useTransform(lit, (v) => 12 * (1 - v))
-  const box =
-    open || !seed
-      ? { x: x - size / 2, y: y - size / 2, width: size, height: size }
-      : { x: seed.x - seed.r, y: seed.y - seed.r, width: 2 * seed.r, height: 2 * seed.r }
+  const pose = useTransform(unfold, (t) => {
+    const target = { x, y, r: size / 2 }
+    return unfoldCircleAt(t, seed ?? target, target, contact)
+  })
+  const left = useTransform(pose, (p) => p.x - p.r)
+  const top = useTransform(pose, (p) => p.y - p.r)
+  const diameter = useTransform(pose, (p) => 2 * p.r)
   return (
-    <motion.div className="unfold__ring" style={{ borderColor: border, boxShadow: halo }} initial={false} animate={box} transition={UNFOLD_SPRING}>
+    <motion.div className="unfold__ring" style={{ x: left, y: top, width: diameter, height: diameter, borderColor: border, boxShadow: halo }}>
+      {seed?.content && <div className="unfold__seed" aria-hidden="true">{seed.content}</div>}
       <motion.span className="unfold__n" style={{ opacity: text }}>
         {n}
       </motion.span>
@@ -1755,9 +1777,16 @@ export function Check({ children, at }: { children: ReactNode; at?: number }) {
  * Wireframe of the app's ringing screen — the phone, the caller's lines and
  * the home bar — drawn in stage px and centred on the slide. Its three
  * circles (avatar, two call buttons) are not drawn here: they are the
- * Spotlight's bars in their opening state (`heroSeeds={APP_WIRE.circles}`),
- * so they can spring out into the bars. `top` is where the blob rests.
+ * Unfold's rings in their opening state (`seeds={APP_WIRE.circles}`),
+ * so their contents travel and fade as they spring out. `top` is where the blob rests.
  */
+function AppCallIcon({ decline = false }: { decline?: boolean }) {
+  return <svg className={`appwire__call${decline ? ' appwire__call--decline' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {/* The same bundled Tabler handset used by the endpoint call screens. */}
+    <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 6a2 2 0 0 1 2-2" />
+  </svg>
+}
+
 export const APP_WIRE = (() => {
   const w = 270
   const h = 536
@@ -1770,9 +1799,9 @@ export const APP_WIRE = (() => {
     h,
     top: { x: 640, y },
     circles: [
-      { x: 640, y: y + 190, r: 44 },
-      { x: 640 - 62, y: y + 430, r: 32 },
-      { x: 640 + 62, y: y + 430, r: 32 },
+      { x: 640 - 62, y: y + 430, r: 32, content: <AppCallIcon decline /> },
+      { x: 640, y: y + 190, r: 44, content: <div className="appwire__avatar"><ClaudeMark /></div> },
+      { x: 640 + 62, y: y + 430, r: 32, content: <AppCallIcon /> },
     ],
   }
 })()

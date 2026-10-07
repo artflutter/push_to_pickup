@@ -4,7 +4,9 @@ notes: |
   Opens full-slide: the app's own screen as a wireframe on the gradient, the
   orb resting on top of the phone. First click: the phone shrinks up out of
   the way, the orb riding along on top of it, and its three circles — avatar,
-  the two call buttons — drop into three rings along the bottom. From the
+  the two call buttons — become three rings along the bottom. The avatar
+  drops straight down and strikes the two buttons, sending decline left
+  and accept right before all three settle into their row. From the
   next click the orb leaves the phone and lights them one per click. The app
   starts everything: without its tokens nobody can reach the device. On the
   last click the third ring — send push to vendor — becomes a balloon and
@@ -17,7 +19,7 @@ notes: |
 
 import { APP_WIRE } from '../deck/mdxComponents'
 
-<Unfold launch hero={<AppWire />} seeds={APP_WIRE.circles} orbAt={APP_WIRE.top}>
+<Unfold launch billiards hero={<AppWire />} seeds={APP_WIRE.circles} orbAt={APP_WIRE.top}>
   <Stop title="Emits push token" />
   <Stop title="Fetches vendor token (from your backend)" />
   <Stop title="Registers push token with vendor" />
