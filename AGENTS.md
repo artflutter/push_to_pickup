@@ -187,7 +187,7 @@ from the route: only the ring the orb is *heading for* lights by distance
 (`aim`) — coming down from the phone it passes within ~280 px of ring 02,
 which flickered to 14 % on the way ("why 02 blinks"). Four clicks. Stepping back folds it all up again; nothing
 blinks.
-The rings read `Emits push token` · `Fetches vendor token (from your backend)` · `Registers push
+The rings read `Emits push token` · `Gets vendor token (from your backend)` · `Registers push
 token with vendor` (the owner's words; ring 11 was `Send push to vendor` until
 the 2026-10-06 fact-check: the app registers its token, the vendor sends the push). Rejected on the way here: the box shrinking
 into the Spotlight layout with bars on the left ("everything should be on
