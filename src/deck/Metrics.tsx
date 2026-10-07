@@ -11,7 +11,7 @@ import { FINALE_CIRCLE, FINALE_END, finaleClawd, finaleExit } from './finaleMoti
 const METRICS = [
   { title: 'Call-processing graph', body: 'Every step of the pipeline, timestamped, from the webhook to the ring.', color: RAINBOW_COLORS[0] },
   { title: 'Push delivery delay', body: 'Emitted at the vendor, received on the device — the gap in between.', color: RAINBOW_COLORS[3] },
-  { title: 'On-device processing', body: 'From the push landing to the ringing screen.', color: RAINBOW_COLORS[4] },
+  { title: 'On-device processing', body: 'From the app receiving the push to the ringing screen.', color: RAINBOW_COLORS[4] },
 ] as const
 type Clock = { clock: MotionValue<number> }
 type FinaleClock = { finale: MotionValue<number> }
