@@ -18,7 +18,10 @@ export type JourneyFrame = {
   blue: number; donor: number; black: number; title: number; phase: CrawlPhase
   headlight: Point & { angle: number; opacity: number }
 }
-type Exit = { states: Worm[]; contours: Point[][]; target: Point[]; duration: number }
+type Exit = {
+  states: Worm[]; contours: Point[][]; target: Point[]; duration: number
+  pathTick: number; pathMorph: number; path: string
+}
 
 export const wormContour = (worm: Worm) => snakeBody([...worm.cells].reverse(), worm.cells.length - 1, worm.origin)
 const move = (worm: Worm, head: Point): Worm => ({ origin: worm.origin, cells: [head, ...worm.cells.slice(0, -1)] })
@@ -151,7 +154,7 @@ export class CrawlJourney {
       const states = routeToCard(worm, { x: box.x + box.width / 2, y: box.y + box.height / 2 })
       const contours = states.map(wormContour)
       return { states, contours, target: alignContour(contours[contours.length - 1], target).map(p => ({ x: p.x, y: p.y - PAGE * 2 })),
-        duration: (states.length - 1) * CRAWL_TICK }
+        duration: (states.length - 1) * CRAWL_TICK, pathTick: -1, pathMorph: -1, path: '' }
     })
     this.exitEnd = Math.max(...this.exits.map(e => e.duration)) + MORPH_TIME
     this.exitTime = 0
@@ -185,7 +188,9 @@ export class CrawlJourney {
         this.phase = 'roam'
       }
     }
-    this.frame = { ...this.frame, phase: this.phase }
+    // Between grid ticks the body is unchanged: keep the same frame so motion
+    // subscribers (including the title's DOM writes) do not wake at display Hz.
+    if (this.frame.phase !== this.phase) this.frame = { ...this.frame, phase: this.phase }
     return this.frame
   }
 
@@ -209,7 +214,14 @@ export class CrawlJourney {
       headlight: headlightAt(litWorm, 1 - morphs[0]),
       paths: this.exits.map((e, i) => {
         const tick = Math.min(e.contours.length - 1, Math.floor(this.exitTime / CRAWL_TICK + 1e-8))
-        return outlinePath(blend(e.contours[tick], e.target, morphs[i]))
+        // The camera is smooth, but each snake holds its outline until its next
+        // grid tick. Only the final card morph needs a fresh path every frame.
+        if (tick !== e.pathTick || morphs[i] !== e.pathMorph) {
+          e.pathTick = tick
+          e.pathMorph = morphs[i]
+          e.path = outlinePath(blend(e.contours[tick], e.target, morphs[i]))
+        }
+        return e.path
       }),
       cards: morphs.map(p => smooth((p - .85) / .15)), fills: morphs,
       black: 1 - smooth((camera - PAGE - 360) / 360), title: smooth((camera - PAGE - 360) / 360),

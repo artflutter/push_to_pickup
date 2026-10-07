@@ -1,9 +1,10 @@
-import { useEffect, useState, type ReactElement, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react'
 import type { HighlighterCore } from 'shiki/core'
-import { ShikiMagicMove } from 'shiki-magic-move/react'
 import 'shiki-magic-move/style.css'
 import { getHighlighter, THEME } from './highlighter'
 import { useSlide } from './slideContext'
+
+const ShikiMagicMove = lazy(() => import('shiki-magic-move/react').then(m => ({ default: m.ShikiMagicMove })))
 
 function useHighlighter(): HighlighterCore | null {
   const [hl, setHl] = useState<HighlighterCore | null>(null)
@@ -57,7 +58,8 @@ export function Code({ children, code, lang = 'dart', title, marks, size = 'md',
   for (let i = 0; i < ordinals.length; i++) {
     if (slide.static || slide.step >= ordinals[i]) active = i + 1
   }
-  const marked = groups.length ? parseLines(groups[active]) : null
+  const markSpec = groups[active]
+  const marked = useMemo(() => markSpec == null ? null : parseLines(markSpec), [markSpec])
 
   useEffect(() => {
     if (!highlighter) return
@@ -120,13 +122,15 @@ export function CodeMorph({ steps, lang = 'dart', title, size = 'md' }: CodeMorp
       {title && <figcaption className="code__title">{title}</figcaption>}
       <div className="code__body">
         {highlighter ? (
-          <ShikiMagicMove
-            highlighter={highlighter}
-            lang={lang}
-            theme={THEME}
-            code={code}
-            options={{ duration: 550, stagger: 2, lineNumbers: false }}
-          />
+          <Suspense fallback={<pre className="code__body--raw"><code>{code}</code></pre>}>
+            <ShikiMagicMove
+              highlighter={highlighter}
+              lang={lang}
+              theme={THEME}
+              code={code}
+              options={{ duration: 550, stagger: 2, lineNumbers: false }}
+            />
+          </Suspense>
         ) : (
           <pre className="code__body--raw">
             <code>{code}</code>

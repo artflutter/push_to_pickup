@@ -1,12 +1,9 @@
 import { createRoot } from 'react-dom/client'
 import { Deck } from './deck/Deck'
 import { Print } from './deck/Print'
-import { preloadHighlighter } from './deck/highlighter'
 import './styles/theme.css'
 import './styles/deck.css'
 import './styles/print.css'
-
-preloadHighlighter()
 
 // Offline first: the built deck caches itself (scripts/offline.mjs), so it
 // still opens with no network once it has been loaded.

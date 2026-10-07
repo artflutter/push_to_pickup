@@ -1,8 +1,9 @@
-import { useId, useRef, useState } from 'react'
-import { motion, useAnimationFrame, useMotionValue, useTransform, type MotionValue } from 'motion/react'
+import { useId, useLayoutEffect, useRef, useState } from 'react'
+import { motion, useMotionValue, useTransform, type MotionValue } from 'motion/react'
 import { CLAWD } from './ClaudeMark'
 import { useSlide } from './slideContext'
 import { useRainbow } from './rainbowContext'
+import { useAnimationLoop } from './useAnimationLoop'
 import { finaleExit } from './finaleMotion'
 import { PRISM_HIT, prismBoost, prismCollapse, prismHead, prismPhase, prismTravel } from './prismMotion'
 import { CHECKPOINTS, NYAN_FRAME_MS, RAINBOW_COLORS, RAINBOW_CUES, RAINBOW_RUN_END, RAINBOW_Y, makeRainbowFlight, nyanPose, rainbowFrame, rainbowLabels, rainbowTrails } from './rainbowMotion'
@@ -82,12 +83,16 @@ export function RainbowTraveller() {
   // Sharing its clock also makes rewinds and direct entry show the right value.
   const seconds = useTransform(flight.clock, t =>
     Math.ceil(TIMER_SECONDS * (1 - Math.max(0, Math.min(1, t / RAINBOW_RUN_END)))))
-  useAnimationFrame((_, delta) => {
-    if (flight.clock.get() <= 0) {
+  // Once compressed, neither the sprite nor its stars/ripple is visible.
+  // Keep the pose for a continuous rewind, but release the frame subscription.
+  const looping = useTransform(() => flight.clock.get() > 0 && collapse.get() < 1)
+  useLayoutEffect(() => flight.clock.on('change', t => {
+    if (t <= 0) {
       elapsed.current = 0
-      if (cycle.get()) cycle.set(0)
-      return
+      cycle.set(0)
     }
+  }), [flight.clock, cycle])
+  useAnimationLoop(looping, delta => {
     elapsed.current += Math.min(delta, 100)
     const next = Math.floor(elapsed.current / NYAN_FRAME_MS)
     if (next !== cycle.get()) cycle.set(next)

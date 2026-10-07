@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { motion, useAnimationFrame, useIsPresent, useMotionValue, useSpring, useTransform, type MotionValue } from 'motion/react'
+import { motion, useIsPresent, useMotionValue, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { SlideContext, useSlide } from './slideContext'
 import { APPLE, ANDROID, VendorPush } from './VendorPush'
 import { PUSH_END } from './vendorPushMotion'
 import { flightSkin, leavePushOrbBehind } from './Traveller'
 import { type Point, type Rect } from './uiCrawlMotion'
 import { CrawlJourney, type CrawlArtwork, type JourneyFrame } from './uiCrawlJourney'
+import { useAnimationLoop } from './useAnimationLoop'
 
 /** The deck cues this only for the adjacent vendor → UI hand-off. */
 export const UIEntryContext = createContext(false)
@@ -154,8 +155,7 @@ export function UICrawl({ children }: { children: ReactNode }) {
     publish(journey.frame)
   }, [journey, slide.step, slide.static, slide.active, publish])
 
-  useAnimationFrame((_, delta) => {
-    if (slide.static || slide.active === false || !present || journey.phase === 'arrived') return
+  useAnimationLoop(!slide.static && slide.active !== false && present && phase !== 'arrived', delta => {
     // Background tabs pause the simulation instead of teleporting on return.
     publish(journey.advance(Math.min(delta / 1000, .05)))
   })

@@ -127,3 +127,12 @@ test('direct entry and static rendering can show the completed cards', () => {
   assert.equal(journey.frame.title, 1)
   assert.deepEqual(journey.frame.cards, [1, 1, 1])
 })
+
+test('roaming holds its published frame between grid ticks', () => {
+  const journey = new CrawlJourney(artwork, false, false, seeded(42))
+  const before = journey.frame
+  for (let i = 0; i < 16; i++) assert.equal(journey.advance(1 / 120), before)
+  const moved = journey.advance(1 / 120)
+  assert.notEqual(moved, before)
+  assert.notDeepEqual(moved.paths, before.paths)
+})

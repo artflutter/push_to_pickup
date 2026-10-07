@@ -1,5 +1,4 @@
-import { createHighlighterCore, type HighlighterCore } from 'shiki/core'
-import { createOnigurumaEngine } from 'shiki/engine/oniguruma'
+import type { HighlighterCore } from 'shiki/core'
 
 /** Languages bundled into the deck. Add more as the talk grows. */
 export const LANGS = [
@@ -24,26 +23,23 @@ let pending: Promise<HighlighterCore> | null = null
  * than the JS engine — Swift and Kotlin grammars lean on lookbehind.
  */
 export function getHighlighter(): Promise<HighlighterCore> {
-  pending ??= createHighlighterCore({
-    themes: [import('shiki/themes/vitesse-dark.mjs')],
-    langs: [
-      import('shiki/langs/dart.mjs'),
-      import('shiki/langs/swift.mjs'),
-      import('shiki/langs/kotlin.mjs'),
-      import('shiki/langs/objective-c.mjs'),
-      import('shiki/langs/typescript.mjs'),
-      import('shiki/langs/javascript.mjs'),
-      import('shiki/langs/json.mjs'),
-      import('shiki/langs/yaml.mjs'),
-      import('shiki/langs/bash.mjs'),
-      import('shiki/langs/diff.mjs'),
-    ],
-    engine: createOnigurumaEngine(import('shiki/wasm')),
-  })
+  pending ??= Promise.all([import('shiki/core'), import('shiki/engine/oniguruma')]).then(
+    ([{ createHighlighterCore }, { createOnigurumaEngine }]) => createHighlighterCore({
+      themes: [import('shiki/themes/vitesse-dark.mjs')],
+      langs: [
+        import('shiki/langs/dart.mjs'),
+        import('shiki/langs/swift.mjs'),
+        import('shiki/langs/kotlin.mjs'),
+        import('shiki/langs/objective-c.mjs'),
+        import('shiki/langs/typescript.mjs'),
+        import('shiki/langs/javascript.mjs'),
+        import('shiki/langs/json.mjs'),
+        import('shiki/langs/yaml.mjs'),
+        import('shiki/langs/bash.mjs'),
+        import('shiki/langs/diff.mjs'),
+      ],
+      engine: createOnigurumaEngine(import('shiki/wasm')),
+    }),
+  )
   return pending
-}
-
-/** Warm the highlighter up front so the first code slide doesn't flash. */
-export function preloadHighlighter() {
-  void getHighlighter()
 }
